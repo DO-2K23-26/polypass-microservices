@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/DO-2K23-26/polypass-microservices/credentials/config"
+  "github.com/DO-2K23-26/polypass-microservices/credentials/cycle"
 )
 
 // @title Optique application TO CHANGE
@@ -18,16 +19,16 @@ func main() {
 	if err != nil {
 		config.HandleError(err)
 	}
-	cycle := NewCycle()
+	app_cycle := cycle.NewCycle()
 
 	if conf.Bootstrap {
-		err := cycle.Setup()
+		err := app_cycle.Setup()
 		if err != nil {
 			slog.Error(err.Error())
-			cycle.Stop()
+			app_cycle.Stop()
 			os.Exit(1)
 		}
 	}
 
-	err = cycle.Ignite()
+	err = app_cycle.Ignite()
 }
