@@ -1,4 +1,4 @@
-package main
+package cycle
 
 import (
 	"log/slog"
