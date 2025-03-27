@@ -3,8 +3,9 @@ package main
 import (
 	"log/slog"
 	"os"
-)
 
+	"github.com/DO-2K23-26/polypass-microservices/credentials/config"
+)
 
 // @title Optique application TO CHANGE
 // @version 1.0

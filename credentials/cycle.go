@@ -5,6 +5,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/DO-2K23-26/polypass-microservices/credentials/application"
+	"github.com/DO-2K23-26/polypass-microservices/credentials/infrastructure"
 )
 
 // Cycle is the component in charge of the life cycle of the application
@@ -35,14 +38,14 @@ func (c *cycle) AddRepository(repo infrastructure.Repository) {
 }
 
 func (c *cycle) AddApplications(apps []application.Application) {
-	Shutdownc.apps = append(c.apps, apps...)
+	c.apps = append(c.apps, apps...)
 }
 
 func (c *cycle) AddRepositories(repos []infrastructure.Repository) {
 	c.repos = append(c.repos, repos...)
 }
 
-func (c *cycle) AddApplication(app application.Application) {
+func (c *cycle) AddAplication(app application.Application) {
 	c.apps = append(c.apps, app)
 }
 
