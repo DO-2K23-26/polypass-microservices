@@ -5,6 +5,8 @@ type UserRepository interface {
 	Create(query CreateUserQuery) (*CreateUserResult, error)
 	Update(query UpdateUserQuery) (*UpdateUserResult, error)
 	Delete(query DeleteUserQuery) (*DeleteUserResult, error)
-	UpsertFolderAccess(query UpsertFolderAccessQuery) (*UpsertFolderAccessResult, error)
-	DeleteFolderAccess(query DeleteFolderAccessQuery) (*DeleteFolderAccessResult, error)
+	//By definition upsert action update the document if it exists, otherwise create a new one.
+	//In this case, it will update a folder of the user
+	AddFolderAccess(query AddFolderAccessQuery) (*AddFolderAccessResult, error)
+	RemoveFolderAccess(query RemoveFolderAccessQuery) (*RemoveFolderAccessResult, error)
 }

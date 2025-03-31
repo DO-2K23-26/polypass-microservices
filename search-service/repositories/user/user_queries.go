@@ -35,20 +35,20 @@ type DeleteUserResult struct {
 	ID string `json:"id"`
 }
 
-type UpsertFolderAccessQuery struct {
+type AddFolderAccessQuery struct {
 	UserID string `json:"user_id"`
 	FolderID string `json:"folder_id"`
 }
 
-type UpsertFolderAccessResult struct {
+type AddFolderAccessResult struct {
 	User types.User `json:"user"`
 }
 
-type DeleteFolderAccessQuery struct {
+type RemoveFolderAccessQuery struct {
 	UserID string `json:"user_id"`
 	FolderID string `json:"folder_id"`
 }
 
-type DeleteFolderAccessResult struct {
+type RemoveFolderAccessResult struct {
 	User types.User `json:"user"`
 }
