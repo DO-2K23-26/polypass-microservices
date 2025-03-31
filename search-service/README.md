@@ -36,7 +36,10 @@ We will also need to know in which folder is a user in order to not send data ab
 
 Note: Topics name could change but those describe good enough to be understandable for everyone.
 
-## Manage nested field
+## Examples
+
+
+### Manage nested field
 
 As we will replicate in credential the folder object we will need to maintain the integrity of datas (given by AI prompt):
 
@@ -71,7 +74,46 @@ func UpdateFolderNameInCredentials(es *elasticsearch.Client, folderID string, ne
     return nil
 }
 ```
+### Exclude folders
 
+This example demonstrates how to exclude folders from a search query to scope to a list of folders.
+
+```go
+func (r *elasticSearchFolderRepository) SearchFolder(query SearchFolderQuery) (*SearchFolderResult, error) {
+    // Build the basic search query
+    searchQuery := map[string]interface{}{
+        "query": map[string]interface{}{},
+        "from":  (query.Page - 1) * query.Size,
+        "size":  query.Size,
+    }
+    
+    // Define the main query part based on search term
+    mainQuery := map[string]interface{}{
+        "match": map[string]interface{}{
+            "name": query.Term,
+        },
+    }
+    
+    // If we have allowed folder IDs, add a filter
+    if len(query.AllowedFolderIds) > 0 {
+        searchQuery["query"] = map[string]interface{}{
+            "bool": map[string]interface{}{
+                "must": mainQuery,
+                "filter": map[string]interface{}{
+                    "terms": map[string]interface{}{
+                        "id": query.AllowedFolderIds,
+                    },
+                },
+            },
+        }
+    } else {
+        // Without folder filtering, just use the main query
+        searchQuery["query"] = mainQuery
+    }
+    
+    // Execute search and process results...
+}
+```
 
 ## Optique Suggestions
 

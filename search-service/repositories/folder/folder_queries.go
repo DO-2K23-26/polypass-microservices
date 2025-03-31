@@ -33,10 +33,11 @@ type GetFolderResult struct {
 }
 
 type SearchFolderQuery struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Limit  int    `json:"limit"`  // The limit is the maximum number of folders to return
-	Offset int    `json:"offset"` // The offset is the number of folders to skip before returning results
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	Limit        *int    `json:"limit"`         // The limit is the maximum number of folders to return
+	Offset       *int    `json:"offset"`        // The offset is the number of folders to skip before returning results
+	FoldersScope *string `json:"folders_scope"` // The folders that the user making the request can access
 }
 
 type SearchFolderResult struct {
