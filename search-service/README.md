@@ -36,6 +36,43 @@ We will also need to know in which folder is a user in order to not send data ab
 
 Note: Topics name could change but those describe good enough to be understandable for everyone.
 
+## Manage nested field
+
+As we will replicate in credential the folder object we will need to maintain the integrity of datas (given by AI prompt):
+
+```go
+// Example function to update folder name across all credentials
+func UpdateFolderNameInCredentials(es *elasticsearch.Client, folderID string, newName string) error {
+    // Define the query to find all credentials with the specific folder_id
+    script := fmt.Sprintf(`
+        if (ctx._source.folder != null && ctx._source.folder.id == '%s') {
+            ctx._source.folder.name = '%s';
+        }
+    `, folderID, newName)
+    
+    // Create the update by query request
+    req := esapi.UpdateByQueryRequest{
+        Index:   []string{"credentials"},
+        Body:    strings.NewReader(`{"query": {"term": {"folder_id": "` + folderID + `"}}, "script": {"source": "` + script + `"}}`),
+        Refresh: "true",
+    }
+    
+    res, err := req.Do(context.Background(), es)
+    if err != nil {
+        return err
+    }
+    defer res.Body.Close()
+    
+    if res.IsError() {
+        // Handle error
+        return fmt.Errorf("error updating credentials: %s", res.String())
+    }
+    
+    return nil
+}
+```
+
+
 ## Optique Suggestions
 
 ### Prerequisites
