@@ -95,8 +95,8 @@ func (s *UserService) DeleteUser(req *DeleteUserRequest) error {
 	return nil
 }
 
-// UpsertFolderAccess adds or updates a user's access to a folder
-func (s *UserService) UpsertFolderAccess(req *AddFolderAccessRequest) (*UserResponse, error) {
+// AddFolderAccess adds or updates a user's access to a folder
+func (s *UserService) AddFolderAccess(req *AddFolderAccessRequest) (*UserResponse, error) {
 	if req == nil {
 		return nil, errors.New("request cannot be nil")
 	}
@@ -119,7 +119,7 @@ func (s *UserService) UpsertFolderAccess(req *AddFolderAccessRequest) (*UserResp
 }
 
 // DeleteFolderAccess removes a user's access to a folder
-func (s *UserService) DeleteFolderAccess(req *RemoveFolderAccessRequest) (*UserResponse, error) {
+func (s *UserService) RemoveFolderAccess(req *RemoveFolderAccessRequest) (*UserResponse, error) {
 	if req == nil {
 		return nil, errors.New("request cannot be nil")
 	}
