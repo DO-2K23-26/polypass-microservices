@@ -5,4 +5,6 @@ type UserRepository interface {
 	Create(query CreateUserQuery) (*CreateUserResult, error)
 	Update(query UpdateUserQuery) (*UpdateUserResult, error)
 	Delete(query DeleteUserQuery) (*DeleteUserResult, error)
+	UpsertFolderAccess(query UpsertFolderAccessQuery) (*UpsertFolderAccessResult, error)
+	DeleteFolderAccess(query DeleteFolderAccessQuery) (*DeleteFolderAccessResult, error)
 }
