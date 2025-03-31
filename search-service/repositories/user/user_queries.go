@@ -19,7 +19,8 @@ type CreateUserResult struct {
 }
 
 type UpdateUserQuery struct {
-	User types.User `json:"user"`
+	ID string `json:"id"`
+	NewFolder string `json:"new_folder"` // This folder can be either the update of a folder or the user being added to a folder
 }
 
 type UpdateUserResult struct {
