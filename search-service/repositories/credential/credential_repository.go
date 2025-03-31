@@ -6,4 +6,6 @@ type Repository interface {
 	DeleteCredential(query DeleteCredentialQuery) error
 	GetCredential(query GetCredentialQuery) (*GetCredentialResult, error)
 	SearchCredentials(query SearchCredentialQuery) (*SearchCredentialResult, error)
+	AddTagsToCredential(query AddTagsToCredentialQuery) error
+	RemoveTagsFromCredential(query RemoveTagsFromCredentialQuery) error
 }
