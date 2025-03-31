@@ -19,7 +19,8 @@ type CreateUserResult struct {
 }
 
 type UpdateUserQuery struct {
-	User types.User `json:"user"`
+	ID string `json:"id"`
+	NewFolder string `json:"new_folder"` // This folder can be either the update of a folder or the user being added to a folder
 }
 
 type UpdateUserResult struct {
@@ -32,4 +33,22 @@ type DeleteUserQuery struct {
 
 type DeleteUserResult struct {
 	ID string `json:"id"`
+}
+
+type AddFolderAccessQuery struct {
+	UserID string `json:"user_id"`
+	FolderID string `json:"folder_id"`
+}
+
+type AddFolderAccessResult struct {
+	User types.User `json:"user"`
+}
+
+type RemoveFolderAccessQuery struct {
+	UserID string `json:"user_id"`
+	FolderID string `json:"folder_id"`
+}
+
+type RemoveFolderAccessResult struct {
+	User types.User `json:"user"`
 }

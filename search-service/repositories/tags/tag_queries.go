@@ -36,7 +36,7 @@ type SearchTagQuery struct {
 	FolderId     *string `json:"folder_id,omitempty"`
 	Limit        *int    `json:"limit,omitempty"`         // Limit is the maximum number of results to return.
 	Offset       *int    `json:"offset,omitempty"`        // Offset is the number of results to skip.
-	FoldersScope *string `json:"folders_scope,omitempty"` // The folders that the user making the request can access
+	FoldersScope *[]string `json:"folders_scope,omitempty"` // The folders that the user making the request can access
 }
 
 type SearchTagResult struct {
