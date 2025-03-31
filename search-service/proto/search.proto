@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package search;
+option go_package = "github.com/DO-2K23-26/polypass-microservices/search-service/proto/search";
+
+service SearchService {
+  // Search for folders
+  rpc SearchFolders(SearchFoldersRequest) returns (SearchFoldersResponse);
+  
+  // Search for tags
+  rpc SearchTags(SearchTagsRequest) returns (SearchTagsResponse);
+  
+  // Search for credentials
+  rpc SearchCredentials(SearchCredentialsRequest) returns (SearchCredentialsResponse);
+  }
+
+// Common message definitions
+message Folder {
+  string id = 1;
+  string name = 2;
+}
+
+message Tag {
+  string id = 1;
+  string name = 2;
+}
+
+message Credential {
+  string id = 1;
+  string title = 2;
+  string folder_id = 3;
+  Folder folder = 4;
+  repeated Tag tags = 5;
+}
+
+// Folder search
+message SearchFoldersRequest {
+  string name = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+  string user_id = 4; // Required for permission check
+}
+
+message SearchFoldersResponse {
+  repeated Folder folders = 1;
+  int32 total = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+// Tag search
+message SearchTagsRequest {
+  string name = 1;
+  string folder_id = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+  string user_id = 5; // Required for permission check
+}
+
+message SearchTagsResponse {
+  repeated Tag tags = 1;
+  int32 total = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+// Credential search
+message SearchCredentialsRequest {
+  string title = 1;
+  string folder_id = 2;
+  string folder_name = 3;
+  repeated string tag_ids = 4;
+  string tag_name = 5;
+  int32 limit = 6;
+  int32 offset = 7;
+  string user_id = 8; // Required for permission check
+}
+
+message SearchCredentialsResponse {
+  repeated Credential credentials = 1;
+  int32 total = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
