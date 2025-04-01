@@ -1,14 +1,15 @@
 package repositories
 
 import (
-    "context"
-    "os"
-    "sharing/models"
+	"context"
+	"os"
+	"sharing/models"
 
-    "github.com/joho/godotenv"
-    "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type SecretRepository interface {
@@ -45,16 +46,18 @@ type secretRepository struct {
 }
 
 func (r *secretRepository) CreateSecret(secret *models.Secret) (models.Secret, error) {
-    collection := r.db.Collection("secrets")
+	collection := r.db.Collection("secrets")
 
-    // Insert the secret into the collection
-    secret.Id = "" // Ensure ID is empty so MongoDB generates it
-    _, err := collection.InsertOne(context.TODO(), secret)
-    if err != nil {
-        return models.Secret{}, err
-    }
+	// Insert the secret into the collection
+	result, err := collection.InsertOne(context.TODO(), secret)
+	if err != nil {
+		return models.Secret{}, err
+	}
 
-    return *secret, nil
+	// Set the generated ID back to the secret
+    secret.Id = result.InsertedID.(primitive.ObjectID).Hex()
+
+	return *secret, nil
 }
 
 func (r *secretRepository) GetSecret(id string) (*models.Secret, error) {
@@ -62,10 +65,23 @@ func (r *secretRepository) GetSecret(id string) (*models.Secret, error) {
 
     // Find the secret by ID
     var secret models.Secret
-    err := collection.FindOne(context.TODO(), bson.M{"_id": id}).Decode(&secret)
+    objectId, err := primitive.ObjectIDFromHex(id)
     if err != nil {
         return nil, err
     }
+
+    err = collection.FindOne(context.TODO(), bson.M{"_id": objectId}).Decode(&secret)
+    if err != nil {
+        return nil, err
+    }
+
+		if secret.IsOneTimeUse {
+			// Delete the secret after it has been accessed
+			_, err = collection.DeleteOne(context.TODO(), bson.M{"_id": objectId})
+			if err != nil {
+				return nil, err
+			}
+		}
 
     return &secret, nil
 }
