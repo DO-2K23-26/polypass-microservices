@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"sharing/dto"
 	"sharing/models"
 	"sharing/repositories"
@@ -49,6 +50,10 @@ func (s *secretService) GetSecret(id string) (*dto.GetSecretResponse, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if secret == nil {
+		return nil, fmt.Errorf("Secret not found")
 	}
 
 	secretResponse := dto.GetSecretResponse{
