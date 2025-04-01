@@ -34,7 +34,7 @@ We will also need to know in which folder is a user in order to not send data ab
 
 - user_folder
 
-Note: Topics name could change but those describe good enough to be understandable for everyone.
+Note: Topics name could change but those described are good enough to be understandable for everyone.
 
 ## Examples
 

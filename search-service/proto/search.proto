@@ -1,15 +1,15 @@
 syntax = "proto3";
 
 package search;
-option go_package = "github.com/DO-2K23-26/polypass-microservices/search-service/proto/search";
+option go_package = "search/api";
 
 service SearchService {
   // Search for folders
   rpc SearchFolders(SearchFoldersRequest) returns (SearchFoldersResponse);
-  
+
   // Search for tags
   rpc SearchTags(SearchTagsRequest) returns (SearchTagsResponse);
-  
+
   // Search for credentials
   rpc SearchCredentials(SearchCredentialsRequest) returns (SearchCredentialsResponse);
   }
