@@ -36,6 +36,20 @@ We will also need to know in which folder is a user in order to not send data ab
 
 Note: Topics name could change but those described are good enough to be understandable for everyone.
 
+## Utils
+
+### Generate protos file
+
+Export the go path:
+```sh
+export PATH="$PATH:$(go env GOPATH)/bin"
+```
+
+Generate the proto files:
+```sh
+protoc --go_out=./gen  --go-grpc_out=./gen ./proto/search.proto
+```
+
 ## Examples
 
 
