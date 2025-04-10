@@ -15,5 +15,5 @@ func main() {
 	if err != nil {
 		config.HandleError(err)
 	}
-	print(conf)
+	println(conf)
 }
