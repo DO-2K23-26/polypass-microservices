@@ -1,6 +1,6 @@
 package credential
 
-type Repository interface {
+type CredentialRepository interface {
 	CreateCredential(query CreateCredentialQuery) (*CreateCredentialResult, error)
 	UpdateCredential(query UpdateCredentialQuery) (*UpdateCredentialResult, error)
 	DeleteCredential(query DeleteCredentialQuery) error
