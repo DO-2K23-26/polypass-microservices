@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/DO-2K23-26/polypass-microservices/search-service/app"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/config"
 )
@@ -12,7 +15,13 @@ func main() {
 	}
 	app, err := app.NewApp(*conf)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Failed to initialize the application: %v\n", err)
+		os.Exit(1)
 	}
-	app.Start()
+
+	err = app.Start()
+	if err != nil {
+		fmt.Printf("Failed to start the application: %v\n", err)
+		os.Exit(1)
+	}
 }
