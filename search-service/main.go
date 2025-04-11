@@ -1,19 +1,27 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
+	"github.com/DO-2K23-26/polypass-microservices/search-service/app"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/config"
 )
 
-// @title Optique application TO CHANGE
-// @version 1.0
-// @description This is a sample application
-// @contact.name Courtcircuits
-// @contact.url https://github.com/Courtcircuits
-// @contact.email tristan-mihai.radulescu@etu.umontpellier.fr
 func main() {
 	conf, err := config.LoadConfig()
 	if err != nil {
 		config.HandleError(err)
 	}
-	println(conf)
+	app, err := app.NewApp(*conf)
+	if err != nil {
+		fmt.Printf("Failed to initialize the application: %v\n", err)
+		os.Exit(1)
+	}
+
+	err = app.Start()
+	if err != nil {
+		fmt.Printf("Failed to start the application: %v\n", err)
+		os.Exit(1)
+	}
 }

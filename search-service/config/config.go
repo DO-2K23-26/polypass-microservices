@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	// Bootstrap is a flag to indicate if the application should start in bootstrap mode, meaning that the cycle should setup repositories e.g. for migrations or seeding
-	Bootstrap bool `json:"bootstrap"`
+	Port       int    `json:"port"`
+	EsHost     string `json:"es_host"`
+	EsPassword string `json:"es_password"`
 }
 
 func LoadConfig() (*Config, error) {
