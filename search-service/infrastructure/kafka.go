@@ -1,6 +1,8 @@
 package infrastructure
 
 import (
+	"fmt"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
@@ -9,6 +11,7 @@ type KafkaAdapter struct {
 	clientId string
 	producer *kafka.Producer
 	consumer *kafka.Consumer
+	admin    *kafka.AdminClient
 }
 
 func NewKafkaAdapter(host string, clientId string) (*KafkaAdapter, error) {
@@ -28,11 +31,16 @@ func NewKafkaAdapter(host string, clientId string) (*KafkaAdapter, error) {
 	if err != nil {
 		return nil, err
 	}
+	admin, err := kafka.NewAdminClient(config)
+	if err != nil {
+		return nil, err
+	}
 	return &KafkaAdapter{
 		host:     host,
 		clientId: clientId,
 		producer: producer,
 		consumer: consumer,
+		admin:    admin,
 	}, nil
 }
 
@@ -45,7 +53,6 @@ func (k *KafkaAdapter) Produce(topic string, message []byte) error {
 	if err != nil {
 		return err
 	}
-
 	e := <-deliveryChan
 	msg := e.(*kafka.Message)
 
@@ -86,4 +93,14 @@ func (k *KafkaAdapter) Consume(topic string, handleMessage func(*kafka.Message) 
 			handleError(err)
 		}
 	}
+}
+
+func (k *KafkaAdapter) HealthCheck() error {
+	// Use the AdminClient to check the status of the brokers
+	_, err := k.admin.GetMetadata(nil, true, 5000)
+	if err != nil {
+		fmt.Println("Error checking Kafka health:", err)
+		return err
+	}
+	return nil
 }

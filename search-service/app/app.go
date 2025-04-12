@@ -7,21 +7,17 @@ import (
 )
 
 type App struct {
-	Config   config.Config
-	EsClient *infrastructure.ElasticAdapter
-	// UserRepository        userRepo.UserRepository
-	// TagRepository         tagsRepo.TagRepository
-	// FolderRepository      folderRepo.FolderRepository
-	// CredentialsRepository credentialRepo.CredentialRepository
-	// UserService           userService.UserService
-	// TagService            tagsService.TagService
-	// FolderService         folderService.FolderService
-	// CredentialsService    credentialService.CredentialService
+	Config     config.Config
 	GrpcServer *grpc.Server
 }
 
 func NewApp(Config config.Config) (*App, error) {
-	EsClient, err := infrastructure.NewElasticAdapter(Config.EsHost, Config.EsPassword)
+	_, err := infrastructure.NewElasticAdapter(Config.EsHost, Config.EsPassword)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = infrastructure.NewKafkaAdapter(Config.KafkaHost, Config.ClientId)
 	if err != nil {
 		return nil, err
 	}
@@ -32,13 +28,10 @@ func NewApp(Config config.Config) (*App, error) {
 	}
 
 	return &App{
-		Config, EsClient, GrpcServer,
+		Config, GrpcServer,
 	}, nil
 }
-
 
 func (app *App) Start() error {
 	return app.GrpcServer.Start()
 }
-
-
