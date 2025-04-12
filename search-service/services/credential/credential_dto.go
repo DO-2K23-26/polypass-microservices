@@ -102,7 +102,6 @@ func ConvertToCredentialResponse(credential types.Credential) CredentialResponse
 	return CredentialResponse{
 		ID:       credential.ID,
 		Title:    credential.Title,
-		FolderID: credential.FolderId,
 		Tags:     ConvertToTagResponses(credential.Tags),
 		Folder:   ConvertToFolderResponse(credential.Folder),
 	}
