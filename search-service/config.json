@@ -1,3 +1,7 @@
 {
-  "bootstrap": false
+  "port": 8080,
+  "esHost": "http://localhost:9200",
+  "esPassword": "search-password",
+  "kafkaHost": "0.0.0.0:9092",
+  "clientId": "search-service"
 }

@@ -2,7 +2,10 @@ module github.com/DO-2K23-26/polypass-microservices/search-service
 
 go 1.24.1
 
-require github.com/spf13/viper v1.20.1
+require (
+	github.com/confluentinc/confluent-kafka-go v1.9.2
+	github.com/spf13/viper v1.20.1
+)
 
 require (
 	github.com/elastic/elastic-transport-go/v8 v8.0.0-20211216131617-bbee439d559c // indirect
@@ -26,6 +29,6 @@ require (
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/grpc v1.71.1
-	google.golang.org/protobuf v1.36.6 // indirect
+	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

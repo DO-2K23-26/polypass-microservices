@@ -1,5 +1,17 @@
 # Search service
 
+## Launch the application
+
+Start the services:
+```sh
+docker compose up -d
+```
+
+Launch the application: 
+```sh
+go run main.go
+```
+
 ## Data aggregation
 
 First of all, the search service of polypass will need to listen to events from

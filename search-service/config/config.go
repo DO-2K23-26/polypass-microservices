@@ -7,14 +7,17 @@ import (
 )
 
 type Config struct {
+	// The port on which the service will listen for incoming requests.
 	Port       int    `json:"port"`
-	EsHost     string `json:"es_host"`
-	EsPassword string `json:"es_password"`
+	EsHost     string `json:"esHost"`
+	EsPassword string `json:"esPassword"`
+	KafkaHost  string `json:"kafkaHost"`
+	ClientId   string `json:"clientId"`
 }
 
 func LoadConfig() (*Config, error) {
 	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath("./")
 	viper.SetConfigType("json")
 	viper.AutomaticEnv()
 
@@ -26,7 +29,6 @@ func LoadConfig() (*Config, error) {
 	if err := viper.Unmarshal(&config); err != nil {
 		return nil, err
 	}
-
 	return &config, nil
 }
 
