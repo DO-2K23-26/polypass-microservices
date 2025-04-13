@@ -10,6 +10,7 @@ type Config struct {
 	// The port on which the service will listen for incoming requests.
 	Port       int    `json:"port"`
 	EsHost     string `json:"esHost"`
+	EsUsername string `json:"esUsername"`
 	EsPassword string `json:"esPassword"`
 	KafkaHost  string `json:"kafkaHost"`
 	ClientId   string `json:"clientId"`

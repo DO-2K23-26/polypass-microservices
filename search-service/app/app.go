@@ -13,7 +13,7 @@ type App struct {
 }
 
 func NewApp(Config config.Config) (*App, error) {
-	esClient, err := infrastructure.NewElasticAdapter(Config.EsHost, Config.EsPassword)
+	esClient, err := infrastructure.NewElasticAdapter(Config.EsHost, Config.EsUsername, Config.EsPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +34,7 @@ func NewApp(Config config.Config) (*App, error) {
 }
 
 func (app *App) Init() error {
+	app.esClient.Ping()
 	app.esClient.CreateIndexes()
 	return nil
 }

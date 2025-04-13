@@ -2,10 +2,27 @@
 
 ## Launch the application
 
-Start the services:
+## Host setup
+
+By default, the stack exposes the following ports:
+
+* 5044: Logstash Beats input
+* 50000: Logstash TCP input
+* 9600: Logstash monitoring API
+* 9200: Elasticsearch HTTP
+* 9300: Elasticsearch TCP transport
+* 5601: Kibana
+
+## Bringing up the stack
+
 ```sh
-docker compose up -d
+docker -f ./docker-elk/docker-compose.yml compose up setup
 ```
+
+If everything went well and the setup completed without error, start the other stack components:
+
+```sh
+docker -f ./docker-elk/docker-compose.yml compose up```
 
 Launch the application: 
 ```sh

@@ -15,8 +15,8 @@ type ElasticAdapter struct {
 	Client *elasticsearch.TypedClient
 }
 
-func NewElasticAdapter(host string, password string) (*ElasticAdapter, error) {
-	esConfig := elasticsearch.Config{Addresses: []string{host}, Password: password}
+func NewElasticAdapter(host string, username, password string) (*ElasticAdapter, error) {
+	esConfig := elasticsearch.Config{Addresses: []string{host}, Username: username, Password: password}
 	Client, err := elasticsearch.NewTypedClient(esConfig)
 	if err != nil {
 		return nil, err
@@ -31,6 +31,7 @@ func NewElasticAdapter(host string, password string) (*ElasticAdapter, error) {
 func (e *ElasticAdapter) Ping() bool {
 	_, err := e.Client.Ping().Do(context.Background())
 	if err != nil {
+		log.Println("Elastic health problem:",err)
 		return false
 	}
 	return true
@@ -71,6 +72,7 @@ func (e *ElasticAdapter) CreateIndexes() error {
 }
 
 func (e *ElasticAdapter) createIndexIfNotExists(indexName string, mapping map[string]types.Property) error {
+
 	res, err := e.Client.Indices.Exists(indexName).Do(context.Background())
 	if err != nil {
 		return err
@@ -83,8 +85,10 @@ func (e *ElasticAdapter) createIndexIfNotExists(indexName string, mapping map[st
 			return err
 		}
 		log.Println("Index", indexName, "was created")
-	} else {
+	} else if res.StatusCode == 200 {
 		log.Println("Index", indexName, "already exists")
+	} else {
+		log.Println("Index", indexName, "status code:", res.StatusCode)
 	}
 	return nil
 }
