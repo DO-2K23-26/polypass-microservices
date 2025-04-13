@@ -22,7 +22,8 @@ docker -f ./docker-elk/docker-compose.yml compose up setup
 If everything went well and the setup completed without error, start the other stack components:
 
 ```sh
-docker -f ./docker-elk/docker-compose.yml compose up```
+docker -f ./docker-elk/docker-compose.yml compose up
+```
 
 Launch the application: 
 ```sh

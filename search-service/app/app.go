@@ -2,7 +2,7 @@ package app
 
 import (
 	"github.com/DO-2K23-26/polypass-microservices/search-service/config"
-	"github.com/DO-2K23-26/polypass-microservices/search-service/grpc"
+	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/grpc"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/infrastructure"
 )
 

@@ -8,6 +8,8 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/search-service/gen/search/api"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/credential"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/folder"
+	grpcController "github.com/DO-2K23-26/polypass-microservices/search-service/controller/grpc"
+
 	tag "github.com/DO-2K23-26/polypass-microservices/search-service/services/tags"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -36,7 +38,7 @@ func NewServer(
 	grpcServer := grpc.NewServer()
 
 	// Create the search service implementation
-	searchService := NewSearchServiceServer(
+	searchService := grpcController.NewSearchController(
 		credentialService,
 		folderService,
 		tagService,
