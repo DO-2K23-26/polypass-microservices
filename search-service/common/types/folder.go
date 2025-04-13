@@ -9,7 +9,7 @@ type Folder struct {
 
 var EsFolder = map[string]types.Property{
 	"id":   types.NewKeywordProperty(),
-	"name": types.NewTextProperty(),
+	"name": types.NewSearchAsYouTypeProperty(),
 }
 
 var FolderIndex = "folders"

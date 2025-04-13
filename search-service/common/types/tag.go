@@ -11,7 +11,7 @@ type Tag struct {
 
 var EsTag = map[string]types.Property{
 	"id":        types.NewKeywordProperty(),
-	"name":      types.NewTextProperty(),
+	"name":      types.NewSearchAsYouTypeProperty(),
 	"folder_id": types.NewKeywordProperty(),
 }
 
