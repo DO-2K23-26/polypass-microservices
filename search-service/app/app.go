@@ -8,11 +8,12 @@ import (
 
 type App struct {
 	Config     config.Config
+	esClient   *infrastructure.ElasticAdapter
 	GrpcServer *grpc.Server
 }
 
 func NewApp(Config config.Config) (*App, error) {
-	_, err := infrastructure.NewElasticAdapter(Config.EsHost, Config.EsPassword)
+	esClient, err := infrastructure.NewElasticAdapter(Config.EsHost, Config.EsUsername, Config.EsPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +29,14 @@ func NewApp(Config config.Config) (*App, error) {
 	}
 
 	return &App{
-		Config, GrpcServer,
+		Config, esClient, GrpcServer,
 	}, nil
+}
+
+func (app *App) Init() error {
+	app.esClient.Ping()
+	app.esClient.CreateIndexes()
+	return nil
 }
 
 func (app *App) Start() error {

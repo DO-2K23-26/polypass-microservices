@@ -15,10 +15,14 @@ func main() {
 	}
 	app, err := app.NewApp(*conf)
 	if err != nil {
+		fmt.Printf("Failed to create the application: %v\n", err)
+		os.Exit(1)
+	}
+	err = app.Init()
+	if err != nil {
 		fmt.Printf("Failed to initialize the application: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("App initialized")
 	err = app.Start()
 	if err != nil {
 		fmt.Printf("Failed to start the application: %v\n", err)

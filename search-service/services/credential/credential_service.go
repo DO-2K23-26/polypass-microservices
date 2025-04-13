@@ -52,7 +52,6 @@ func (s *CredentialService) CreateCredential(req CreateCredentialRequest) (*Cred
 	return &CredentialResponse{
 		ID:       result.Credential.ID,
 		Title:    result.Credential.Title,
-		FolderID: result.Credential.FolderId,
 		Tags:     ConvertToTagResponses(result.Credential.Tags),
 		Folder:   ConvertToFolderResponse(result.Credential.Folder),
 	}, nil
