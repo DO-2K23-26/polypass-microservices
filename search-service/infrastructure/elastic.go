@@ -28,7 +28,7 @@ func NewElasticAdapter(host string, username, password string) (*ElasticAdapter,
 
 // Ping checks the connection to the Elasticsearch server.
 // False = failed connection , True = successful connection
-func (e *ElasticAdapter) Ping() bool {
+func (e *ElasticAdapter) CheckHealth() bool {
 	_, err := e.Client.Ping().Do(context.Background())
 	if err != nil {
 		log.Println("Elastic health problem:",err)

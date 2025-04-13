@@ -34,7 +34,6 @@ func NewApp(Config config.Config) (*App, error) {
 }
 
 func (app *App) Init() error {
-	app.esClient.Ping()
 	app.esClient.CreateIndexes()
 	return nil
 }

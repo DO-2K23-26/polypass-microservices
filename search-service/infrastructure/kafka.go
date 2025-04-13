@@ -95,12 +95,12 @@ func (k *KafkaAdapter) Consume(topic string, handleMessage func(*kafka.Message) 
 	}
 }
 
-func (k *KafkaAdapter) HealthCheck() error {
+func (k *KafkaAdapter) CheckHealth() bool {
 	// Use the AdminClient to check the status of the brokers
 	_, err := k.admin.GetMetadata(nil, true, 5000)
 	if err != nil {
 		fmt.Println("Error checking Kafka health:", err)
-		return err
+		return false
 	}
-	return nil
+	return true
 }
