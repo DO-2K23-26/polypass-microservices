@@ -8,7 +8,8 @@ import (
 
 type Config struct {
 	// The port on which the service will listen for incoming requests.
-	Port       int    `json:"port"`
+	GrpcPort   string `json:"grpcPort"`
+	HttpPort   string `json:"httpPort"`
 	EsHost     string `json:"esHost"`
 	EsUsername string `json:"esUsername"`
 	EsPassword string `json:"esPassword"`

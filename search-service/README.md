@@ -15,18 +15,25 @@ By default, the stack exposes the following ports:
 
 ## Bringing up the stack
 
+Go in the docker-elk directory
 ```sh
-docker -f ./docker-elk/docker-compose.yml compose up setup
+cd docker-elk
+```
+
+The first time you launch the stack, you will need to run the setup script:
+```sh
+docker compose up setup
 ```
 
 If everything went well and the setup completed without error, start the other stack components:
 
 ```sh
-docker -f ./docker-elk/docker-compose.yml compose up
+docker compose up -d
 ```
 
-Launch the application: 
+Launch the search service:
 ```sh
+cd ..
 go run main.go
 ```
 

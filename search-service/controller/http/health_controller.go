@@ -7,10 +7,10 @@ import (
 )
 
 type HealthController struct {
-    HealthService health.HealthService
+    HealthService *health.HealthService
 }
 
-func NewHealthController(healthService health.HealthService) *HealthController {
+func NewHealthController(healthService *health.HealthService) *HealthController {
     return &HealthController{
         HealthService: healthService,
     }

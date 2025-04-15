@@ -5,11 +5,11 @@ import (
 )
 
 type HealthService struct {
-	esClient    infrastructure.ElasticAdapter
-	kafkaClient infrastructure.KafkaAdapter
+	esClient    *infrastructure.ElasticAdapter
+	kafkaClient *infrastructure.KafkaAdapter
 }
 
-func NewHealthService(esClient infrastructure.ElasticAdapter, kafkaClient infrastructure.KafkaAdapter) *HealthService {
+func NewHealthService(esClient *infrastructure.ElasticAdapter, kafkaClient *infrastructure.KafkaAdapter) *HealthService {
 	return &HealthService{
 		esClient:    esClient,
 		kafkaClient: kafkaClient,
