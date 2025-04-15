@@ -11,7 +11,7 @@ import (
 )
 
 // SearchServiceServer implements the gRPC search service
-type SearchServiceServer struct {
+type SearchController struct {
 	api.UnimplementedSearchServiceServer
 	credentialService *credential.CredentialService
 	folderService     *folderService.FolderService
@@ -19,12 +19,12 @@ type SearchServiceServer struct {
 }
 
 // NewSearchServiceServer creates a new search service server
-func NewSearchServiceServer(
+func NewSearchController(
 	credentialService *credential.CredentialService,
 	folderService *folderService.FolderService,
 	tagService *tagService.TagService,
-) *SearchServiceServer {
-	return &SearchServiceServer{
+) *SearchController {
+	return &SearchController{
 		credentialService: credentialService,
 		folderService:     folderService,
 		tagService:        tagService,
@@ -32,7 +32,7 @@ func NewSearchServiceServer(
 }
 
 // SearchFolders searches for folders
-func (s *SearchServiceServer) SearchFolders(ctx context.Context, req *api.SearchFoldersRequest) (*api.SearchFoldersResponse, error) {
+func (s *SearchController) SearchFolders(ctx context.Context, req *api.SearchFoldersRequest) (*api.SearchFoldersResponse, error) {
 	// Validate request
 	if req.UserId == "" {
 		return nil, errors.New("user ID is required")
@@ -74,7 +74,7 @@ func (s *SearchServiceServer) SearchFolders(ctx context.Context, req *api.Search
 }
 
 // SearchTags searches for tags
-func (s *SearchServiceServer) SearchTags(ctx context.Context, req *api.SearchTagsRequest) (*api.SearchTagsResponse, error) {
+func (s *SearchController) SearchTags(ctx context.Context, req *api.SearchTagsRequest) (*api.SearchTagsResponse, error) {
 	// Validate request
 	if req.UserId == "" {
 		return nil, errors.New("user ID is required")
@@ -122,7 +122,7 @@ func (s *SearchServiceServer) SearchTags(ctx context.Context, req *api.SearchTag
 }
 
 // SearchCredentials searches for credentials
-func (s *SearchServiceServer) SearchCredentials(ctx context.Context, req *api.SearchCredentialsRequest) (*api.SearchCredentialsResponse, error) {
+func (s *SearchController) SearchCredentials(ctx context.Context, req *api.SearchCredentialsRequest) (*api.SearchCredentialsResponse, error) {
 	// Validate request
 	if req.UserId == "" {
 		return nil, errors.New("user ID is required")

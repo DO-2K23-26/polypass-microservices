@@ -5,9 +5,11 @@ import (
 	"log"
 	"net"
 
+	grpcController "github.com/DO-2K23-26/polypass-microservices/search-service/controller/grpc"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/gen/search/api"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/credential"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/folder"
+
 	tag "github.com/DO-2K23-26/polypass-microservices/search-service/services/tags"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -24,10 +26,10 @@ func NewServer(
 	credentialService *credential.CredentialService,
 	folderService *folder.FolderService,
 	tagService *tag.TagService,
-	port int,
+	port string,
 ) (*Server, error) {
 	// Create a listener on specified port
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		return nil, fmt.Errorf("failed to listen: %v", err)
 	}
@@ -36,7 +38,7 @@ func NewServer(
 	grpcServer := grpc.NewServer()
 
 	// Create the search service implementation
-	searchService := NewSearchServiceServer(
+	searchService := grpcController.NewSearchController(
 		credentialService,
 		folderService,
 		tagService,
