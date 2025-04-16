@@ -29,6 +29,11 @@ func NewApp(Config config.Config) (*App, error) {
 		return nil, err
 	}
 
+	_, err = infrastructure.NewGormAdapter(Config.PgHost, Config.PgUser, Config.PgPassword, Config.PgDBName, Config.PgPort)
+	if err != nil {
+		return nil, err
+	}
+
 	GrpcServer, err := grpc.NewServer(nil, nil, nil, Config.GrpcPort)
 	if err != nil {
 		return nil, err

@@ -5,5 +5,10 @@
   "esPassword": "changeme",
   "esUsername": "elastic",
   "kafkaHost": "0.0.0.0:9092",
-  "clientId": "search-service"
+  "clientId": "search-service",
+  "pgHost": "localhost",
+  "pgUser": "postgres",
+  "pgPassword": "postgres",
+  "pgDBName": "postgres",
+  "pgPort": "5432"
 }
