@@ -1,15 +1,21 @@
 package types
 
-import "github.com/elastic/go-elasticsearch/v8/typedapi/types"
+import (
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+)
 
 type Folder struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID       string   `json:"id"  gorm:"primaryKey"`
+	Name     string   `json:"name"`
+	ParentID *string  `json:"parent_id"`
+	Parent   *Folder  `gorm:"foreignKey:ParentID" json:"-"`
+	Children []Folder `gorm:"foreignKey:ParentID" json:"children"`
 }
 
 var EsFolder = map[string]types.Property{
-	"id":   types.NewKeywordProperty(),
-	"name": types.NewSearchAsYouTypeProperty(),
+	"id":        types.NewKeywordProperty(),
+	"name":      types.NewSearchAsYouTypeProperty(),
+	"parent_id": types.NewKeywordProperty(),
 }
 
 var FolderIndex = "folders"

@@ -103,6 +103,7 @@ services:
     depends_on:
       - elasticsearch
     restart: unless-stopped
+
   broker:
     image: apache/kafka:latest
     hostname: broker
@@ -125,6 +126,20 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_HOST: "localhost"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "postgres"
+      POSTGRES_PORT: "5432"
+    networks:
+      - elk
 
 networks:
   elk:

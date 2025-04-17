@@ -7,18 +7,20 @@ import (
 type HealthService struct {
 	esClient    *infrastructure.ElasticAdapter
 	kafkaClient *infrastructure.KafkaAdapter
+	gormClient  *infrastructure.GormAdapter
 }
 
-func NewHealthService(esClient *infrastructure.ElasticAdapter, kafkaClient *infrastructure.KafkaAdapter) *HealthService {
+func NewHealthService(esClient *infrastructure.ElasticAdapter, kafkaClient *infrastructure.KafkaAdapter, gormClient *infrastructure.GormAdapter) *HealthService {
 	return &HealthService{
 		esClient:    esClient,
 		kafkaClient: kafkaClient,
+		gormClient:  gormClient,
 	}
 }
 
 func (s *HealthService) CheckHealth() HealthResponse {
 	// The number of services to check
-	serviceNumber := 2
+	serviceNumber := 3
 	healthResponse := HealthResponse{}
 
 	results := make(chan struct {
@@ -50,6 +52,19 @@ func (s *HealthService) CheckHealth() HealthResponse {
 			service string
 			status  string
 		}{service: "Kafka", status: status}
+	}()
+
+	// Run Gorm health check in a goroutine
+	go func() {
+		gormHealth := s.gormClient.CheckHealth()
+		status := Failure
+		if gormHealth {
+			status = Ok
+		}
+		results <- struct {
+			service string
+			status  string
+		}{service: "Gorm", status: status}
 	}()
 
 	// Collect results
