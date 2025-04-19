@@ -9,6 +9,8 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/indices/create"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
+
 )
 
 type ElasticAdapter struct {
@@ -91,4 +93,19 @@ func (e *ElasticAdapter) createIndexIfNotExists(indexName string, mapping map[st
 		log.Println("Index", indexName, "status code:", res.StatusCode)
 	}
 	return nil
+}
+
+func (e *ElasticAdapter) Search(indexName string, query types.Query) {
+	req := search.NewRequest()
+	req.Query = &query
+	res, err := e.Client.Search().Index(indexName).Request(req).Do(context.Background())
+	if err != nil {
+		log.Println("Elastic search error:", err)
+		return
+	} else if res.StatusCode != 200 {
+		log.Println("Elastic search status code:", res.StatusCode)
+		return
+	}
+	log.Println("Elastic search result:", res)
+	return
 }
