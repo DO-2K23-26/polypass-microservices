@@ -4,27 +4,66 @@ import (
 	"context"
 	"errors"
 
-	"github.com/DO-2K23-26/polypass-microservices/search-service/gen/search/api"
-	"github.com/DO-2K23-26/polypass-microservices/search-service/services/credential"
+	// Search service imports
+	credentialService "github.com/DO-2K23-26/polypass-microservices/search-service/services/credential"
 	folderService "github.com/DO-2K23-26/polypass-microservices/search-service/services/folder"
 	tagService "github.com/DO-2K23-26/polypass-microservices/search-service/services/tags"
+
+	// Following below is the imported generated gRPC code based on the protobuf definitions (.proto file)
+	proto "github.com/DO-2K23-26/polypass-microservices/search-service/gen/search/api"
 )
 
-// SearchServiceServer implements the gRPC search service
-type SearchController struct {
-	api.UnimplementedSearchServiceServer
-	credentialService *credential.CredentialService
+/* This is the gRPC API for the search service.
+ * It defines an interface to search for folders, tags, and credentials.
+ * It handles converting the incoming and outgoing gRPC responses.
+ * Under the hood, it uses the respective services to perform the searches.
+ * Search logic is implemented in the respective services.
+ */
+
+/*
+ * Interfaces defined:
+ * - ISearchGrpcApi
+ *
+ * Structs defined:
+ * - SearchGrpcApi
+ *
+ * Functions implemented:
+ * - NewSearchGrpcApi
+ * - SearchFolders
+ * - SearchTags
+ * - SearchCredentials
+*/
+
+// SearchGrpcApi's interface
+type ISearchGrpcApi interface {
+	// API object constructor
+	NewSearchGrpcApi(
+		credentialService *credentialService.CredentialService,
+		folderService *folderService.FolderService,
+		tagService *tagService.TagService,
+	) *SearchGrpcApi
+
+	// Search endpoint handlers
+	SearchFolders(ctx context.Context, req *proto.SearchFoldersRequest) (*proto.SearchFoldersResponse, error)
+	SearchTags(ctx context.Context, req *proto.SearchTagsRequest) (*proto.SearchTagsResponse, error)
+	SearchCredentials(ctx context.Context, req *proto.SearchCredentialsRequest) (*proto.SearchCredentialsResponse, error)
+}
+
+// SearchGrpcApi implements the ISearchGrpcApi interface
+type SearchGrpcApi struct {
+	//api.UnimplementedSearchServiceServer
+	credentialService *credentialService.CredentialService
 	folderService     *folderService.FolderService
 	tagService        *tagService.TagService
 }
 
-// NewSearchServiceServer creates a new search service server
-func NewSearchController(
-	credentialService *credential.CredentialService,
+// SearchGrpcApi constructor
+func NewSearchGrpcApi(
+	credentialService *credentialService.CredentialService,
 	folderService *folderService.FolderService,
 	tagService *tagService.TagService,
-) *SearchController {
-	return &SearchController{
+) *SearchGrpcApi {
+	return &SearchGrpcApi{
 		credentialService: credentialService,
 		folderService:     folderService,
 		tagService:        tagService,
@@ -32,7 +71,7 @@ func NewSearchController(
 }
 
 // SearchFolders searches for folders
-func (s *SearchController) SearchFolders(ctx context.Context, req *api.SearchFoldersRequest) (*api.SearchFoldersResponse, error) {
+func (api *SearchGrpcApi) SearchFolders(ctx context.Context, req *proto.SearchFoldersRequest) (*proto.SearchFoldersResponse, error) {
 	// Validate request
 	if req.UserId == "" {
 		return nil, errors.New("user ID is required")
@@ -49,22 +88,22 @@ func (s *SearchController) SearchFolders(ctx context.Context, req *api.SearchFol
 	}
 
 	// Call service
-	result, err := s.folderService.SearchFolders(serviceReq)
+	result, err := api.folderService.SearchFolders(serviceReq)
 	if err != nil {
 		return nil, err
 	}
 
 	// Convert service response to gRPC response
-	response := &api.SearchFoldersResponse{
+	response := &proto.SearchFoldersResponse{
 		Total:  int32(result.Total),
 		Limit:  int32(result.Limit),
 		Offset: int32(result.Offset),
 	}
 
 	// Map folders
-	response.Folders = make([]*api.Folder, len(result.Folders))
+	response.Folders = make([]*proto.Folder, len(result.Folders))
 	for i, folder := range result.Folders {
-		response.Folders[i] = &api.Folder{
+		response.Folders[i] = &proto.Folder{
 			Id:   folder.ID,
 			Name: folder.Name,
 		}
@@ -74,7 +113,7 @@ func (s *SearchController) SearchFolders(ctx context.Context, req *api.SearchFol
 }
 
 // SearchTags searches for tags
-func (s *SearchController) SearchTags(ctx context.Context, req *api.SearchTagsRequest) (*api.SearchTagsResponse, error) {
+func (api *SearchGrpcApi) SearchTags(ctx context.Context, req *proto.SearchTagsRequest) (*proto.SearchTagsResponse, error) {
 	// Validate request
 	if req.UserId == "" {
 		return nil, errors.New("user ID is required")
@@ -97,22 +136,22 @@ func (s *SearchController) SearchTags(ctx context.Context, req *api.SearchTagsRe
 	}
 
 	// Call service
-	result, err := s.tagService.SearchTags(serviceReq)
+	result, err := api.tagService.SearchTags(serviceReq)
 	if err != nil {
 		return nil, err
 	}
 
 	// Convert service response to gRPC response
-	response := &api.SearchTagsResponse{
+	response := &proto.SearchTagsResponse{
 		Total:  int32(result.Total),
 		Limit:  int32(result.Limit),
 		Offset: int32(result.Offset),
 	}
 
 	// Map tags
-	response.Tags = make([]*api.Tag, len(result.Tags))
+	response.Tags = make([]*proto.Tag, len(result.Tags))
 	for i, tag := range result.Tags {
-		response.Tags[i] = &api.Tag{
+		response.Tags[i] = &proto.Tag{
 			Id:   tag.ID,
 			Name: tag.Name,
 		}
@@ -122,7 +161,7 @@ func (s *SearchController) SearchTags(ctx context.Context, req *api.SearchTagsRe
 }
 
 // SearchCredentials searches for credentials
-func (s *SearchController) SearchCredentials(ctx context.Context, req *api.SearchCredentialsRequest) (*api.SearchCredentialsResponse, error) {
+func (api *SearchGrpcApi) SearchCredentials(ctx context.Context, req *proto.SearchCredentialsRequest) (*proto.SearchCredentialsResponse, error) {
 	// Validate request
 	if req.UserId == "" {
 		return nil, errors.New("user ID is required")
@@ -153,7 +192,7 @@ func (s *SearchController) SearchCredentials(ctx context.Context, req *api.Searc
 		tagIDs = &tags
 	}
 
-	serviceReq := credential.SearchCredentialsRequest{
+	serviceReq := credentialService.SearchCredentialsRequest{
 		Title:      req.Title,
 		FolderID:   folderID,
 		FolderName: folderName,
@@ -165,23 +204,23 @@ func (s *SearchController) SearchCredentials(ctx context.Context, req *api.Searc
 	}
 
 	// Call service
-	result, err := s.credentialService.SearchCredentials(serviceReq)
+	result, err := api.credentialService.SearchCredentials(serviceReq)
 	if err != nil {
 		return nil, err
 	}
 
 	// Convert service response to gRPC response
-	response := &api.SearchCredentialsResponse{
+	response := &proto.SearchCredentialsResponse{
 		Total:  int32(result.Total),
 		Limit:  int32(result.Limit),
 		Offset: int32(result.Offset),
 	}
 
 	// Map credentials
-	response.Credentials = make([]*api.Credential, len(result.Credentials))
+	response.Credentials = make([]*proto.Credential, len(result.Credentials))
 	for i, cred := range result.Credentials {
 		// Create credential
-		credential := &api.Credential{
+		credential := &proto.Credential{
 			Id:       cred.ID,
 			Title:    cred.Title,
 			FolderId: cred.FolderID,
@@ -189,7 +228,7 @@ func (s *SearchController) SearchCredentials(ctx context.Context, req *api.Searc
 
 		// Add folder if present
 		if cred.Folder != nil {
-			credential.Folder = &api.Folder{
+			credential.Folder = &proto.Folder{
 				Id:   cred.Folder.ID,
 				Name: cred.Folder.Name,
 			}
@@ -197,9 +236,9 @@ func (s *SearchController) SearchCredentials(ctx context.Context, req *api.Searc
 
 		// Add tags if present
 		if len(cred.Tags) > 0 {
-			credential.Tags = make([]*api.Tag, len(cred.Tags))
+			credential.Tags = make([]*proto.Tag, len(cred.Tags))
 			for j, tag := range cred.Tags {
-				credential.Tags[j] = &api.Tag{
+				credential.Tags[j] = &proto.Tag{
 					Id:   tag.ID,
 					Name: tag.Name,
 				}

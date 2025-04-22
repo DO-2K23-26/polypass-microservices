@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 
-	grpcController "github.com/DO-2K23-26/polypass-microservices/search-service/controller/grpc"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/gen/search/api"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/credential"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/folder"
@@ -17,7 +16,7 @@ import (
 
 // Server represents the gRPC server
 type Server struct {
-	server   *grpc.Server
+	server   *api.Server
 	listener net.Listener
 }
 
@@ -44,7 +43,7 @@ func NewServer(
 		tagService,
 	)
 
-	api.RegisterSearchServiceServer(grpcServer, searchService)
+	grpc.RegisterSearchServiceServer(grpcServer, searchService)
 
 	// Register reflection service (useful for debugging with tools like grpcurl)
 	reflection.Register(grpcServer)
