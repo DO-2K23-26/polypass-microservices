@@ -1,6 +1,6 @@
 package tags
 
-type TagRepository interface {
+type ITagRepository interface {
 	Get(query GetTagQuery) (*GetTagResult, error)
 	Create(query CreateTagQuery) (*CreateTagResult, error)
 	Update(query UpdateTagQuery) (*UpdateTagResult, error)

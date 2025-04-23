@@ -1,6 +1,6 @@
 package folder
 
-type FolderRepository interface {
+type IFolderRepository interface {
 	CreateFolder(query CreateFolderQuery) (*CreateFolderResult, error)
 	GetFolder(query GetFolderQuery) (*GetFolderResult, error)
 	UpdateFolder(query UpdateFolderQuery) (*UpdateFolderResult, error)
