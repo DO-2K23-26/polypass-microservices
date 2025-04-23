@@ -17,11 +17,11 @@ var (
 )
 
 type FolderService struct {
-	folderRepo folder.FolderRepository
-	userRepo   user.UserRepository
+	folderRepo folder.IFolderRepository
+	userRepo   user.IUserRepository
 }
 
-func NewFolderService(folderRepo folder.FolderRepository, userRepo user.UserRepository) *FolderService {
+func NewFolderService(folderRepo folder.IFolderRepository, userRepo user.IUserRepository) *FolderService {
 	return &FolderService{
 		folderRepo: folderRepo,
 		userRepo:   userRepo,

@@ -16,11 +16,11 @@ var (
 )
 
 type TagService struct {
-	tagRepo  tags.TagRepository
-	userRepo user.UserRepository
+	tagRepo  tags.ITagRepository
+	userRepo user.IUserRepository
 }
 
-func NewTagService(tagRepo tags.TagRepository, userRepo user.UserRepository) *TagService {
+func NewTagService(tagRepo tags.ITagRepository, userRepo user.IUserRepository) *TagService {
 	return &TagService{
 		tagRepo:  tagRepo,
 		userRepo: userRepo,

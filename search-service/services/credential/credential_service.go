@@ -18,13 +18,13 @@ var (
 )
 
 type CredentialService struct {
-	credentialRepo credential.CredentialRepository
-	userRepo       user.UserRepository
+	credentialRepo credential.ICredentialRepository
+	userRepo       user.IUserRepository
 }
 
 func NewCredentialService(
-	credentialRepo credential.CredentialRepository,
-	userRepo user.UserRepository,
+	credentialRepo credential.ICredentialRepository,
+	userRepo user.IUserRepository,
 ) *CredentialService {
 	return &CredentialService{
 		credentialRepo: credentialRepo,
