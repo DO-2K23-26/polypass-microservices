@@ -6,8 +6,8 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/search-service/config"
 	httpController "github.com/DO-2K23-26/polypass-microservices/search-service/controller/http"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/infrastructure"
-	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/grpc"
-	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/http"
+	"github.com/DO-2K23-26/polypass-microservices/search-service/api/grpc"
+	"github.com/DO-2K23-26/polypass-microservices/search-service/api/http"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/health"
 
 	"sync"

@@ -36,17 +36,7 @@ import (
 
 // SearchGrpcApi's interface
 type ISearchGrpcApi interface {
-	// API object constructor
-	NewSearchGrpcApi(
-		credentialService *credentialService.CredentialService,
-		folderService *folderService.FolderService,
-		tagService *tagService.TagService,
-	) *SearchGrpcApi
-
-	// Search endpoint handlers
-	SearchFolders(ctx context.Context, req *proto.SearchFoldersRequest) (*proto.SearchFoldersResponse, error)
-	SearchTags(ctx context.Context, req *proto.SearchTagsRequest) (*proto.SearchTagsResponse, error)
-	SearchCredentials(ctx context.Context, req *proto.SearchCredentialsRequest) (*proto.SearchCredentialsResponse, error)
+	proto.SearchServiceClient
 }
 
 // SearchGrpcApi implements the ISearchGrpcApi interface

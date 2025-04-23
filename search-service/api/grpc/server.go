@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/DO-2K23-26/polypass-microservices/search-service/gen/search/api"
+	grpc "github.com/DO-2K23-26/polypass-microservices/search-service/gen/search/api"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/credential"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/folder"
 
@@ -16,8 +16,8 @@ import (
 
 // Server represents the gRPC server
 type Server struct {
-	server   *api.Server
 	listener net.Listener
+	api    grpcApi.ISearchGrpcApi
 }
 
 // NewServer creates a new gRPC server with the necessary services
@@ -36,8 +36,8 @@ func NewServer(
 	// Create a gRPC server
 	grpcServer := grpc.NewServer()
 
-	// Create the search service implementation
-	searchService := grpcController.NewSearchController(
+	// Instantiate the gRPC API object with the services objects
+	searchService := grpcApi.NewSearchGrpcApi(
 		credentialService,
 		folderService,
 		tagService,
