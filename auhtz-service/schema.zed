@@ -1,0 +1,34 @@
+definition user {}
+
+definition folder {
+  relation viewer: user
+  relation admin: user
+  relation parent: folder
+
+  permission read = viewer + admin
+  permission update = admin
+  permission create_subfolder = admin
+
+  // Inherit permissions from parent
+  permission inherited_viewer = parent->read
+  permission inherited_admin = parent->admin
+  permission inherited_update = parent->update
+
+  permission can_read = read + inherited_viewer
+  permission can_update = update + inherited_update
+  permission can_create_subfolder = create_subfolder + inherited_admin
+}
+
+definition credential {
+  relation parent: folder
+
+  permission read = parent->can_read
+  permission update = parent->can_update
+}
+
+definition tag {
+  relation parent: folder
+
+  permission read = parent->can_read
+  permission update = parent->can_update
+}
