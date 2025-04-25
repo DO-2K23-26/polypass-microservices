@@ -4,7 +4,7 @@
 ## Purpose
 
 This service will hold the logic to do data aggregation form other services.
-We will use [Permify](https://permify.co/) to manage authorization.
+We will use [Authzed](https://authzed.com/) to manage authorization.
 
 ## Main feature
 
