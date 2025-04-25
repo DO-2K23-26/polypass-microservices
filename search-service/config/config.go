@@ -15,6 +15,11 @@ type Config struct {
 	EsPassword string `json:"esPassword"`
 	KafkaHost  string `json:"kafkaHost"`
 	ClientId   string `json:"clientId"`
+	PgHost     string `json:"pgHost"`
+	PgUser     string `json:"pgUser"`
+	PgPassword string `json:"pgPassword"`
+	PgDBName   string `json:"pgDBName"`
+	PgPort     string `json:"pgPort"`
 }
 
 func LoadConfig() (*Config, error) {
