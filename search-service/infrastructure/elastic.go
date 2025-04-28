@@ -72,11 +72,11 @@ func (e *ElasticAdapter) CreateIndexes() error {
 
 func (e *ElasticAdapter) createIndexIfNotExists(indexName string, mapping map[string]types.Property) error {
 
-	res, err := e.Client.Indices.Exists(indexName).Do(context.Background())
+	exists, err := e.Client.Indices.Exists(indexName).Do(context.Background())
 	if err != nil {
 		return err
 	}
-	if res.StatusCode == 404 {
+	if !exists {
 		_, err = e.Client.Indices.Create(indexName).
 			Request(&create.Request{Mappings: &types.TypeMapping{Properties: mapping}}).
 			Do(context.Background())
@@ -84,10 +84,8 @@ func (e *ElasticAdapter) createIndexIfNotExists(indexName string, mapping map[st
 			return err
 		}
 		log.Println("Index", indexName, "was created")
-	} else if res.StatusCode == 200 {
-		log.Println("Index", indexName, "already exists")
 	} else {
-		log.Println("Index", indexName, "status code:", res.StatusCode)
+		log.Println("Index", indexName, "already exists")
 	}
 	return nil
 }
