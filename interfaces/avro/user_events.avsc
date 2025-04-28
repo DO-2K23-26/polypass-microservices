@@ -1,0 +1,31 @@
+{
+  "namespace": "com.polypass.events.user",
+  "type": "record",
+  "name": "UserFolderEvent",
+  "fields": [
+    {
+      "name": "eventType",
+      "type": {
+        "type": "enum",
+        "name": "UserFolderEventType",
+        "symbols": ["USER_FOLDER_ACCESS_GRANTED", "USER_FOLDER_ACCESS_REVOKED"]
+      }
+    },
+    {
+      "name": "userId",
+      "type": "string"
+    },
+    {
+      "name": "folderId",
+      "type": "string"
+    },
+    {
+      "name": "organizationId",
+      "type": "string"
+    },
+    {
+      "name": "timestamp",
+      "type": "long"
+    }
+  ]
+} 
