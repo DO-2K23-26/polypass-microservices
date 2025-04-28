@@ -24,24 +24,7 @@ func main() {
 	if err != nil {
 		fmt.Printf("Failed to initialize the application: %v\n", err)
 		os.Exit(1)
-	}
-	_ , err = app.UserRepository.Create(user.CreateUserQuery{User: types.User{
-		ID:      "test",
-		Folders: []types.Folder{},
-	}})
-	
-	if err != nil {
-		fmt.Printf("Failed to create user: %v\n", err)
-		os.Exit(1)
-	}
-	
-	_, err = app.UserRepository.Get(user.GetUserQuery{ID: "test"})
-	
-	if err != nil {
-		fmt.Printf("Failed to get user: %v\n", err)
-		os.Exit(1)
-	}
-	
+	}	
 	err = app.Start()
 	if err != nil {
 		fmt.Printf("Failed to start the application: %v\n", err)
