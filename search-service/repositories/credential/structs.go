@@ -3,23 +3,25 @@ package credential
 import "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 
 type CreateCredentialQuery struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	FolderId string `json:"folder_id"`
+	ID       string      `json:"id"`
+	Title    string      `json:"title"`
+	Tags     []types.Tag `json:"tags"`
+	FolderId string      `json:"folder_id"`
 }
 
 type CreateCredentialResult struct {
-	Credential types.Credential `json:"credential"`
+	Credential RepoCredential `json:"credential"`
 }
 
 type UpdateCredentialQuery struct {
-	ID       *string `json:"id"`
-	Title    *string `json:"title"`
-	FolderId *string `json:"folder_id"`
+	ID       *string     `json:"id"`
+	Title    *string     `json:"title"`
+	Tags     []types.Tag `json:"tags"`
+	FolderId *string     `json:"folder_id"`
 }
 
 type UpdateCredentialResult struct {
-	Credential types.Credential `json:"credential"`
+	Credential RepoCredential `json:"credential"`
 }
 
 type DeleteCredentialQuery struct {
@@ -31,7 +33,7 @@ type GetCredentialQuery struct {
 }
 
 type GetCredentialResult struct {
-	Credential types.Credential `json:"credential"`
+	Credential RepoCredential `json:"credential"`
 }
 
 type SearchCredentialQuery struct {
@@ -47,26 +49,26 @@ type SearchCredentialQuery struct {
 }
 
 type SearchCredentialResult struct {
-	Credentials []types.Credential `json:"credentials"`
-	Total       int                `json:"total"` // The total is the total number of credentials that match the query
-	Limit       int                `json:"limit"`
-	Offset      int                `json:"offset"`
+	Credentials []RepoCredential `json:"credentials"`
+	Total       int              `json:"total"` // The total is the total number of credentials that match the query
+	Limit       int              `json:"limit"`
+	Offset      int              `json:"offset"`
 }
 
 type AddTagsToCredentialQuery struct {
-	ID    string   `json:"id"`
+	ID     string   `json:"id"`
 	TagIds []string `json:"tag_ids"`
 }
 
 type AddTagsToCredentialResult struct {
-	Credential types.Credential `json:"credential"`
+	Credential RepoCredential `json:"credential"`
 }
 
 type RemoveTagsFromCredentialQuery struct {
-	ID    string   `json:"id"`
+	ID     string   `json:"id"`
 	TagIds []string `json:"tag_ids"`
 }
 
 type RemoveTagsFromCredentialResult struct {
-	Credential types.Credential `json:"credential"`
+	Credential RepoCredential `json:"credential"`
 }
