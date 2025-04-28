@@ -125,9 +125,14 @@ func (s *CredentialService) SearchCredentials(req SearchCredentialsRequest) (*Se
 		return nil, ErrUserNotFound
 	}
 
+	folderIds := make([]string, len(userResult.User.Folders))
+	
+	for _, folder := range userResult.User.Folders {
+		folderIds = append(folderIds, folder.ID)
+	}
 	// If a specific folder ID is requested, verify the user has access to it
 	if req.FolderID != nil && *req.FolderID != "" {
-		hasAccess := slices.Contains(userResult.User.FolderIds, *req.FolderID)
+		hasAccess := slices.Contains(folderIds, *req.FolderID)
 		if !hasAccess {
 			return nil, ErrUserNotAuthorized
 		}
@@ -153,7 +158,7 @@ func (s *CredentialService) SearchCredentials(req SearchCredentialsRequest) (*Se
 		TagName:      req.TagName,
 		Limit:        &limit,
 		Offset:       &offset,
-		FoldersScope: &userResult.User.FolderIds,
+		FoldersScope: &folderIds,
 	})
 	if err != nil {
 		return nil, err

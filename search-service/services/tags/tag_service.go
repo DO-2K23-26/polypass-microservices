@@ -6,7 +6,6 @@ import (
 
 	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/tags"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
-	"slices"
 )
 
 var (
@@ -118,7 +117,13 @@ func (s *TagService) SearchTags(req SearchTagsRequest) (*SearchTagsResponse, err
 
 	// If a specific folder ID is requested, verify the user has access to it
 	if req.FolderID != nil && *req.FolderID != "" {
-		hasAccess := slices.Contains(userResult.User.FolderIds, *req.FolderID)
+		hasAccess := false
+		for _, folder := range userResult.User.Folders {
+			if folder.ID == *req.FolderID {
+				hasAccess = true
+				break
+			}
+		}
 		if !hasAccess {
 			return nil, ErrUserNotAuthorized
 		}
@@ -134,14 +139,19 @@ func (s *TagService) SearchTags(req SearchTagsRequest) (*SearchTagsResponse, err
 	if req.Offset != nil && *req.Offset >= 0 {
 		offset = *req.Offset
 	}
-
+	folderIds := make([]string, len(userResult.User.Folders))
+	
+	for _, folder := range userResult.User.Folders {
+		folderIds = append(folderIds, folder.ID)
+	}
+	
 	// Perform the search
 	searchResult, err := s.tagRepo.SearchTags(tags.SearchTagQuery{
 		Name:         req.Name,
 		FolderId:     req.FolderID,
 		Limit:        &limit,
 		Offset:       &offset,
-		FoldersScope: &userResult.User.FolderIds,
+		FoldersScope: &folderIds,
 	})
 	if err != nil {
 		return nil, err

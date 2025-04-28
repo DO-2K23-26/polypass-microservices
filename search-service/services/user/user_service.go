@@ -54,28 +54,6 @@ func (s *UserService) CreateUser(req *CreateUserRequest) (*UserResponse, error) 
 	return toCreateUserResponse(result), nil
 }
 
-// UpdateUser updates a user with a new folder
-func (s *UserService) UpdateUser(req *UpdateUserRequest) (*UserResponse, error) {
-	if req == nil {
-		return nil, errors.New("request cannot be nil")
-	}
-
-	if req.ID == "" {
-		return nil, errors.New("user ID is required")
-	}
-
-	if req.NewFolder == "" {
-		return nil, errors.New("new folder is required")
-	}
-
-	query := toUpdateUserQuery(req)
-	result, err := s.userRepository.Update(query)
-	if err != nil {
-		return nil, err
-	}
-
-	return toUpdateUserResponse(result), nil
-}
 
 // DeleteUser deletes a user by ID
 func (s *UserService) DeleteUser(req *DeleteUserRequest) error {

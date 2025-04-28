@@ -48,7 +48,6 @@ func (e *ElasticAdapter) CreateIndexes() error {
 		{commonTypes.FolderIndex, commonTypes.EsFolder},
 		{commonTypes.TagIndex, commonTypes.EsTag},
 		{commonTypes.CredentialIndex, commonTypes.EsCredential},
-		{commonTypes.UserIndex, commonTypes.EsUser},
 	}
 
 	for _, index := range indexes {
@@ -92,3 +91,4 @@ func (e *ElasticAdapter) createIndexIfNotExists(indexName string, mapping map[st
 	}
 	return nil
 }
+

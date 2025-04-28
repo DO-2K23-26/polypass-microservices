@@ -9,6 +9,7 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/grpc"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/http"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/health"
+	userRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
 
 	"sync"
 )
@@ -17,6 +18,7 @@ type App struct {
 	Config     config.Config
 	esClient   *infrastructure.ElasticAdapter
 	gormClient *infrastructure.GormAdapter
+	UserRepository *userRepository.GormUserRepository
 	GrpcServer *grpc.Server
 	HttpServer *http.Server
 }
@@ -44,13 +46,17 @@ func NewApp(Config config.Config) (*App, error) {
 	healthService := health.NewHealthService(esClient, kafkaClient,gormClient)
 	healthController := httpController.NewHealthController(healthService)
 	HttpServer := http.NewServer(healthController, Config.HttpPort)
-
+	
+	// Initialize repos
+	userRepository := userRepository.NewGormUserRepository(gormClient.Db)
+	
 	return &App{
 		Config:     Config,
 		esClient:   esClient,
 		gormClient: gormClient,
 		GrpcServer: GrpcServer,
 		HttpServer: HttpServer,
+		UserRepository: userRepository,
 	}, nil
 }
 

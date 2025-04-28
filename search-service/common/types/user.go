@@ -1,15 +1,8 @@
 package types
 
-import "github.com/elastic/go-elasticsearch/v8/typedapi/types"
 
 type User struct {
-	ID    string `json:"id"`
-	FolderIds []string `json:"folder_ids"`
+	ID        string   `json:"id" gorm:"primaryKey;column:id"`
+	Folders []Folder `json:"folders" gorm:"many2many:user_folders;"`
 }
 
-var EsUser = map[string]types.Property{
-	"id":        types.NewKeywordProperty(),
-	"folder_ids": types.NewKeywordProperty(),
-}
-
-var UserIndex = "users"
