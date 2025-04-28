@@ -6,9 +6,9 @@ import (
 	"sync"
 
 	commonTypes "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
-	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/indices/create"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v9"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/indices/create"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/types"
 )
 
 type ElasticAdapter struct {
