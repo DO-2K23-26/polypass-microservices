@@ -1,6 +1,6 @@
 package types
 
-import "github.com/elastic/go-elasticsearch/v8/typedapi/types"
+import "github.com/elastic/go-elasticsearch/v9/typedapi/types"
 
 type Credential struct {
 	ID     string  `json:"id"`
