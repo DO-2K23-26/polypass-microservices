@@ -10,6 +10,7 @@ type Folder struct {
 	ParentID *string  `json:"parent_id"`
 	Parent   *Folder  `gorm:"foreignKey:ParentID" json:"-"`
 	Children []Folder `gorm:"foreignKey:ParentID" json:"children"`
+	User     *[]User    `gorm:"many2many:user_folders;" json:"user"`
 }
 
 var EsFolder = map[string]types.Property{

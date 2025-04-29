@@ -65,8 +65,13 @@ func (s *FolderService) GetFolder(req GetFolderRequest) (*FolderResponse, error)
 		return nil, ErrUserNotFound
 	}
 
+	folderIds := make([]string, len(userResult.User.Folders))
+	
+	for _, folder := range userResult.User.Folders {
+		folderIds = append(folderIds, folder.ID)
+	}
 	// Check if user has access to the folder
-	hasAccess := slices.Contains(userResult.User.FolderIds, req.ID)
+	hasAccess := slices.Contains(folderIds, req.ID)
 	if !hasAccess {
 		return nil, ErrUserNotAuthorized
 	}
@@ -124,9 +129,14 @@ func (s *FolderService) DeleteFolder(req DeleteFolderRequest) error {
 	if userResult == nil || userResult.User.ID == "" {
 		return ErrUserNotFound
 	}
-
+	
+	folderIds := make([]string, len(userResult.User.Folders))
+	
+	for _, folder := range userResult.User.Folders {
+		folderIds = append(folderIds, folder.ID)
+	}
 	// Check if user has access to the folder
-	hasAccess := slices.Contains(userResult.User.FolderIds, req.ID)
+	hasAccess := slices.Contains(folderIds, req.ID)
 	if !hasAccess {
 		return ErrUserNotAuthorized
 	}
@@ -164,13 +174,18 @@ func (s *FolderService) SearchFolders(req SearchFoldersRequest) (*SearchFoldersR
 		offset = *req.Offset
 	}
 
+	folderIds := make([]string, len(userResult.User.Folders))
+	
+	for _, folder := range userResult.User.Folders {
+		folderIds = append(folderIds, folder.ID)
+	}
 	// Perform the search with user's folder access scope
 	searchResult, err := s.folderRepo.SearchFolder(folder.SearchFolderQuery{
 		ID:           req.ID,
 		Name:         req.Name,
 		Limit:        &limit,
 		Offset:       &offset,
-		FoldersScope: &userResult.User.FolderIds,
+		FoldersScope: &folderIds,
 	})
 	if err != nil {
 		return nil, err
