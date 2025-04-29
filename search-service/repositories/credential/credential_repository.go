@@ -18,7 +18,8 @@ type ICredentialRepository interface {
 	UpdateCredential(query UpdateCredentialQuery) (*UpdateCredentialResult, error)
 	DeleteCredential(query DeleteCredentialQuery) error
 	GetCredential(query GetCredentialQuery) (*GetCredentialResult, error)
-	SearchCredentials(query SearchCredentialQuery) (*SearchCredentialResult, error)
+	GenericSearch(query SearchCredentialQuery) (*SearchCredentialResult, error)
+	FilteredSearch(query SearchCredentialQuery) (*SearchCredentialResult, error)
 	AddTagsToCredential(query AddTagsToCredentialQuery) error
 	RemoveTagsFromCredential(query RemoveTagsFromCredentialQuery) error
 }
@@ -76,8 +77,7 @@ func (c *CredentialRepository) GetCredential(query GetCredentialQuery) (*GetCred
 }
 
 // Function to search for credentials based on many parameters, in elasticsearch, with a paginated result.
-
-func (c *CredentialRepository) SearchCredentials(query SearchCredentialQuery) (SearchCredentialResult, error) {
+func (c *CredentialRepository) GenericSearch(query SearchCredentialQuery) (SearchCredentialResult, error) {
 	// Default limit and offset if not provided
 	limit := 10
 	if query.Limit != nil {
@@ -97,6 +97,65 @@ func (c *CredentialRepository) SearchCredentials(query SearchCredentialQuery) (S
 				Type:   &textquerytype.Phraseprefix, // To match on parts of words (instead of whole words).
 			},
 		},
+		From: &offset,
+		Size: &limit,
+	})
+
+	// Execute the search query
+	res, err := searchQuery.Do(context.Background())
+	if err != nil {
+		return SearchCredentialResult{}, fmt.Errorf("error executing search query: %w", err)
+	}
+
+	// Parse the search results
+	credentials := make([]types.Credential, len(res.Hits.Hits))
+	for i, hit := range res.Hits.Hits {
+		if err := json.Unmarshal(hit.Source_, &credentials[i]); err != nil {
+			return SearchCredentialResult{}, fmt.Errorf("error unmarshalling hit source: %w", err)
+		}
+	}
+
+	return SearchCredentialResult{
+		Credentials: credentials,
+		Total:       int(res.Hits.Total.Value),
+		Limit:       limit,
+		Offset:      offset,
+	}, nil
+}
+
+// Function to search for credentials on title, filtered by folder and/or tags, in elasticsearch, with a paginated result.
+func (c *CredentialRepository) FilteredSearch(query SearchCredentialQuery) (SearchCredentialResult, error) {
+	// Default limit and offset if not provided
+	limit := 10
+	if query.Limit != nil {
+		limit = *query.Limit
+	}
+	offset := 0
+	if query.Offset != nil {
+		offset = *query.Offset
+	}
+
+	// Construct the search query
+	searchQuery := c.esClient.Client.Search().Index(types.CredentialIndex).Request(&search.Request{
+		Query: &esTypes.Query{
+			Bool: &esTypes.BoolQuery{
+				Must: []esTypes.Query{
+					{
+						MultiMatch: &esTypes.MultiMatchQuery{
+							Query:  query.Title,
+							Fields: []string{"title"},
+							Type:   &textquerytype.Phraseprefix, // To match on parts of words (instead of whole words).
+						},
+						Terms: &esTypes.TermsQuery{ // Filter on folder scopes.
+							TermsQuery: map[string]esTypes.TermsQueryField{
+								"folder.id": query.FoldersScope,
+							},
+						},
+						//TODO: test if FolderScope filter works.
+						//TODO: Then filter on tags too.
+					},
+				},
+			},},
 		From: &offset,
 		Size: &limit,
 	})
