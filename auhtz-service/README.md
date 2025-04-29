@@ -9,8 +9,8 @@ We will use [Authzed](https://authzed.com/) to manage authorization.
 ## Main feature
 
 The main feature of this service is to provide a centralized authorization logic for all the microservices in the Polypass ecosystem.
-We will listen to kafka topics to aggregate the authorization datas in Permify database. 
-Then we will expose the GRPC api of Permify so that it can be called by other services.
+We will listen to kafka topics to aggregate the authorization datas in Authzed database.
+Then we will expose the GRPC api of Authzed so that it can be called by other services.
 
 ## Authorization Logic
 
@@ -46,4 +46,4 @@ Open the playground Authzed
 
 ## Discussion
 
-It could be interesting to let the check api of permify directly exposed in order to not re-implement in this service.
+It could be interesting to let the check api of Authzed directly exposed in order to not re-implement in this service.
