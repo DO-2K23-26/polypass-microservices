@@ -36,6 +36,14 @@ The folder admin admin will have the right to:
 - create & update tags in the folder and sub-folders
 - create & update  credentials in the folder and sub-folders
 
+## Open the playground Authzed
+
+```sh
+docker run -it -p 3000:3000 ghcr.io/authzed/spicedb-playground:latest
+```
+
+Open the playground Authzed
+
 ## Discussion
 
 It could be interesting to let the check api of permify directly exposed in order to not re-implement in this service.
