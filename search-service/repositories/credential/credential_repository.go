@@ -27,8 +27,6 @@ type ICredentialRepository interface {
 	RemoveTagsFromCredential(query RemoveTagsFromCredentialQuery) error
 }
 
-const indexName = "credential"
-
 type CredentialRepository struct {
 	esClient infrastructure.ElasticAdapter
 }
@@ -42,7 +40,7 @@ func NewCredentialRepository(esClient infrastructure.ElasticAdapter) *Credential
 // Function to write a credential to elasticsearch
 func (c *CredentialRepository) CreateCredential(query CreateCredentialQuery) (*CreateCredentialResult, error) {
 
-	_, err := c.esClient.Client.Index(indexName).Id(query.ID).Request(query).Do(context.Background())
+	_, err := c.esClient.Client.Index(types.CredentialIndex).Id(query.ID).Request(query).Do(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("error indexing document ID=%s: %w", query.ID, err)
 	}
@@ -63,7 +61,7 @@ func (c *CredentialRepository) GetCredential(query GetCredentialQuery) (*GetCred
 		return nil, fmt.Errorf("ID is required")
 	}
 
-	res, err := c.esClient.Client.Get(indexName, query.ID).Do(context.Background())
+	res, err := c.esClient.Client.Get(types.CredentialIndex, query.ID).Do(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("error getting document ID=%s: %w", query.ID, err)
 	}
