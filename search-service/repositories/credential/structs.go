@@ -6,11 +6,11 @@ type CreateCredentialQuery struct {
 	ID       string      `json:"id"`
 	Title    string      `json:"title"`
 	Tags     []types.Tag `json:"tags"`
-	FolderId string      `json:"folder_id"`
+	Folder  *types.Folder `json:"folder"`
 }
 
 type CreateCredentialResult struct {
-	Credential RepoCredential `json:"credential"`
+	Credential types.Credential `json:"credential"`
 }
 
 type UpdateCredentialQuery struct {
@@ -21,7 +21,7 @@ type UpdateCredentialQuery struct {
 }
 
 type UpdateCredentialResult struct {
-	Credential RepoCredential `json:"credential"`
+	Credential types.Credential `json:"credential"`
 }
 
 type DeleteCredentialQuery struct {
@@ -33,7 +33,7 @@ type GetCredentialQuery struct {
 }
 
 type GetCredentialResult struct {
-	Credential RepoCredential `json:"credential"`
+	Credential types.Credential `json:"credential"`
 }
 
 type SearchCredentialQuery struct {
@@ -49,7 +49,7 @@ type SearchCredentialQuery struct {
 }
 
 type SearchCredentialResult struct {
-	Credentials []RepoCredential `json:"credentials"`
+	Credentials []types.Credential `json:"credentials"`
 	Total       int              `json:"total"` // The total is the total number of credentials that match the query
 	Limit       int              `json:"limit"`
 	Offset      int              `json:"offset"`
@@ -61,7 +61,7 @@ type AddTagsToCredentialQuery struct {
 }
 
 type AddTagsToCredentialResult struct {
-	Credential RepoCredential `json:"credential"`
+	Credential types.Credential `json:"credential"`
 }
 
 type RemoveTagsFromCredentialQuery struct {
@@ -70,5 +70,5 @@ type RemoveTagsFromCredentialQuery struct {
 }
 
 type RemoveTagsFromCredentialResult struct {
-	Credential RepoCredential `json:"credential"`
+	Credential types.Credential `json:"credential"`
 }

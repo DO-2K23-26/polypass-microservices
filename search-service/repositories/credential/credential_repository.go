@@ -6,16 +6,8 @@ import (
 	"fmt"
 
 	"github.com/DO-2K23-26/polypass-microservices/search-service/infrastructure"
-
 	"github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 )
-
-type RepoCredential struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	Tags     []types.Tag  `json:"tags"`
-	FolderId string `json:"folder_id"`
-}
 
 type ICredentialRepository interface {
 	CreateCredential(query CreateCredentialQuery) (*CreateCredentialResult, error)
@@ -46,11 +38,11 @@ func (c *CredentialRepository) CreateCredential(query CreateCredentialQuery) (*C
 	}
 
 	return &CreateCredentialResult{
-		Credential: RepoCredential{
+		Credential: types.Credential{
 			ID:       query.ID,
 			Title:    query.Title,
 			Tags:     query.Tags,
-			FolderId: query.FolderId,
+			Folder:   query.Folder,
 		},
 	}, nil
 }
@@ -70,7 +62,7 @@ func (c *CredentialRepository) GetCredential(query GetCredentialQuery) (*GetCred
 		return nil, fmt.Errorf("document ID=%s not found", query.ID)
 	}
 
-	var credential RepoCredential
+	var credential types.Credential
 	if err := json.Unmarshal(res.Source_, &credential); err != nil {
 		return nil, fmt.Errorf("error unmarshalling document ID=%s: %w", query.ID, err)
 	}
