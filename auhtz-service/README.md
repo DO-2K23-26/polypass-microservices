@@ -1,6 +1,23 @@
 # Authorization service
 ---
 
+## Launch the application
+
+Populate the env.local.sh file then :
+```sh
+source env.local.sh
+```
+
+Start the external services:
+```sh
+docker-compose up -d
+```
+
+Start the application:
+```sh
+go run main.go
+```
+
 ## Purpose
 
 This service will hold the logic to do data aggregation form other services.

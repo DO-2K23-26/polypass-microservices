@@ -1,0 +1,2 @@
+export AUTHZED_HOST=
+export AUTHZED_API_KEY=
