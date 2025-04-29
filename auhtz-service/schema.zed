@@ -5,30 +5,26 @@ definition folder {
   relation admin: user
   relation parent: folder
 
-  permission read = viewer + admin
-  permission update = admin
-  permission create_subfolder = admin
+  permission read = viewer + admin + parent->read
+  permission update = admin + parent->update
 
-  // Inherit permissions from parent
-  permission inherited_viewer = parent->read
-  permission inherited_admin = parent->admin
-  permission inherited_update = parent->update
-
-  permission can_read = read + inherited_viewer
-  permission can_update = update + inherited_update
-  permission can_create_subfolder = create_subfolder + inherited_admin
+  permission manage_subfolder = admin + parent->manage_subfolder
+  permission manage_tag = admin
+  permission manage_credential = admin + parent->manage_credential
 }
 
 definition credential {
-  relation parent: folder
+  relation folder: folder
 
-  permission read = parent->can_read
-  permission update = parent->can_update
+  permission read = folder->manage_credential
+  permission update = folder->manage_credential
+  permission delete = folder->manage_credential
 }
 
 definition tag {
-  relation parent: folder
+  relation folder: folder
 
-  permission read = parent->can_read
-  permission update = parent->can_update
+  permission read = folder->read
+  permission update = folder->manage_tag
+  permission delete = folder->manage_tag
 }
