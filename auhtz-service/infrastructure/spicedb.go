@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/DO-2K23-26/polypass-microservices/authz-service/common/types"
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/authzed/authzed-go/v1"
 )
@@ -41,7 +42,7 @@ func (s *SpiceDBAdapter) Init() error {
 		return err
 	}
 	schemaString := string(schema)
-	res , err := s.authzedClient.SchemaServiceClient.WriteSchema(context.Background(), &v1.WriteSchemaRequest{
+	res, err := s.authzedClient.SchemaServiceClient.WriteSchema(context.Background(), &v1.WriteSchemaRequest{
 		Schema: schemaString,
 	})
 	if err != nil {
@@ -49,6 +50,28 @@ func (s *SpiceDBAdapter) Init() error {
 		return err
 	}
 	log.Println("Wrote the schema to spicedb", res)
-	
+
+	return nil
+}
+
+func (s *SpiceDBAdapter) CreateRelationship(ctx context.Context, subjectType types.ObjectType, subjectId string, relation string, resourceType types.ObjectType, resourceId string) error {
+	_, err := s.authzedClient.WriteRelationships(ctx, &v1.WriteRelationshipsRequest{
+		Updates: []*v1.RelationshipUpdate{
+			{
+				Operation: v1.RelationshipUpdate_OPERATION_CREATE,
+				Relationship: &v1.Relationship{
+					Subject: &v1.SubjectReference{
+						Object: &v1.ObjectReference{ObjectType: string(subjectType), ObjectId: subjectId},
+					},
+					Resource: &v1.ObjectReference{ObjectType: string(resourceType), ObjectId: resourceId},
+					Relation: relation,
+				},
+			},
+		},
+	})
+	if err != nil {
+		log.Printf("failed to create relationship: %v", err)
+		return err
+	}
 	return nil
 }
