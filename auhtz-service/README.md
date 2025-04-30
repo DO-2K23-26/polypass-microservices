@@ -53,6 +53,17 @@ The folder admin admin will have the right to:
 - create & update tags in the folder and sub-folders
 - create & update  credentials in the folder and sub-folders
 
+## Some reliationship writing help
+
+For example, if you want to add some credential to a folder you will have to write this reliationship:
+
+```
+Resource Type: credentials
+Resource Id: "ascsd1234567890"
+Subject Type: folder
+Subject Id: "fo1234567890"
+```
+
 ## Open the playground Authzed
 
 ```sh
