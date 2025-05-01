@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
@@ -10,7 +11,6 @@ type KafkaAdapter struct {
 	host     string
 	clientId string
 	producer *kafka.Producer
-	consumer *kafka.Consumer
 	admin    *kafka.AdminClient
 }
 
@@ -23,14 +23,6 @@ func NewKafkaAdapter(host string, clientId string) (*KafkaAdapter, error) {
 	if err != nil {
 		return nil, err
 	}
-	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": host,
-		"group.id":          clientId,
-		"auto.offset.reset": "earliest",
-	})
-	if err != nil {
-		return nil, err
-	}
 	admin, err := kafka.NewAdminClient(config)
 	if err != nil {
 		return nil, err
@@ -39,7 +31,6 @@ func NewKafkaAdapter(host string, clientId string) (*KafkaAdapter, error) {
 		host:     host,
 		clientId: clientId,
 		producer: producer,
-		consumer: consumer,
 		admin:    admin,
 	}, nil
 }
@@ -65,13 +56,21 @@ func (k *KafkaAdapter) Produce(topic string, message []byte) error {
 }
 
 func (k *KafkaAdapter) Consume(topic string, handleMessage func(*kafka.Message) error, handleError func(error)) error {
-	err := k.consumer.Subscribe(topic, nil)
+	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": k.host,
+		"group.id":          k.clientId,
+		"auto.offset.reset": "earliest",
+	})
+	if err != nil {
+		return err
+	}
+	err = consumer.Subscribe(topic, nil)
 	if err != nil {
 		return err
 	}
 
 	for {
-		msg, err := k.consumer.ReadMessage(-1)
+		msg, err := consumer.ReadMessage(-1)
 		if err != nil {
 			if handleError != nil {
 				handleError(err)
@@ -88,9 +87,13 @@ func (k *KafkaAdapter) Consume(topic string, handleMessage func(*kafka.Message) 
 			}
 		}
 
-		_, err = k.consumer.CommitMessage(msg)
+		_, err = consumer.CommitMessage(msg)
 		if err != nil && handleError != nil {
 			handleError(err)
+			err = consumer.Close()
+			if err != nil {
+				log.Println("Error closing the consumer:",err)
+			}
 		}
 	}
 }
