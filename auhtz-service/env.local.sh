@@ -1,2 +1,4 @@
 export AUTHZED_HOST=
 export AUTHZED_API_KEY=
+export KAFKA_CLIENT_ID=
+export KAFKA_HOST=

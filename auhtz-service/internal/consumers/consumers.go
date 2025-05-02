@@ -9,16 +9,19 @@ import (
 
 type Consumers struct {
 	kafka                     infrastructure.KafkaAdapter
-	srclient                  infrastructure.SchemaRegistry
 	FolderEventController     events.IFolderEventController
 	CredentialEventController events.ICredentialEventController
 	TagEventController        events.ITagEventController
 	UserEventController       events.IUserEventController
 }
 
-func NewConsumers(folderEventController events.IFolderEventController) *Consumers {
+func NewConsumers(folderEventController events.IFolderEventController, credentialEventController events.ICredentialEventController, tagEventController events.ITagEventController, userEventController events.IUserEventController, kafka infrastructure.KafkaAdapter) *Consumers {
 	return &Consumers{
-		FolderEventController: folderEventController,
+		kafka:                     kafka,
+		FolderEventController:     folderEventController,
+		CredentialEventController: credentialEventController,
+		TagEventController:        tagEventController,
+		UserEventController:       userEventController,
 	}
 }
 
