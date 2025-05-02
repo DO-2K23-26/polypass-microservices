@@ -8,6 +8,7 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/authz-service/controllers/events"
 	"github.com/DO-2K23-26/polypass-microservices/authz-service/infrastructure"
 	"github.com/DO-2K23-26/polypass-microservices/authz-service/internal/consumers"
+	"github.com/DO-2K23-26/polypass-microservices/authz-service/producer"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
 	"google.golang.org/grpc"
@@ -17,6 +18,7 @@ import (
 type App struct {
 	authzedClient *infrastructure.SpiceDBAdapter
 	consumers     *consumers.Consumers
+	producer      *producer.Producer
 }
 
 func NewApp(config config.Config) (*App, error) {
@@ -30,6 +32,9 @@ func NewApp(config config.Config) (*App, error) {
 		return nil, err
 	}
 
+	// Instantiate producer for debug purpose.
+	// producer := producer.NewProducer(*kafkaClient)
+
 	authzedClient := infrastructure.NewSpiceDBAdapter(authzedRawClient)
 	folderEventController := events.NewFolderEventController()
 	credentialEventController := events.NewCredentialEventController()
@@ -38,6 +43,7 @@ func NewApp(config config.Config) (*App, error) {
 
 	consumersController := consumers.NewConsumers(folderEventController, credentialEventController, tagEventController, userEventController, *kafkaClient)
 	return &App{
+		// producer:      producer,
 		consumers:     consumersController,
 		authzedClient: authzedClient,
 	}, nil
@@ -46,7 +52,11 @@ func NewApp(config config.Config) (*App, error) {
 // Perform instanciation to external services/ local services/ repos
 func (a *App) Start() error {
 	ctx := context.Background()
-	a.consumers.Start(ctx)
+	err := a.consumers.Start(ctx)
+	if err != nil {
+		log.Fatal("Error while starting:", err)
+		return err
+	}
 	<-ctx.Done()
 	return nil
 }
