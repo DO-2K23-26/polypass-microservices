@@ -1,0 +1,24 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  meshConfig:
+    enableTracing: true
+    defaultConfig:
+      tracing: {} # disable legacy MeshConfig tracing options
+    extensionProviders:
+    - name: jaeger
+      opentelemetry:
+        port: 4317
+        service: jaeger-collector.istio-system.svc.cluster.local
+    - name: otel-tracing
+      opentelemetry:
+        port: 4318
+        service: opentelemetry-collector.observability.svc.cluster.local
+        http:
+          path: "/v1/traces"
+          timeout: 5s
+          headers:
+            - name: "custom-header"
+              value: "custom value"
+        resource_detectors:
+          environment: {}
