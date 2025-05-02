@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
