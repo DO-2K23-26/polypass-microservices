@@ -35,13 +35,29 @@ func (s *SpiceDBAdapter) HealthCheck() error {
 	return nil
 }
 
-func (s *SpiceDBAdapter) Init() error {
+func (s *SpiceDBAdapter) Migrate() error {
 	schema, err := os.ReadFile("schema.zed")
 	if err != nil {
 		log.Printf("failed to read schema file: %v", err)
 		return err
 	}
 	schemaString := string(schema)
+	
+	// Check if schema is up to date
+	isUpToDate, err := s.authzedClient.SchemaServiceClient.DiffSchema(context.Background(), &v1.DiffSchemaRequest{
+		ComparisonSchema: schemaString,
+		Consistency: &v1.Consistency{
+			Requirement: &v1.Consistency_FullyConsistent{FullyConsistent: true},
+		},
+	})
+	if err != nil {
+		log.Printf("failed to diff schema: %v", err)
+		return err
+	}
+	if len(isUpToDate.Diffs)==0 {
+		log.Println("Authzed schema is up to date")
+		return nil
+	}
 	res, err := s.authzedClient.SchemaServiceClient.WriteSchema(context.Background(), &v1.WriteSchemaRequest{
 		Schema: schemaString,
 	})

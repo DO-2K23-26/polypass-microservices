@@ -1,6 +1,8 @@
 package app
 
 import (
+	"log"
+
 	"github.com/DO-2K23-26/polypass-microservices/authz-service/config"
 	"github.com/DO-2K23-26/polypass-microservices/authz-service/infrastructure"
 	"github.com/authzed/authzed-go/v1"
@@ -29,13 +31,15 @@ func NewApp(config config.Config) (*App, error) {
 
 // Perform instanciation to external services/ local services/ repos
 func (a *App) Start() error {
-
 	return nil
 }
 
 // Perform any data migration the version of the app need
 func (a *App) Init() error {
-	// ...
+	if err := a.authzedClient.Migrate(); err != nil {
+		log.Println("Error while migrating:",err)
+		return err
+	}
 	return nil
 }
 
