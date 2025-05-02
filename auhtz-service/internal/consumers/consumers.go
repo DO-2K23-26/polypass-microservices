@@ -1,6 +1,8 @@
 package consumers
 
 import (
+	"context"
+
 	"github.com/DO-2K23-26/polypass-microservices/authz-service/controllers/events"
 	"github.com/DO-2K23-26/polypass-microservices/authz-service/infrastructure"
 )
@@ -20,25 +22,25 @@ func NewConsumers(folderEventController events.IFolderEventController) *Consumer
 	}
 }
 
-func (c *Consumers) Start() error {
+func (c *Consumers) Start(ctx context.Context) error {
 	// Register consumers
 	// Folder event
-	c.kafka.Consume("create_folder", c.FolderEventController.Create, nil)
-	c.kafka.Consume("delete_folder", c.FolderEventController.Delete, nil)
-	c.kafka.Consume("update_folder", c.FolderEventController.Update, nil)
-	
+	err := c.kafka.Consume("create_folder", c.FolderEventController.Create, nil, ctx)
+	err = c.kafka.Consume("delete_folder", c.FolderEventController.Delete, nil, ctx)
+	err = c.kafka.Consume("update_folder", c.FolderEventController.Update, nil, ctx)
+
 	// Credentials event
-	c.kafka.Consume("create_credential", c.CredentialEventController.Create, nil)
-	c.kafka.Consume("update_credential", c.CredentialEventController.Update, nil)
-	c.kafka.Consume("delete_credential", c.CredentialEventController.Delete, nil)
-	
+	err = c.kafka.Consume("create_credential", c.CredentialEventController.Create, nil, ctx)
+	err = c.kafka.Consume("update_credential", c.CredentialEventController.Update, nil, ctx)
+	err = c.kafka.Consume("delete_credential", c.CredentialEventController.Delete, nil, ctx)
+
 	// Tags event
-	c.kafka.Consume("create_tag", c.TagEventController.Create, nil)
-	c.kafka.Consume("update_tag", c.TagEventController.Update, nil)
-	c.kafka.Consume("delete_tag", c.TagEventController.Delete, nil)
-	
+	err = c.kafka.Consume("create_tag", c.TagEventController.Create, nil, ctx)
+	err = c.kafka.Consume("update_tag", c.TagEventController.Update, nil, ctx)
+	err = c.kafka.Consume("delete_tag", c.TagEventController.Delete, nil, ctx)
+
 	// Users event
-	c.kafka.Consume("add_user", c.UserEventController.AddUserToFolder, nil)
-	c.kafka.Consume("revoke_user", c.UserEventController.AddUserToFolder, nil)
-	return nil
+	err = c.kafka.Consume("add_user", c.UserEventController.AddUserToFolder, nil, ctx)
+	err = c.kafka.Consume("revoke_user", c.UserEventController.AddUserToFolder, nil, ctx)
+	return err
 }

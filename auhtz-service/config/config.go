@@ -19,8 +19,8 @@ func LoadConfig() *Config {
 	}
 
 	config := &Config{
-		AuthzedHost:   os.Getenv("AUTHZ_HOST"),
-		AuthzedApiKey: os.Getenv("AUTHZ_API_KEY"),
+		AuthzedHost:   os.Getenv("AUTHZED_HOST"),
+		AuthzedApiKey: os.Getenv("AUTHZED_API_KEY"),
 	}
 
 	return config
