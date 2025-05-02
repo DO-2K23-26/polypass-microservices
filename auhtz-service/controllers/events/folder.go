@@ -1,6 +1,8 @@
 package events
 
 import (
+	"log"
+
 	"github.com/DO-2K23-26/polypass-microservices/authz-service/infrastructure"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
@@ -20,20 +22,19 @@ func NewFolderEventController() IFolderEventController {
 }
 
 func (c *FolderEventController) Create(message *kafka.Message) error {
-	var createFolderMessage any
-	err := c.srClient.GetValue(*message, &createFolderMessage)
-	if err != nil {
-		return err
-	}
+	// TODO: Implement Create logic
+	log.Printf("Received Create message: %v", message)
 	return nil
 }
 
-// Delete implements IFolderEventController.
-func (c *FolderEventController) Delete(*kafka.Message) error {
-	panic("unimplemented")
+func (c *FolderEventController) Delete(message *kafka.Message) error {
+	// TODO: Implement Delete logic
+	log.Printf("Received Delete message: %v", message)
+	return nil
 }
 
-// Update implements IFolderEventController.
-func (c *FolderEventController) Update(*kafka.Message) error {
-	panic("unimplemented")
+func (c *FolderEventController) Update(message *kafka.Message) error {
+	// TODO: Implement Update logic
+	log.Printf("Received Update message: %v", message)
+	return nil
 }

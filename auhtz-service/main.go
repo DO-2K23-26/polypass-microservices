@@ -13,6 +13,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	err = app.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = app.Start()
 	if err != nil {
 		app.Stop()

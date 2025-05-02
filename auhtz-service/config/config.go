@@ -8,19 +8,23 @@ import (
 type Config struct {
 	AuthzedHost   string `json:"authzed_host"`
 	AuthzedApiKey string `json:"authzed_api_key"`
+	KafkaHost     string `json:"kafka_host"`
+	KafkaClientId string `json:"kafka_client_id"`
 }
 
 // LoadConfig loads configuration values from environment variables
 func LoadConfig() *Config {
-	missingVars := checkMissingVars([]string{"AUTHZED_HOST", "AUTHZED_API_KEY"})
+	missingVars := checkMissingVars([]string{"AUTHZED_HOST", "AUTHZED_API_KEY", "KAFKA_CLIENT_ID", "KAFKA_HOST"})
 
 	if len(missingVars) > 0 {
 		log.Fatalf("The following environment variables are missing: %v", missingVars)
 	}
 
 	config := &Config{
-		AuthzedHost:   os.Getenv("AUTHZ_HOST"),
-		AuthzedApiKey: os.Getenv("AUTHZ_API_KEY"),
+		AuthzedHost:   os.Getenv("AUTHZED_HOST"),
+		AuthzedApiKey: os.Getenv("AUTHZED_API_KEY"),
+		KafkaHost:     os.Getenv("KAFKA_HOST"),
+		KafkaClientId: os.Getenv("KAFKA_CLIENT_ID"),
 	}
 
 	return config

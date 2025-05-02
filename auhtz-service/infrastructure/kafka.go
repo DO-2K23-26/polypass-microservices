@@ -1,9 +1,9 @@
 package infrastructure
 
 import (
+	"context"
 	"fmt"
 	"log"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
@@ -55,7 +55,7 @@ func (k *KafkaAdapter) Produce(topic string, message []byte) error {
 	return nil
 }
 
-func (k *KafkaAdapter) Consume(topic string, handleMessage func(*kafka.Message) error, handleError func(error)) error {
+func (k *KafkaAdapter) Consume(topic string, handleMessage func(*kafka.Message) error, handleError func(error), ctx context.Context) error {
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": k.host,
 		"group.id":          k.clientId,
@@ -69,33 +69,45 @@ func (k *KafkaAdapter) Consume(topic string, handleMessage func(*kafka.Message) 
 		return err
 	}
 
-	for {
-		msg, err := consumer.ReadMessage(-1)
-		if err != nil {
-			if handleError != nil {
-				handleError(err)
-			}
-			continue
-		}
-		if handleMessage != nil {
-			err := handleMessage(msg)
+	go func() {
+		defer func() {
+			err := consumer.Close()
 			if err != nil {
-				if handleError != nil {
+				log.Println("Error closing the consumer:", err)
+			}
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				msg, err := consumer.ReadMessage(-1)
+				if err != nil {
+					if handleError != nil {
+						handleError(err)
+					}
+					continue
+				}
+				if handleMessage != nil {
+					err := handleMessage(msg)
+					if err != nil {
+						if handleError != nil {
+							handleError(err)
+						}
+						continue
+					}
+				}
+
+				_, err = consumer.CommitMessage(msg)
+				if err != nil && handleError != nil {
 					handleError(err)
 				}
-				continue
 			}
 		}
+	}()
 
-		_, err = consumer.CommitMessage(msg)
-		if err != nil && handleError != nil {
-			handleError(err)
-			err = consumer.Close()
-			if err != nil {
-				log.Println("Error closing the consumer:",err)
-			}
-		}
-	}
+	return nil
 }
 
 func (k *KafkaAdapter) CheckHealth() bool {
