@@ -5,6 +5,7 @@ import "github.com/DO-2K23-26/polypass-microservices/search-service/common/types
 type CreateFolderQuery struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+	ParentID string `json:"parent_id"`
 }
 
 type CreateFolderResult struct {
@@ -33,10 +34,10 @@ type GetFolderResult struct {
 }
 
 type SearchFolderQuery struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	Limit        *int    `json:"limit"`         // The limit is the maximum number of folders to return
-	Offset       *int    `json:"offset"`        // The offset is the number of folders to skip before returning results
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	Limit        *int      `json:"limit"`         // The limit is the maximum number of folders to return
+	Offset       *int      `json:"offset"`        // The offset is the number of folders to skip before returning results
 	FoldersScope *[]string `json:"folders_scope"` // The folders that the user making the request can access
 }
 
@@ -46,3 +47,13 @@ type SearchFolderResult struct {
 	Limit   int            `json:"limit"`
 	Offset  int            `json:"offset"`
 }
+
+type GetFolderHierarchyQuery struct {
+	ID string `json:"id"`
+}
+
+type GetFolderHierarchyResult struct {
+	Folders []types.Folder `json:"folders"`
+}
+
+

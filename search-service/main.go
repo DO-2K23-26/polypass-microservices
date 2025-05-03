@@ -5,9 +5,7 @@ import (
 	"os"
 
 	"github.com/DO-2K23-26/polypass-microservices/search-service/app"
-	"github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/config"
-	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
 )
 
 func main() {

@@ -8,19 +8,21 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/search-service/infrastructure"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/grpc"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/http"
-	"github.com/DO-2K23-26/polypass-microservices/search-service/services/health"
+	folderRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/folder"
 	userRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
+	"github.com/DO-2K23-26/polypass-microservices/search-service/services/health"
 
 	"sync"
 )
 
 type App struct {
-	Config     config.Config
-	esClient   *infrastructure.ElasticAdapter
-	gormClient *infrastructure.GormAdapter
-	UserRepository *userRepository.GormUserRepository
-	GrpcServer *grpc.Server
-	HttpServer *http.Server
+	Config           config.Config
+	esClient         *infrastructure.ElasticAdapter
+	gormClient       *infrastructure.GormAdapter
+	UserRepository   *userRepository.GormUserRepository
+	FolderRepository *folderRepository.EsSqlFolderRepository
+	GrpcServer       *grpc.Server
+	HttpServer       *http.Server
 }
 
 func NewApp(Config config.Config) (*App, error) {
@@ -43,20 +45,22 @@ func NewApp(Config config.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	healthService := health.NewHealthService(esClient, kafkaClient,gormClient)
+	healthService := health.NewHealthService(esClient, kafkaClient, gormClient)
 	healthController := httpController.NewHealthController(healthService)
 	HttpServer := http.NewServer(healthController, Config.HttpPort)
-	
+
 	// Initialize repos
 	userRepository := userRepository.NewGormUserRepository(gormClient.Db)
-	
+	folderRepository := folderRepository.NewEsSqlFolderRepository(gormClient, esClient)
+
 	return &App{
-		Config:     Config,
-		esClient:   esClient,
-		gormClient: gormClient,
-		GrpcServer: GrpcServer,
-		HttpServer: HttpServer,
-		UserRepository: userRepository,
+		Config:           Config,
+		esClient:         esClient,
+		gormClient:       gormClient,
+		GrpcServer:       GrpcServer,
+		HttpServer:       HttpServer,
+		UserRepository:   userRepository,
+		FolderRepository: folderRepository,
 	}, nil
 }
 
