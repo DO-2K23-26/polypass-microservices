@@ -1,6 +1,13 @@
-## Migrations 
+## Launch the microservice
 
+1. ### Docker compose
+```bash
+docker-compose up -d
 ```
-$ brew install golang-migrate
-$ migrate -source migrations -database postgres://localhost:5432/database up 2
+
+2. ### go
+```bash
+go run main.go
 ```
+
+

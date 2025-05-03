@@ -21,7 +21,7 @@ func init() {
 func main() {
 	app := fiber.New()
 
-	app.Post("/secret", func(c *fiber.Ctx) error {
+	app.Post("/sharing", func(c *fiber.Ctx) error {
 		var request dto.PostSecretRequest
 		if err := c.BodyParser(&request); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
@@ -35,7 +35,7 @@ func main() {
 		return c.JSON(response)
 	})
 
-	app.Get("/secret/:id", func(c *fiber.Ctx) error {
+	app.Get("/sharing/:id", func(c *fiber.Ctx) error {
 		id := c.Params("id")
 		response, err := service.GetSecret(id)
 		if err != nil {
