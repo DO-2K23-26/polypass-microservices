@@ -71,3 +71,30 @@ Install a mesh vizualizer [Kiali](https://istio.io/latest/docs/ops/integrations/
 ```sh
 kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.25/samples/addons/kiali.yaml
 ```
+
+
+## Confluent
+
+[Prepare the cluster](https://docs.confluent.io/operator/current/co-prepare.html#quick-easy-deployment-and-relaxed-permissions):
+```sh
+kubectl create namespace confluent
+helm repo add confluentinc https://packages.confluent.io/helm
+kubectl apply -f confluent/confluent-for-kubernetes/crds
+# As this crd is too long you have to force it see
+# https://docs.confluent.io/operator/current/co-troubleshooting.html#issue-an-error-returns-while-applying-a-crd-during-an-upgrade
+kubectl apply --server-side=true --force-conflicts -f confluent/confluent-for-kubernetes/crds/platform.confluent.io_kafkas.yaml
+```
+
+Install confluent-for-kubernetes:
+```sh
+helm upgrade --install confluent-operator \
+  confluentinc/confluent-for-kubernetes \
+  --namespace confluent
+```
+
+Install confluent platform (Kafka, Schema registry and zookeeper):
+```sh
+kubectl apply -f confluent-platform.yaml
+```
+
+It can take up to 10 min to deploy.
