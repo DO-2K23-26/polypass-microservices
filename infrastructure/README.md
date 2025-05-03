@@ -92,3 +92,9 @@ helm upgrade --install confluent-operator \
   --namespace confluent
 ```
 
+Install confluent platform (Kafka, Schema registry and zookeeper):
+```sh
+kubectl apply -f confluent-platform.yaml
+```
+
+It can take up to 10 min to deploy.
