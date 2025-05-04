@@ -3,13 +3,12 @@ package infrastructure
 import (
 	"context"
 	"log"
-	"net/http"
 	"sync"
 
 	commonTypes "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
-	"github.com/elastic/go-elasticsearch/v9"
-	"github.com/elastic/go-elasticsearch/v9/typedapi/indices/create"
-	"github.com/elastic/go-elasticsearch/v9/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/indices/create"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 )
 
 type ElasticAdapter struct {
@@ -17,13 +16,10 @@ type ElasticAdapter struct {
 }
 
 func NewElasticAdapter(host string, username, password string) (*ElasticAdapter, error) {
-	headers := http.Header{}
-	headers.Set("Accept", "application/json")
-	headers.Set("Content-Type", "application/vnd.elasticsearch+json; compatible-with=8")
 
 	esConfig := elasticsearch.Config{Addresses: []string{host}, Username: username,
 		Password: password,
-		Header:   headers}
+	}
 
 	Client, err := elasticsearch.NewTypedClient(esConfig)
 	if err != nil {

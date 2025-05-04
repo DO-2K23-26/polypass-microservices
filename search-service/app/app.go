@@ -68,11 +68,11 @@ func NewApp(Config config.Config) (*App, error) {
 	}, nil
 }
 func (app *App) Init() error {
-	// if err := app.esClient.CreateIndexes(); err != nil {
-	// 	log.Println("Could not create elastic indexes:", err)
-	// 	return err
+	if err := app.esClient.CreateIndexes(); err != nil {
+		log.Println("Could not create elastic indexes:", err)
+		return err
 		
-	// }
+	}
 	if err := app.gormClient.Migrate(); err != nil {
 		log.Println("Could not migrate database:", err)
 		return err

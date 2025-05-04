@@ -7,10 +7,9 @@ import (
 
 	types "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/infrastructure"
-	esTypes "github.com/elastic/go-elasticsearch/v9/typedapi/types"
-
-	"github.com/elastic/go-elasticsearch/v9/typedapi/core/search"
-	"github.com/elastic/go-elasticsearch/v9/typedapi/types/enums/textquerytype"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
+	esTypes "github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/textquerytype"
 )
 
 type ICredentialRepository interface {
@@ -47,7 +46,6 @@ func (c CredentialRepository) CreateCredential(query CreateCredentialQuery) (*Cr
 			ID:     query.ID,
 			Title:  query.Title,
 			Tags:   query.Tags,
-			Folder: query.Folder,
 		},
 	}, nil
 }

@@ -3,7 +3,7 @@ package types
 import (
 	"database/sql"
 
-	"github.com/elastic/go-elasticsearch/v9/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 )
 
 type Folder struct {
@@ -13,6 +13,12 @@ type Folder struct {
 	Parent   *Folder        `gorm:"foreignKey:ParentID" json:"-"`
 	Children []Folder       `gorm:"foreignKey:ParentID" json:"children"`
 	User     *[]User        `gorm:"many2many:user_folders;" json:"user"`
+}
+
+type FolderTest struct {
+	ID       string         `json:"id"  gorm:"primaryKey"`
+	Name     string         `json:"name"`
+	ParentID *string `json:"parent_id"`
 }
 
 var EsFolder = map[string]types.Property{
