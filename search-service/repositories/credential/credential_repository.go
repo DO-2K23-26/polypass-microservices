@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	types "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
-	esTypes "github.com/elastic/go-elasticsearch/v9/typedapi/types"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/infrastructure"
+	esTypes "github.com/elastic/go-elasticsearch/v9/typedapi/types"
 
 	"github.com/elastic/go-elasticsearch/v9/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v9/typedapi/types/enums/textquerytype"
@@ -28,14 +28,14 @@ type CredentialRepository struct {
 	esClient infrastructure.ElasticAdapter
 }
 
-func NewCredentialRepository(esClient infrastructure.ElasticAdapter) *CredentialRepository {
+func NewCredentialRepository(esClient infrastructure.ElasticAdapter) ICredentialRepository {
 	return &CredentialRepository{
 		esClient: esClient,
 	}
 }
 
 // Function to write a credential to elasticsearch
-func (c *CredentialRepository) CreateCredential(query CreateCredentialQuery) (*CreateCredentialResult, error) {
+func (c CredentialRepository) CreateCredential(query CreateCredentialQuery) (*CreateCredentialResult, error) {
 
 	_, err := c.esClient.Client.Index(types.CredentialIndex).Id(query.ID).Request(query).Do(context.Background())
 	if err != nil {
@@ -53,7 +53,7 @@ func (c *CredentialRepository) CreateCredential(query CreateCredentialQuery) (*C
 }
 
 // Function to get a credential by ID from elasticsearch
-func (c *CredentialRepository) GetCredential(query GetCredentialQuery) (*GetCredentialResult, error) {
+func (c CredentialRepository) GetCredential(query GetCredentialQuery) (*GetCredentialResult, error) {
 	if query.ID == "" {
 		return nil, fmt.Errorf("ID is required")
 	}
@@ -77,7 +77,7 @@ func (c *CredentialRepository) GetCredential(query GetCredentialQuery) (*GetCred
 }
 
 // Function to search for credentials based on many parameters, in elasticsearch, with a paginated result.
-func (c *CredentialRepository) GenericSearch(query SearchCredentialQuery) (SearchCredentialResult, error) {
+func (c CredentialRepository) GenericSearch(query SearchCredentialQuery) (*SearchCredentialResult, error) {
 	// Default limit and offset if not provided
 	limit := 10
 	if query.Limit != nil {
@@ -92,7 +92,7 @@ func (c *CredentialRepository) GenericSearch(query SearchCredentialQuery) (Searc
 	searchQuery := c.esClient.Client.Search().Index(types.CredentialIndex).Request(&search.Request{
 		Query: &esTypes.Query{
 			MultiMatch: &esTypes.MultiMatchQuery{
-				Query:  query.Title,
+				Query:  query.SearchQuery,
 				Fields: []string{"title^2", "folder.name", "tags.name"},
 				Type:   &textquerytype.Phraseprefix, // To match on parts of words (instead of whole words).
 			},
@@ -104,18 +104,18 @@ func (c *CredentialRepository) GenericSearch(query SearchCredentialQuery) (Searc
 	// Execute the search query
 	res, err := searchQuery.Do(context.Background())
 	if err != nil {
-		return SearchCredentialResult{}, fmt.Errorf("error executing search query: %w", err)
+		// return nil, fmt.Errorf("error executing search query: %w", err)
 	}
 
 	// Parse the search results
 	credentials := make([]types.Credential, len(res.Hits.Hits))
 	for i, hit := range res.Hits.Hits {
 		if err := json.Unmarshal(hit.Source_, &credentials[i]); err != nil {
-			return SearchCredentialResult{}, fmt.Errorf("error unmarshalling hit source: %w", err)
+			return nil, fmt.Errorf("error unmarshalling hit source: %w", err)
 		}
 	}
 
-	return SearchCredentialResult{
+	return &SearchCredentialResult{
 		Credentials: credentials,
 		Total:       int(res.Hits.Total.Value),
 		Limit:       limit,
@@ -124,7 +124,7 @@ func (c *CredentialRepository) GenericSearch(query SearchCredentialQuery) (Searc
 }
 
 // Function to search for credentials on title, filtered by folder and/or tags, in elasticsearch, with a paginated result.
-func (c *CredentialRepository) FilteredSearch(query SearchCredentialQuery) (SearchCredentialResult, error) {
+func (c CredentialRepository) FilteredSearch(query SearchCredentialQuery) (*SearchCredentialResult, error) {
 	// Default limit and offset if not provided
 	limit := 10
 	if query.Limit != nil {
@@ -135,6 +135,20 @@ func (c *CredentialRepository) FilteredSearch(query SearchCredentialQuery) (Sear
 		offset = *query.Offset
 	}
 
+	searchOnFields := []string{"title^2", "tags.name"}
+	filters := []esTypes.Query{}
+
+	if query.FoldersScope == nil || (query.FoldersScope != nil && len(*query.FoldersScope) == 0) {
+		searchOnFields = append(searchOnFields, "folder.name")
+	} else {
+		filters = append(filters, esTypes.Query{
+			Terms: &esTypes.TermsQuery{ // Filter on folder scopes.
+				TermsQuery: map[string]esTypes.TermsQueryField{
+					"folder.id": *query.FoldersScope,
+				},
+			},
+		})
+	}
 	// Construct the search query
 	searchQuery := c.esClient.Client.Search().Index(types.CredentialIndex).Request(&search.Request{
 		Query: &esTypes.Query{
@@ -142,20 +156,15 @@ func (c *CredentialRepository) FilteredSearch(query SearchCredentialQuery) (Sear
 				Must: []esTypes.Query{
 					{
 						MultiMatch: &esTypes.MultiMatchQuery{
-							Query:  query.Title,
-							Fields: []string{"title"},
+							Query:  query.SearchQuery,
+							Fields: searchOnFields,
 							Type:   &textquerytype.Phraseprefix, // To match on parts of words (instead of whole words).
 						},
-						Terms: &esTypes.TermsQuery{ // Filter on folder scopes.
-							TermsQuery: map[string]esTypes.TermsQueryField{
-								"folder.id": query.FoldersScope,
-							},
-						},
-						//TODO: test if FolderScope filter works.
-						//TODO: Then filter on tags too.
 					},
 				},
-			},},
+				Filter: filters,
+			},
+		},
 		From: &offset,
 		Size: &limit,
 	})
@@ -163,21 +172,39 @@ func (c *CredentialRepository) FilteredSearch(query SearchCredentialQuery) (Sear
 	// Execute the search query
 	res, err := searchQuery.Do(context.Background())
 	if err != nil {
-		return SearchCredentialResult{}, fmt.Errorf("error executing search query: %w", err)
+		return nil, fmt.Errorf("error executing search query: %w", err)
 	}
 
 	// Parse the search results
 	credentials := make([]types.Credential, len(res.Hits.Hits))
 	for i, hit := range res.Hits.Hits {
 		if err := json.Unmarshal(hit.Source_, &credentials[i]); err != nil {
-			return SearchCredentialResult{}, fmt.Errorf("error unmarshalling hit source: %w", err)
+			return nil, fmt.Errorf("error unmarshalling hit source: %w", err)
 		}
 	}
 
-	return SearchCredentialResult{
+	return &SearchCredentialResult{
 		Credentials: credentials,
 		Total:       int(res.Hits.Total.Value),
 		Limit:       limit,
 		Offset:      offset,
 	}, nil
+}
+
+func (c CredentialRepository) AddTagsToCredential(query AddTagsToCredentialQuery) error {
+	return nil
+
+}
+
+func (c CredentialRepository) DeleteCredential(query DeleteCredentialQuery) error {
+	return nil
+}
+
+func (c CredentialRepository) RemoveTagsFromCredential(query RemoveTagsFromCredentialQuery) error {
+	return nil
+}
+
+// UpdateCredential implements ICredentialRepository.
+func (c CredentialRepository) UpdateCredential(query UpdateCredentialQuery) (*UpdateCredentialResult, error) {
+	panic("unimplemented")
 }

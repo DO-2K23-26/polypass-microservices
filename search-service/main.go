@@ -5,7 +5,9 @@ import (
 	"os"
 
 	"github.com/DO-2K23-26/polypass-microservices/search-service/app"
+	"github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/config"
+	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/credential"
 )
 
 func main() {
@@ -22,7 +24,20 @@ func main() {
 	if err != nil {
 		fmt.Printf("Failed to initialize the application: %v\n", err)
 		os.Exit(1)
-	}	
+	}
+	test := *app.CredentialRepository
+	_, err = test.CreateCredential(credential.CreateCredentialQuery{
+		ID:    "test1",
+		Title: "je suis le creds",
+		Tags:  []types.Tag{},
+		Folder: &types.Folder{
+			ID:   "test_folder",
+			Name: "hawai",
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
 	err = app.Start()
 	if err != nil {
 		fmt.Printf("Failed to start the application: %v\n", err)

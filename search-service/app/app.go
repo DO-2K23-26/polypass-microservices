@@ -8,6 +8,7 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/search-service/infrastructure"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/grpc"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/http"
+	credentialRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/credential"
 	folderRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/folder"
 	userRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/health"
@@ -16,13 +17,14 @@ import (
 )
 
 type App struct {
-	Config           config.Config
-	esClient         *infrastructure.ElasticAdapter
-	gormClient       *infrastructure.GormAdapter
-	UserRepository   *userRepository.GormUserRepository
-	FolderRepository *folderRepository.EsSqlFolderRepository
-	GrpcServer       *grpc.Server
-	HttpServer       *http.Server
+	Config               config.Config
+	esClient             *infrastructure.ElasticAdapter
+	gormClient           *infrastructure.GormAdapter
+	UserRepository       *userRepository.GormUserRepository
+	FolderRepository     *folderRepository.EsSqlFolderRepository
+	CredentialRepository *credentialRepository.ICredentialRepository
+	GrpcServer           *grpc.Server
+	HttpServer           *http.Server
 }
 
 func NewApp(Config config.Config) (*App, error) {
@@ -52,23 +54,25 @@ func NewApp(Config config.Config) (*App, error) {
 	// Initialize repos
 	userRepository := userRepository.NewGormUserRepository(gormClient.Db)
 	folderRepository := folderRepository.NewEsSqlFolderRepository(gormClient, esClient)
+	credentialRepository := credentialRepository.NewCredentialRepository(*esClient)
 
 	return &App{
-		Config:           Config,
-		esClient:         esClient,
-		gormClient:       gormClient,
-		GrpcServer:       GrpcServer,
-		HttpServer:       HttpServer,
-		UserRepository:   userRepository,
-		FolderRepository: folderRepository,
+		Config:               Config,
+		esClient:             esClient,
+		gormClient:           gormClient,
+		GrpcServer:           GrpcServer,
+		HttpServer:           HttpServer,
+		UserRepository:       userRepository,
+		FolderRepository:     folderRepository,
+		CredentialRepository: &credentialRepository,
 	}, nil
 }
-
 func (app *App) Init() error {
-	if err := app.esClient.CreateIndexes(); err != nil {
-		log.Println("Could not create elastic indexes:", err)
-		return err
-	}
+	// if err := app.esClient.CreateIndexes(); err != nil {
+	// 	log.Println("Could not create elastic indexes:", err)
+	// 	return err
+		
+	// }
 	if err := app.gormClient.Migrate(); err != nil {
 		log.Println("Could not migrate database:", err)
 		return err

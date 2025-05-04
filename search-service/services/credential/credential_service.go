@@ -43,7 +43,7 @@ func (s *CredentialService) CreateCredential(req CreateCredentialRequest) (*Cred
 	result, err := s.credentialRepo.CreateCredential(credential.CreateCredentialQuery{
 		ID:       req.ID,
 		Title:    req.Title,
-		FolderId: req.FolderID,
+		// FolderId: req.FolderID,
 	})
 	if err != nil {
 		return nil, err
@@ -139,37 +139,37 @@ func (s *CredentialService) SearchCredentials(req SearchCredentialsRequest) (*Se
 	}
 
 	// Set default limit and offset if not provided
-	limit := 10
-	if req.Limit != nil && *req.Limit > 0 {
-		limit = *req.Limit
-	}
+	// limit := 10
+	// if req.Limit != nil && *req.Limit > 0 {
+	// 	limit = *req.Limit
+	// }
 
-	offset := 0
-	if req.Offset != nil && *req.Offset >= 0 {
-		offset = *req.Offset
-	}
+	// offset := 0
+	// if req.Offset != nil && *req.Offset >= 0 {
+	// 	offset = *req.Offset
+	// }
 
 	// Perform the search
-	searchResult, err := s.credentialRepo.SearchCredentials(credential.SearchCredentialQuery{
-		Title:        req.Title,
-		FolderId:     req.FolderID,
-		FolderName:   req.FolderName,
-		TagIds:       req.TagIDs,
-		TagName:      req.TagName,
-		Limit:        &limit,
-		Offset:       &offset,
-		FoldersScope: &folderIds,
-	})
-	if err != nil {
-		return nil, err
-	}
+	// searchResult, err := s.credentialRepo.SearchCredentials(credential.SearchCredentialQuery{
+	// 	Title:        req.Title,
+	// 	FolderId:     req.FolderID,
+	// 	FolderName:   req.FolderName,
+	// 	TagIds:       req.TagIDs,
+	// 	TagName:      req.TagName,
+	// 	Limit:        &limit,
+	// 	Offset:       &offset,
+	// 	FoldersScope: &folderIds,
+	// })
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// Convert to response DTO
 	response := &SearchCredentialsResponse{
-		Credentials: ConvertToCredentialResponses(searchResult.Credentials),
-		Total:       searchResult.Total,
-		Limit:       searchResult.Limit,
-		Offset:      searchResult.Offset,
+		// Credentials: ConvertToCredentialResponses(searchResult.Credentials),
+		// Total:       searchResult.Total,
+		// Limit:       searchResult.Limit,
+		// Offset:      searchResult.Offset,
 	}
 
 	return response, nil

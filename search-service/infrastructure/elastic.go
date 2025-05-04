@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"context"
 	"log"
+	"net/http"
 	"sync"
 
 	commonTypes "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
@@ -16,7 +17,14 @@ type ElasticAdapter struct {
 }
 
 func NewElasticAdapter(host string, username, password string) (*ElasticAdapter, error) {
-	esConfig := elasticsearch.Config{Addresses: []string{host}, Username: username, Password: password}
+	headers := http.Header{}
+	headers.Set("Accept", "application/json")
+	headers.Set("Content-Type", "application/vnd.elasticsearch+json; compatible-with=8")
+
+	esConfig := elasticsearch.Config{Addresses: []string{host}, Username: username,
+		Password: password,
+		Header:   headers}
+
 	Client, err := elasticsearch.NewTypedClient(esConfig)
 	if err != nil {
 		return nil, err
@@ -31,7 +39,7 @@ func NewElasticAdapter(host string, username, password string) (*ElasticAdapter,
 func (e *ElasticAdapter) CheckHealth() bool {
 	_, err := e.Client.Ping().Do(context.Background())
 	if err != nil {
-		log.Println("Elastic health problem:",err)
+		log.Println("Elastic health problem:", err)
 		return false
 	}
 	return true
@@ -89,4 +97,3 @@ func (e *ElasticAdapter) createIndexIfNotExists(indexName string, mapping map[st
 	}
 	return nil
 }
-

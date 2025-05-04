@@ -3,10 +3,10 @@ package credential
 import "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 
 type CreateCredentialQuery struct {
-	ID       string      `json:"id"`
-	Title    string      `json:"title"`
-	Tags     []types.Tag `json:"tags"`
-	Folder  *types.Folder `json:"folder"`
+	ID     string        `json:"id"`
+	Title  string        `json:"title"`
+	Tags   []types.Tag   `json:"tags"`
+	Folder *types.Folder `json:"folder"`
 }
 
 type CreateCredentialResult struct {
@@ -37,12 +37,10 @@ type GetCredentialResult struct {
 }
 
 type SearchCredentialQuery struct {
-	ID           string    `json:"id"`
-	Title        string    `json:"title"`
-	FolderId 	 *string   `json:"folder_id"`
+	SearchQuery  string    `json:"search_query"`
+	FolderId     *string   `json:"folder_id"`
 	FolderName   *string   `json:"folder_name"`
-	TagIds	     *[]string `json:"tag_ids"`
-	TagName      *string   `json:"tag_name"`
+	TagIds       *[]string `json:"tag_ids"`
 	FoldersScope *[]string `json:"folders_scope"` // The name of the folders that the user making the request can access
 	Limit        *int      `json:"limit"`         // The limit is the maximum number of credentials to return
 	Offset       *int      `json:"offset"`        // The offset is the number of credentials to skip before returning results
@@ -50,9 +48,9 @@ type SearchCredentialQuery struct {
 
 type SearchCredentialResult struct {
 	Credentials []types.Credential `json:"credentials"`
-	Total       int              `json:"total"` // The total is the total number of credentials that match the query
-	Limit       int              `json:"limit"`
-	Offset      int              `json:"offset"`
+	Total       int                `json:"total"` // The total is the total number of credentials that match the query
+	Limit       int                `json:"limit"`
+	Offset      int                `json:"offset"`
 }
 
 type AddTagsToCredentialQuery struct {
