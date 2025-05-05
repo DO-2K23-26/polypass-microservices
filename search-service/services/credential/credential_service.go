@@ -40,9 +40,9 @@ func (s *CredentialService) CreateCredential(req CreateCredentialRequest) (*Cred
 	}
 
 	// Create the credential
-	result, err := s.credentialRepo.CreateCredential(credential.CreateCredentialQuery{
-		ID:       req.ID,
-		Title:    req.Title,
+	result, err := s.credentialRepo.Create(credential.CreateCredentialQuery{
+		ID:    req.ID,
+		Title: req.Title,
 		// FolderId: req.FolderID,
 	})
 	if err != nil {
@@ -50,10 +50,10 @@ func (s *CredentialService) CreateCredential(req CreateCredentialRequest) (*Cred
 	}
 
 	return &CredentialResponse{
-		ID:       result.Credential.ID,
-		Title:    result.Credential.Title,
-		Tags:     ConvertToTagResponses(result.Credential.Tags),
-		Folder:   ConvertToFolderResponse(result.Credential.Folder),
+		ID:     result.Credential.ID,
+		Title:  result.Credential.Title,
+		Tags:   ConvertToTagResponses(result.Credential.Tags),
+		Folder: ConvertToFolderResponse(result.Credential.Folder),
 	}, nil
 }
 
@@ -64,7 +64,7 @@ func (s *CredentialService) GetCredential(req GetCredentialRequest) (*Credential
 	}
 
 	// Get the credential
-	result, err := s.credentialRepo.GetCredential(credential.GetCredentialQuery{
+	result, err := s.credentialRepo.Get(credential.GetCredentialQuery{
 		ID: req.ID,
 	})
 	if err != nil {
@@ -79,23 +79,22 @@ func (s *CredentialService) GetCredential(req GetCredentialRequest) (*Credential
 }
 
 // UpdateCredential updates an existing credential
-func (s *CredentialService) UpdateCredential(req UpdateCredentialRequest) (*CredentialResponse, error) {
+func (s *CredentialService) UpdateCredential(req UpdateCredentialRequest) error {
 	if req.ID == "" {
-		return nil, ErrInvalidRequest
+		return ErrInvalidRequest
 	}
 
 	// Update the credential
-	updateResult, err := s.credentialRepo.UpdateCredential(credential.UpdateCredentialQuery{
-		ID:       &req.ID,
-		Title:    &req.Title,
-		FolderId: &req.FolderID,
+	// To Do: retrieve folder
+	err := s.credentialRepo.Update(credential.UpdateCredentialQuery{
+		ID:    req.ID,
+		Title: &req.Title,
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	response := ConvertToCredentialResponse(updateResult.Credential)
-	return &response, nil
+	return nil
 }
 
 // DeleteCredential deletes a credential by ID
@@ -105,7 +104,7 @@ func (s *CredentialService) DeleteCredential(req DeleteCredentialRequest) error 
 	}
 
 	// Delete the credential
-	return s.credentialRepo.DeleteCredential(credential.DeleteCredentialQuery{
+	return s.credentialRepo.Delete(credential.DeleteCredentialQuery{
 		ID: req.ID,
 	})
 }
@@ -126,7 +125,7 @@ func (s *CredentialService) SearchCredentials(req SearchCredentialsRequest) (*Se
 	}
 
 	folderIds := make([]string, len(userResult.User.Folders))
-	
+
 	for _, folder := range userResult.User.Folders {
 		folderIds = append(folderIds, folder.ID)
 	}
@@ -182,7 +181,7 @@ func (s *CredentialService) AddTagsToCredential(credentialID string, tagIDs []st
 		return ErrInvalidRequest
 	}
 	// Call the repository method to add tags
-	return s.credentialRepo.AddTagsToCredential(credential.AddTagsToCredentialQuery{
+	return s.credentialRepo.AddTags(credential.AddTagsToCredentialQuery{
 		ID:     credentialID,
 		TagIds: tagIDs,
 	})
@@ -194,7 +193,7 @@ func (s *CredentialService) RemoveTagsFromCredential(req RemoveTagsFromCredentia
 	if req.ID == "" {
 		return ErrInvalidRequest
 	}
-	return s.credentialRepo.RemoveTagsFromCredential(credential.RemoveTagsFromCredentialQuery{
+	return s.credentialRepo.RemoveTags(credential.RemoveTagsFromCredentialQuery{
 		ID:     req.ID,
 		TagIds: req.TagIds,
 	})
