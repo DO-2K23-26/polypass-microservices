@@ -2,6 +2,8 @@ package infrastructure
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 	"sync"
 
@@ -90,6 +92,45 @@ func (e *ElasticAdapter) createIndexIfNotExists(indexName string, mapping map[st
 		log.Println("Index", indexName, "was created")
 	} else {
 		log.Println("Index", indexName, "already exists")
+	}
+	return nil
+}
+
+func (e *ElasticAdapter) GetDocument(indexName string, documentId string, document any) error {
+	res, err := e.Client.Get(indexName, documentId).Do(context.Background())
+	if err != nil {
+		return fmt.Errorf("error getting document ID=%s: %w", documentId, err)
+	}
+	if !res.Found { // Document not found
+		return fmt.Errorf("document ID=%s not found", documentId)
+	}
+
+	if err := json.Unmarshal(res.Source_, document); err != nil {
+		return fmt.Errorf("error unmarshalling document ID=%s: %w", documentId, err)
+	}
+	return nil
+}
+
+func (e *ElasticAdapter) CreateDocument(indexName string, documentId string, document any) error {
+	_, err := e.Client.Index(indexName).Id(documentId).Request(document).Do(context.Background())
+	if err != nil {
+		return fmt.Errorf("error creating document in index %s ID=%s: %w", indexName, documentId, err)
+	}
+	return nil
+}
+
+func (e *ElasticAdapter) UpdateDocument(indexName string, documentId string, document any) error {
+	_, err := e.Client.Update(indexName, documentId).Doc(document).Do(context.Background())
+	if err != nil {
+		return fmt.Errorf("error updating document in index %s ID=%s: %w", indexName, documentId, err)
+	}
+	return nil
+}
+
+func (e *ElasticAdapter) DeleteDocument(indexName string, documentId string) error {
+	_, err := e.Client.Delete(indexName, documentId).Do(context.Background())
+	if err != nil {
+		return fmt.Errorf("error deleting document in index %s ID=%s: %w", indexName, documentId, err)
 	}
 	return nil
 }

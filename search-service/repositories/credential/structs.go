@@ -6,7 +6,7 @@ type CreateCredentialQuery struct {
 	ID     string            `json:"id"`
 	Title  string            `json:"title"`
 	Tags   []types.Tag       `json:"tags"`
-	Folder *types.FolderTest `json:"folder"`
+	Folder *types.Folder `json:"folder"`
 }
 
 type CreateCredentialResult struct {

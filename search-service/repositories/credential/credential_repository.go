@@ -34,18 +34,18 @@ func NewCredentialRepository(esClient infrastructure.ElasticAdapter) ICredential
 
 // Function to write a credential to elasticsearch
 func (c CredentialRepository) Create(query CreateCredentialQuery) (*CreateCredentialResult, error) {
-
-	_, err := c.esClient.Client.Index(types.CredentialIndex).Id(query.ID).Request(query).Do(context.Background())
-	if err != nil {
-		return nil, fmt.Errorf("error indexing document ID=%s: %w", query.ID, err)
+	credential := types.Credential{
+		ID:     query.ID,
+		Title:  query.Title,
+		Tags:   query.Tags,
+		Folder: query.Folder,
 	}
-
+	err := c.esClient.CreateDocument(types.CredentialIndex, credential.ID, credential)
+	if err != nil {
+		return nil, err
+	}
 	return &CreateCredentialResult{
-		Credential: types.Credential{
-			ID:    query.ID,
-			Title: query.Title,
-			Tags:  query.Tags,
-		},
+		Credential: credential,
 	}, nil
 }
 
@@ -54,18 +54,11 @@ func (c CredentialRepository) Get(query GetCredentialQuery) (*GetCredentialResul
 	if query.ID == "" {
 		return nil, fmt.Errorf("ID is required")
 	}
-
-	res, err := c.esClient.Client.Get(types.CredentialIndex, query.ID).Do(context.Background())
-	if err != nil {
-		return nil, fmt.Errorf("error getting document ID=%s: %w", query.ID, err)
-	}
-	if !res.Found { // Document not found
-		return nil, fmt.Errorf("document ID=%s not found", query.ID)
-	}
-
 	var credential types.Credential
-	if err := json.Unmarshal(res.Source_, &credential); err != nil {
-		return nil, fmt.Errorf("error unmarshalling document ID=%s: %w", query.ID, err)
+
+	err := c.esClient.GetDocument(types.CredentialIndex, query.ID, &credential)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting folder: %w", err)
 	}
 
 	return &GetCredentialResult{
@@ -146,8 +139,7 @@ func (c CredentialRepository) AddTags(query AddTagsToCredentialQuery) error {
 }
 
 func (c CredentialRepository) Delete(query DeleteCredentialQuery) error {
-	_, err := c.esClient.Client.Delete(types.CredentialIndex, query.ID).Do(context.Background())
-	return err
+	return c.esClient.DeleteDocument(types.CredentialIndex, query.ID)
 }
 
 func (c CredentialRepository) RemoveTags(query RemoveTagsFromCredentialQuery) error {
@@ -156,10 +148,11 @@ func (c CredentialRepository) RemoveTags(query RemoveTagsFromCredentialQuery) er
 
 // UpdateCredential implements ICredentialRepository.
 func (c CredentialRepository) Update(query UpdateCredentialQuery) error {
-	_, err := c.esClient.Client.Update(types.CredentialIndex, query.ID).Doc(types.Credential{
+	updateCredential := types.Credential{
 		Title:  *query.Title,
 		Folder: query.Folder,
-	}).Do(context.Background())
+	}
+	err := c.esClient.UpdateDocument(types.CredentialIndex, query.ID, updateCredential)
 	if err != nil {
 		return err
 	}

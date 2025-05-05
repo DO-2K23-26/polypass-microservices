@@ -1,8 +1,6 @@
 package folder
 
 import (
-	"database/sql"
-
 	"github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/infrastructure"
 	"gorm.io/gorm"
@@ -22,12 +20,9 @@ func NewEsSqlFolderRepository(sqlDb *infrastructure.GormAdapter, esDb *infrastru
 // CreateFolder implements FolderRepository.
 func (e *EsSqlFolderRepository) CreateFolder(query CreateFolderQuery) (*CreateFolderResult, error) {
 	createdFolder := types.Folder{
-		ID:   query.ID,
-		Name: query.Name,
-		ParentID: sql.NullString{
-			String: query.ParentID,
-			Valid:  query.ParentID != "",
-		},
+		ID:       query.ID,
+		Name:     query.Name,
+		ParentID: &query.ParentID,
 	}
 	if err := e.sql.Db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(createdFolder).Error; err != nil {
