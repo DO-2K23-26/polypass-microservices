@@ -3,9 +3,9 @@ package credential
 import "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 
 type CreateCredentialQuery struct {
-	ID     string        `json:"id"`
-	Title  string        `json:"title"`
-	Tags   []types.Tag   `json:"tags"`
+	ID     string            `json:"id"`
+	Title  string            `json:"title"`
+	Tags   []types.Tag       `json:"tags"`
 	Folder *types.FolderTest `json:"folder"`
 }
 
@@ -14,10 +14,9 @@ type CreateCredentialResult struct {
 }
 
 type UpdateCredentialQuery struct {
-	ID       *string     `json:"id"`
-	Title    *string     `json:"title"`
-	Tags     []types.Tag `json:"tags"`
-	FolderId *string     `json:"folder_id"`
+	ID     string       `json:"id"`
+	Title  *string       `json:"title"`
+	Folder *types.Folder `json:"folder"`
 }
 
 type UpdateCredentialResult struct {

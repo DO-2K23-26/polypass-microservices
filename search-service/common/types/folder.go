@@ -16,8 +16,8 @@ type Folder struct {
 }
 
 type FolderTest struct {
-	ID       string         `json:"id"  gorm:"primaryKey"`
-	Name     string         `json:"name"`
+	ID       string  `json:"id"  gorm:"primaryKey"`
+	Name     string  `json:"name"`
 	ParentID *string `json:"parent_id"`
 }
 
