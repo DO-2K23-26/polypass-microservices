@@ -1,15 +1,12 @@
 package credential
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 
 	types "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/infrastructure"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	esTypes "github.com/elastic/go-elasticsearch/v8/typedapi/types"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/textquerytype"
 )
 
 type ICredentialRepository interface {
@@ -79,56 +76,36 @@ func (c CredentialRepository) Search(query SearchCredentialQuery) (*SearchCreden
 	}
 
 	searchOnFields := []string{"title^2", "tags.name"}
-	filters := []esTypes.Query{}
+	filter := esTypes.Query{}
 
 	if query.FoldersScope == nil || (query.FoldersScope != nil && len(*query.FoldersScope) == 0) {
 		searchOnFields = append(searchOnFields, "folder.name")
 	} else {
-		filters = append(filters, esTypes.Query{
+		filter = esTypes.Query{
 			Terms: &esTypes.TermsQuery{ // Filter on folder scopes.
 				TermsQuery: map[string]esTypes.TermsQueryField{
 					"folder.id": *query.FoldersScope,
 				},
 			},
-		})
+		}
 	}
 	// Construct the search query
-	searchQuery := c.esClient.Client.Search().Index(types.CredentialIndex).Request(&search.Request{
-		Query: &esTypes.Query{
-			Bool: &esTypes.BoolQuery{
-				Must: []esTypes.Query{
-					{
-						MultiMatch: &esTypes.MultiMatchQuery{
-							Query:  query.SearchQuery,
-							Fields: searchOnFields,
-							Type:   &textquerytype.Phraseprefix, // To match on parts of words (instead of whole words).
-						},
-					},
-				},
-				Filter: filters,
-			},
-		},
-		From: &offset,
-		Size: &limit,
-	})
+	res, total, err := c.esClient.Search(types.CredentialIndex, query.SearchQuery, searchOnFields, filter)
 
-	// Execute the search query
-	res, err := searchQuery.Do(context.Background())
-	if err != nil {
-		return nil, fmt.Errorf("error executing search query: %w", err)
-	}
-
+	result := make([]types.Credential, *total)
 	// Parse the search results
-	credentials := make([]types.Credential, len(res.Hits.Hits))
-	for i, hit := range res.Hits.Hits {
-		if err := json.Unmarshal(hit.Source_, &credentials[i]); err != nil {
+	for i, hit := range res {
+		if err := json.Unmarshal(hit, &result[i]); err != nil {
 			return nil, fmt.Errorf("error unmarshalling hit source: %w", err)
 		}
 	}
+	if err != nil {
+		return nil, err
+	}
 
 	return &SearchCredentialResult{
-		Credentials: credentials,
-		Total:       int(res.Hits.Total.Value),
+		Credentials: result,
+		Total:       *total,
 		Limit:       limit,
 		Offset:      offset,
 	}, nil

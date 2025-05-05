@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	// "log"
 	"os"
 
 	"github.com/DO-2K23-26/polypass-microservices/search-service/app"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/config"
+	// "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/credential"
 )
 
 func main() {
@@ -23,7 +25,13 @@ func main() {
 		fmt.Printf("Failed to initialize the application: %v\n", err)
 		os.Exit(1)
 	}
-
+	// test:= *app.CredentialRepository
+	// res,err := test.Search(credential.SearchCredentialQuery{ SearchQuery: "je suis"})
+	// if err != nil {
+	// 	panic(err)
+	// } else {
+	// 	log.Println("result in main :",res.Credentials)
+	// }
 	err = app.Start()
 	if err != nil {
 		fmt.Printf("Failed to start the application: %v\n", err)

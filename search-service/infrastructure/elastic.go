@@ -9,8 +9,10 @@ import (
 
 	commonTypes "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/indices/create"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/textquerytype"
 )
 
 type ElasticAdapter struct {
@@ -133,4 +135,41 @@ func (e *ElasticAdapter) DeleteDocument(indexName string, documentId string) err
 		return fmt.Errorf("error deleting document in index %s ID=%s: %w", indexName, documentId, err)
 	}
 	return nil
+}
+
+func (e *ElasticAdapter) Search(indexName, searchQueryString string, searchOnField []string,filters ...types.Query) ([]json.RawMessage, *int, error) {
+	if len(filters) != 0 {
+		filters= []types.Query{}
+	}
+	searchQuery := e.Client.Search().Index(indexName).Request(&search.Request{
+		Query: &types.Query{
+			Bool: &types.BoolQuery{
+				Must: []types.Query{
+					{
+						MultiMatch: &types.MultiMatchQuery{
+							Query:  searchQueryString,
+							Fields: searchOnField,
+							Type:   &textquerytype.Phraseprefix,
+						},
+					},
+				},
+				Filter: filters, // Add actual filters if needed
+			},
+		},
+	})
+
+	// Execute the search query
+	res, err := searchQuery.Do(context.Background())
+	if err != nil {
+		return nil, nil, fmt.Errorf("error executing search query: %w", err)
+	}
+
+	totalHits := int(res.Hits.Total.Value)
+	result := make([]json.RawMessage, 0, totalHits)
+	// Parse the search results
+	hits := res.Hits.Hits
+	for _, hit := range hits {
+		result = append(result, hit.Source_)
+	}
+	return result, &totalHits, nil
 }
