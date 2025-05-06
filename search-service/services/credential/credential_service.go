@@ -183,7 +183,7 @@ func (s *CredentialService) AddTagsToCredential(credentialID string, tagIDs []st
 	// Call the repository method to add tags
 	return s.credentialRepo.AddTags(credential.AddTagsToCredentialQuery{
 		ID:     credentialID,
-		TagIds: tagIDs,
+		// TagIds: tagIDs,
 	})
 
 }

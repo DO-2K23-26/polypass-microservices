@@ -137,23 +137,38 @@ func (e *ElasticAdapter) DeleteDocument(indexName string, documentId string) err
 	return nil
 }
 
-func (e *ElasticAdapter) Search(indexName, searchQueryString string, searchOnField []string,filters ...types.Query) ([]json.RawMessage, *int, error) {
-	if len(filters) != 0 {
-		filters= []types.Query{}
+func (e *ElasticAdapter) Search(
+	indexName, searchQueryString string,
+	searchOnField []string,
+	filters []types.Query,
+	additionalQueries ...types.Query,
+) ([]json.RawMessage, *int, error) {
+	queries := []types.Query{
+		{
+			MultiMatch: &types.MultiMatchQuery{
+				Query:  searchQueryString,
+				Fields: searchOnField,
+				Type:   &textquerytype.Phraseprefix,
+			},
+		},
 	}
+
+	if additionalQueries == nil || len(additionalQueries) == 0 {
+		additionalQueries = []types.Query{}
+		for _, query := range additionalQueries {
+			queries = append(queries, query)
+		}
+
+	}
+
+	// Building the base query with the field to search on and the search Query
+
 	searchQuery := e.Client.Search().Index(indexName).Request(&search.Request{
 		Query: &types.Query{
 			Bool: &types.BoolQuery{
-				Must: []types.Query{
-					{
-						MultiMatch: &types.MultiMatchQuery{
-							Query:  searchQueryString,
-							Fields: searchOnField,
-							Type:   &textquerytype.Phraseprefix,
-						},
-					},
-				},
-				Filter: filters, // Add actual filters if needed
+				Should:             queries,
+				MinimumShouldMatch: 1,
+				Filter:             filters,
 			},
 		},
 	})
