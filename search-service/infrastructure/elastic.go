@@ -155,19 +155,25 @@ func (e *ElasticAdapter) Search(
 
 	if additionalQueries == nil || len(additionalQueries) == 0 {
 		additionalQueries = []types.Query{}
-		for _, query := range additionalQueries {
-			queries = append(queries, query)
-		}
 
+	} else {
+		fmt.Println("test")
+
+		for _, query := range additionalQueries {
+			if !isEmptyQuery(query) {
+				queries = append(queries, query)
+			}
+}
 	}
+	// fmt.Printf("%#v\n", queries)
 
 	// Building the base query with the field to search on and the search Query
-
+	minShould := "1"
 	searchQuery := e.Client.Search().Index(indexName).Request(&search.Request{
 		Query: &types.Query{
 			Bool: &types.BoolQuery{
 				Should:             queries,
-				MinimumShouldMatch: 1,
+				MinimumShouldMatch: &minShould,
 				Filter:             filters,
 			},
 		},
@@ -175,7 +181,9 @@ func (e *ElasticAdapter) Search(
 
 	// Execute the search query
 	res, err := searchQuery.Do(context.Background())
+
 	if err != nil {
+
 		return nil, nil, fmt.Errorf("error executing search query: %w", err)
 	}
 
@@ -187,4 +195,16 @@ func (e *ElasticAdapter) Search(
 		result = append(result, hit.Source_)
 	}
 	return result, &totalHits, nil
+}
+
+
+func isEmptyQuery(q types.Query) bool {
+	// You can expand this if you support more query types
+	return q.Match == nil &&
+		q.MultiMatch == nil &&
+		q.Nested == nil &&
+		q.Term == nil &&
+		q.Terms == nil &&
+		q.Range == nil &&
+		q.Bool == nil
 }

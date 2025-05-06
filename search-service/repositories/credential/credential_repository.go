@@ -136,7 +136,9 @@ func (c CredentialRepository) Search(query SearchCredentialQuery) (*SearchCreden
 		filters,
 		additionalQuery,
 	)
-
+	if err != nil {
+		return nil, err
+	}
 	result := make([]types.Credential, *total)
 	// Parse the search results
 	for i, hit := range res {
@@ -144,10 +146,6 @@ func (c CredentialRepository) Search(query SearchCredentialQuery) (*SearchCreden
 			return nil, fmt.Errorf("error unmarshalling hit source: %w", err)
 		}
 	}
-	if err != nil {
-		return nil, err
-	}
-
 	return &SearchCredentialResult{
 		Credentials: result,
 		Total:       *total,
