@@ -77,18 +77,15 @@ func (s *TagService) UpdateTag(req UpdateTagRequest) (*TagResponse, error) {
 		return nil, ErrInvalidRequest
 	}
 
-	result, err := s.tagRepo.Update(tags.UpdateTagQuery{
-		ID:   req.ID,
-		Name: normalizedName,
-	})
-	if err != nil {
-		return nil, err
-	}
+	// result, err := s.tagRepo.Update(tags.UpdateTagQuery{
+	// 	ID:   req.ID,
+	// 	Name: normalizedName,
+	// })
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	return &TagResponse{
-		ID:   result.Tag.ID,
-		Name: result.Tag.Name,
-	}, nil
+	return nil, nil
 }
 
 // DeleteTag deletes a tag by ID

@@ -21,8 +21,9 @@ type CreateTagResult struct {
 }
 
 type UpdateTagQuery struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID       string `json:"id"`
+	Name     *string `json:"name"`
+	FolderId *string
 }
 
 type UpdateTagResult struct {

@@ -139,13 +139,23 @@ func (e *ElasticAdapter) DeleteDocument(indexName string, documentId string) err
 	return nil
 }
 
-func (e *ElasticAdapter) UpdateByQuery(indexName string, query types.Query,script string) error {
+// The params props correspond to the params you need to pass to the script
+func (e *ElasticAdapter) UpdateByQuery(
+	indexName string,
+	query types.Query,
+	script string,
+	params *map[string]json.RawMessage,
+) error {
+	scriptPainless := &types.Script{
+		Lang:   &scriptlanguage.Painless,
+		Source: &script,
+	}
+	if params != nil {
+		scriptPainless.Params = *params
+	}
 	_, err := e.Client.UpdateByQuery(indexName).Request(&updatebyquery.Request{
-		Script: &types.Script{
-			Lang:&scriptlanguage.Painless,
-			Source: &script,
-		},
-		Query: &query,
+		Script: scriptPainless,
+		Query:  &query,
 	}).Do(context.Background())
 	if err != nil {
 		return fmt.Errorf("error executing delete by query in index %s: %w", indexName, err)

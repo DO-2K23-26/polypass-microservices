@@ -7,6 +7,8 @@ import (
 
 	"github.com/DO-2K23-26/polypass-microservices/search-service/app"
 	// "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
+
+	// "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/credential"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/tags"
 
@@ -35,34 +37,43 @@ func main() {
 	credRepo := *app.CredentialRepository
 
 	// credRepo.Create(credential.CreateCredentialQuery{
-	// 	ID:    "cred1",
+	// 	ID:    "cred2",
 	// 	Title: "test cred",
 	// 	Tags: []types.Tag{{
-	// 		ID:       "tagtest1",
+	// 		ID:       "tagtest2",
 	// 		Name:     "Deletable tag",
 	// 		FolderId: "folder",
 	// 	}},
 	// })
 
 	// _, err = tagRepo.Create(tags.CreateTagQuery{
-	// 	ID:       "tagtest1",
+	// 	ID:       "tagtest2",
 	// 	Name:     "Deletable tag",
 	// 	FolderID: "folder",
 	// })
+	res, err := credRepo.Get(credential.GetCredentialQuery{ID: "cred2"})
+	if err != nil {
+		panic(err)
+	} else {
+		log.Println(res)
+	}
+	
+	// newName := "newName"
+	newFolder := "zizi2"
 
-	err = tagRepo.Delete(tags.DeleteTagQuery{ID: "tagtest1"})
+	err = tagRepo.Update(tags.UpdateTagQuery{ID: "tagtest2", FolderId: &newFolder })
 	if err != nil {
 		panic(err)
 	}
 
-	res, err := credRepo.Get(credential.GetCredentialQuery{ID: "cred1"})
+	res, err = credRepo.Get(credential.GetCredentialQuery{ID: "cred2"})
 	if err != nil {
 		panic(err)
 	} else {
 		log.Println(res)
 	}
 
-	restag, err := tagRepo.Get(tags.GetTagQuery{ID: "tagtest1"})
+	restag, err := tagRepo.Get(tags.GetTagQuery{ID: "tagtest2"})
 	if err != nil {
 		panic(err)
 	} else {

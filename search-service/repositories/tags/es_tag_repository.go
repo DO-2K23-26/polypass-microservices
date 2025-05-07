@@ -53,18 +53,64 @@ func (r *ESTagRepository) Get(query GetTagQuery) (*GetTagResult, error) {
 }
 
 // UpdateTag updates an existing tag in Elasticsearch
-func (r *ESTagRepository) Update(query UpdateTagQuery) (*UpdateTagResult, error) {
-	updateTag := types.Tag{
-		ID:   query.ID,
-		Name: query.Name,
-	}
-	err := r.esClient.UpdateDocument(types.TagIndex, query.ID, updateTag)
+// Will only update the field that are passed in the query
+func (r *ESTagRepository) Update(query UpdateTagQuery) error {
+	err := r.esClient.UpdateDocument(types.TagIndex, query.ID, query)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &UpdateTagResult{
-		Tag: &updateTag,
-	}, nil
+
+	// Update the tag in all credentials
+	script := `
+if (ctx._source.tags != null) {
+  for (tag in ctx._source.tags) {
+    if (tag.id == params.tag_id) {
+      if (params.containsKey('new_name') && params.new_name != null) {
+        tag.name = params.new_name;
+      }
+      if (params.containsKey('new_folder_id') && params.new_folder_id != null) {
+        tag.folder_id = params.new_folder_id;
+      }
+    }
+  }
+}`
+	updateQuery := esTypes.Query{
+		Nested: &esTypes.NestedQuery{
+			Path: "tags",
+			Query: esTypes.Query{
+				Term: map[string]esTypes.TermQuery{
+					"tags.id": {Value: query.ID},
+				},
+			},
+		},
+	}
+	params := make(map[string]json.RawMessage)
+
+	// Always include tag_id
+	
+	tagIDJson, _ := json.Marshal(query.ID)
+	params["tag_id"] = tagIDJson
+
+	// Optional fields
+	if query.Name != nil {
+		newNameJson, _ := json.Marshal(*query.Name)
+		params["new_name"] = newNameJson
+	}
+
+	if query.FolderId != nil {
+		newFolderIDJson, _ := json.Marshal(*query.FolderId)
+		params["new_folder_id"] = newFolderIDJson
+	}
+	err = r.esClient.UpdateByQuery(
+		types.CredentialIndex,
+		updateQuery,
+		script,
+		&params,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // DeleteTag deletes a tag by ID from Elasticsearch
@@ -76,7 +122,7 @@ func (r *ESTagRepository) Delete(query DeleteTagQuery) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Remove all the occurence of the tag inside the credential index
 
 	script := fmt.Sprintf(`
@@ -94,7 +140,13 @@ func (r *ESTagRepository) Delete(query DeleteTagQuery) error {
 			},
 		},
 	}
-	err = r.esClient.UpdateByQuery(types.CredentialIndex, updateQuery, script)
+
+	err = r.esClient.UpdateByQuery(
+		types.CredentialIndex,
+		updateQuery,
+		script,
+		nil,
+	)
 	if err != nil {
 		return err
 	}
