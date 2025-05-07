@@ -10,7 +10,9 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/http"
 	credentialRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/credential"
 	folderRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/folder"
+	tagRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/tags"
 	userRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
+
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/health"
 
 	"sync"
@@ -23,6 +25,7 @@ type App struct {
 	UserRepository       *userRepository.GormUserRepository
 	FolderRepository     *folderRepository.EsSqlFolderRepository
 	CredentialRepository *credentialRepository.ICredentialRepository
+	TagRepository        *tagRepository.ITagRepository
 	GrpcServer           *grpc.Server
 	HttpServer           *http.Server
 }
@@ -55,7 +58,7 @@ func NewApp(Config config.Config) (*App, error) {
 	userRepository := userRepository.NewGormUserRepository(gormClient.Db)
 	folderRepository := folderRepository.NewEsSqlFolderRepository(gormClient, esClient)
 	credentialRepository := credentialRepository.NewCredentialRepository(*esClient)
-
+	tagRepository := tagRepository.NewESTagRepository(*esClient)
 	return &App{
 		Config:               Config,
 		esClient:             esClient,
@@ -64,6 +67,7 @@ func NewApp(Config config.Config) (*App, error) {
 		HttpServer:           HttpServer,
 		UserRepository:       userRepository,
 		FolderRepository:     folderRepository,
+		TagRepository:        &tagRepository,
 		CredentialRepository: &credentialRepository,
 	}, nil
 }
@@ -71,7 +75,7 @@ func (app *App) Init() error {
 	if err := app.esClient.CreateIndexes(); err != nil {
 		log.Println("Could not create elastic indexes:", err)
 		return err
-		
+
 	}
 	if err := app.gormClient.Migrate(); err != nil {
 		log.Println("Could not migrate database:", err)

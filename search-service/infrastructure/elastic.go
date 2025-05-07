@@ -10,8 +10,10 @@ import (
 	commonTypes "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/updatebyquery"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/indices/create"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/scriptlanguage"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/textquerytype"
 )
 
@@ -137,6 +139,20 @@ func (e *ElasticAdapter) DeleteDocument(indexName string, documentId string) err
 	return nil
 }
 
+func (e *ElasticAdapter) UpdateByQuery(indexName string, query types.Query,script string) error {
+	_, err := e.Client.UpdateByQuery(indexName).Request(&updatebyquery.Request{
+		Script: &types.Script{
+			Lang:&scriptlanguage.Painless,
+			Source: &script,
+		},
+		Query: &query,
+	}).Do(context.Background())
+	if err != nil {
+		return fmt.Errorf("error executing delete by query in index %s: %w", indexName, err)
+	}
+	return nil
+}
+
 func (e *ElasticAdapter) Search(
 	indexName, searchQueryString string,
 	searchOnField []string,
@@ -157,15 +173,12 @@ func (e *ElasticAdapter) Search(
 		additionalQueries = []types.Query{}
 
 	} else {
-		fmt.Println("test")
-
 		for _, query := range additionalQueries {
 			if !isEmptyQuery(query) {
 				queries = append(queries, query)
 			}
-}
+		}
 	}
-	// fmt.Printf("%#v\n", queries)
 
 	// Building the base query with the field to search on and the search Query
 	minShould := "1"
@@ -183,7 +196,6 @@ func (e *ElasticAdapter) Search(
 	res, err := searchQuery.Do(context.Background())
 
 	if err != nil {
-
 		return nil, nil, fmt.Errorf("error executing search query: %w", err)
 	}
 
@@ -196,7 +208,6 @@ func (e *ElasticAdapter) Search(
 	}
 	return result, &totalHits, nil
 }
-
 
 func isEmptyQuery(q types.Query) bool {
 	// You can expand this if you support more query types

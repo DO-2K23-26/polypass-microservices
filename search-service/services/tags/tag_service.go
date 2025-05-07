@@ -146,7 +146,7 @@ func (s *TagService) SearchTags(req SearchTagsRequest) (*SearchTagsResponse, err
 	}
 	
 	// Perform the search
-	searchResult, err := s.tagRepo.SearchTags(tags.SearchTagQuery{
+	searchResult, err := s.tagRepo.Search(tags.SearchTagQuery{
 		Name:         req.Name,
 		FolderId:     req.FolderID,
 		Limit:        &limit,

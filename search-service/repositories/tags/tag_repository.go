@@ -5,5 +5,5 @@ type ITagRepository interface {
 	Create(query CreateTagQuery) (*CreateTagResult, error)
 	Update(query UpdateTagQuery) (*UpdateTagResult, error)
 	Delete(query DeleteTagQuery) error
-	SearchTags(query SearchTagQuery) (*SearchTagResult, error)
+	Search(query SearchTagQuery) (*SearchTagResult, error)
 }

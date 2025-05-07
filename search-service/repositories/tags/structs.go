@@ -11,7 +11,9 @@ type GetTagResult struct {
 }
 
 type CreateTagQuery struct {
-	Name string `json:"name"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	FolderID string `json:"folder_id"`
 }
 
 type CreateTagResult struct {
@@ -32,10 +34,10 @@ type DeleteTagQuery struct {
 }
 
 type SearchTagQuery struct {
-	Name         string  `json:"name,omitempty"`
-	FolderId     *string `json:"folder_id,omitempty"`
-	Limit        *int    `json:"limit,omitempty"`         // Limit is the maximum number of results to return.
-	Offset       *int    `json:"offset,omitempty"`        // Offset is the number of results to skip.
+	Name         string    `json:"name,omitempty"`
+	FolderId     *string   `json:"folder_id,omitempty"`
+	Limit        *int      `json:"limit,omitempty"`         // Limit is the maximum number of results to return.
+	Offset       *int      `json:"offset,omitempty"`        // Offset is the number of results to skip.
 	FoldersScope *[]string `json:"folders_scope,omitempty"` // The folders that the user making the request can access
 }
 

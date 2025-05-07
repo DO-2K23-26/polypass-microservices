@@ -17,6 +17,8 @@ type UpdateFolderQuery struct {
 	Name string `json:"name"`
 }
 
+
+
 type UpdateFolderResult struct {
 	Folder types.Folder `json:"folder"`
 }
