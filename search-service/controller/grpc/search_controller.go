@@ -49,7 +49,7 @@ func (s *SearchController) SearchFolders(ctx context.Context, req *api.SearchFol
 	}
 
 	// Call service
-	result, err := s.folderService.SearchFolders(serviceReq)
+	result, err := s.folderService.Search(serviceReq)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func (s *SearchController) SearchCredentials(ctx context.Context, req *api.Searc
 	}
 
 	// Call service
-	result, err := s.credentialService.SearchCredentials(serviceReq)
+	result, err := s.credentialService.Search(serviceReq)
 	if err != nil {
 		return nil, err
 	}

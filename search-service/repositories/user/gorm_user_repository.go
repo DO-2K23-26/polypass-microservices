@@ -11,7 +11,7 @@ type GormUserRepository struct {
 	DB *gorm.DB
 }
 
-func NewGormUserRepository(db *gorm.DB) *GormUserRepository {
+func NewGormUserRepository(db *gorm.DB) IUserRepository {
 	return &GormUserRepository{
 		DB: db,
 	}
@@ -114,5 +114,20 @@ func (r *GormUserRepository) RemoveFolderAccess(query RemoveFolderAccessQuery) (
 
 	return &RemoveFolderAccessResult{
 		User: user,
+	}, nil
+}
+
+
+func (r *GormUserRepository) GetFolders(query GetFoldersQuery) (*GetFoldersResult, error) {
+	var user types.User
+	if err := r.DB.Preload("Folders").Where("id = ?", query.UserID).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+
+	return &GetFoldersResult{
+		Folders: user.Folders,
 	}, nil
 }

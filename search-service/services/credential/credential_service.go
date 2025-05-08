@@ -4,8 +4,10 @@ import (
 	"errors"
 	"slices"
 
+	"github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/credential"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
+	"github.com/DO-2K23-26/polypass-microservices/search-service/services/folder"
 )
 
 var (
@@ -19,6 +21,7 @@ var (
 
 type CredentialService struct {
 	credentialRepo credential.ICredentialRepository
+	folderService  folder.FolderService
 	userRepo       user.IUserRepository
 }
 
@@ -33,17 +36,18 @@ func NewCredentialService(
 }
 
 // CreateCredential creates a new credential
-func (s *CredentialService) CreateCredential(req CreateCredentialRequest) (*CredentialResponse, error) {
+func (s *CredentialService) Create(req CreateCredentialRequest) (*CredentialResponse, error) {
 	// Validate required fields
 	if req.Title == "" || req.FolderID == "" || req.ID == "" {
 		return nil, ErrInvalidRequest
 	}
 
+	s.folderService.Get(folder.GetFolderRequest{})
 	// Create the credential
 	result, err := s.credentialRepo.Create(credential.CreateCredentialQuery{
-		ID:    req.ID,
-		Title: req.Title,
-		// FolderId: req.FolderID,
+		ID:     req.ID,
+		Title:  req.Title,
+		Folder: &types.Folder{},
 	})
 	if err != nil {
 		return nil, err
@@ -58,7 +62,7 @@ func (s *CredentialService) CreateCredential(req CreateCredentialRequest) (*Cred
 }
 
 // GetCredential retrieves a credential by ID
-func (s *CredentialService) GetCredential(req GetCredentialRequest) (*CredentialResponse, error) {
+func (s *CredentialService) Get(req GetCredentialRequest) (*CredentialResponse, error) {
 	if req.ID == "" {
 		return nil, ErrInvalidRequest
 	}
@@ -79,7 +83,7 @@ func (s *CredentialService) GetCredential(req GetCredentialRequest) (*Credential
 }
 
 // UpdateCredential updates an existing credential
-func (s *CredentialService) UpdateCredential(req UpdateCredentialRequest) error {
+func (s *CredentialService) Update(req UpdateCredentialRequest) error {
 	if req.ID == "" {
 		return ErrInvalidRequest
 	}
@@ -98,7 +102,7 @@ func (s *CredentialService) UpdateCredential(req UpdateCredentialRequest) error 
 }
 
 // DeleteCredential deletes a credential by ID
-func (s *CredentialService) DeleteCredential(req DeleteCredentialRequest) error {
+func (s *CredentialService) Delete(req DeleteCredentialRequest) error {
 	if req.ID == "" {
 		return ErrInvalidRequest
 	}
@@ -110,7 +114,7 @@ func (s *CredentialService) DeleteCredential(req DeleteCredentialRequest) error 
 }
 
 // SearchCredentials searches for credentials based on criteria
-func (s *CredentialService) SearchCredentials(req SearchCredentialsRequest) (*SearchCredentialsResponse, error) {
+func (s *CredentialService) Search(req SearchCredentialsRequest) (*SearchCredentialsResponse, error) {
 	if req.UserID == "" {
 		return nil, ErrInvalidRequest
 	}
@@ -175,21 +179,21 @@ func (s *CredentialService) SearchCredentials(req SearchCredentialsRequest) (*Se
 }
 
 // AddTagsToCredential adds tags to a credential (this would need a new repository method)
-func (s *CredentialService) AddTagsToCredential(credentialID string, tagIDs []string) error {
+func (s *CredentialService) AddTags(credentialID string, tagIDs []string) error {
 	// Validate input
 	if credentialID == "" {
 		return ErrInvalidRequest
 	}
 	// Call the repository method to add tags
 	return s.credentialRepo.AddTags(credential.AddTagsToCredentialQuery{
-		ID:     credentialID,
+		ID: credentialID,
 		// TagIds: tagIDs,
 	})
 
 }
 
 // RemoveTagsFromCredential removes tags from a credential (this would need a new repository method)
-func (s *CredentialService) RemoveTagsFromCredential(req RemoveTagsFromCredentialRequest) error {
+func (s *CredentialService) RemoveTags(req RemoveTagsFromCredentialRequest) error {
 	if req.ID == "" {
 		return ErrInvalidRequest
 	}
