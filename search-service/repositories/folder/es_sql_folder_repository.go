@@ -3,6 +3,7 @@ package folder
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 
 	esTypes "github.com/elastic/go-elasticsearch/v8/typedapi/types"
 
@@ -25,15 +26,21 @@ func NewEsSqlFolderRepository(sqlDb *infrastructure.GormAdapter, esDb *infrastru
 // CreateFolder implements FolderRepository.
 func (e *EsSqlFolderRepository) Create(query CreateFolderQuery) (*CreateFolderResult, error) {
 	createdFolder := types.Folder{
-		ID:       query.ID,
-		Name:     query.Name,
-		ParentID: &query.ParentID,
+		ID:   query.ID,
+		Name: query.Name,
+	}
+
+	if query.ParentID != nil {
+		createdFolder.ParentID = query.ParentID
 	}
 	if err := e.sql.Db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(createdFolder).Error; err != nil {
 			return err
 		}
-		if err := e.es.CreateDocument(types.CredentialIndex, createdFolder.ID, createdFolder); err != nil {
+		log.Println("create folder", createdFolder)
+		if err := e.es.CreateDocument(types.FolderIndex, createdFolder.ID, createdFolder); err != nil {
+			log.Println("create folder err: ", err)
+
 			return err
 		}
 		return nil
@@ -49,9 +56,10 @@ func (e *EsSqlFolderRepository) Delete(query DeleteFolderQuery) error {
 	if err != nil {
 		return err
 	}
+
 	for _, folder := range res.Folders {
 		if err := e.sql.Db.Transaction(func(tx *gorm.DB) error {
-			if err := tx.Delete(&types.Folder{}, folder.ID).Error; err != nil {
+			if err := tx.Where("id", folder.ID).Delete(&types.Folder{}).Error; err != nil {
 				return err
 			}
 			e.es.DeleteByQuery(types.CredentialIndex, esTypes.Query{
@@ -97,17 +105,19 @@ func (e *EsSqlFolderRepository) Get(query GetFolderQuery) (*GetFolderResult, err
 func (e *EsSqlFolderRepository) GetHierarchy(query GetFolderHierarchyQuery) (*GetFolderHierarchyResult, error) {
 	var folders []types.Folder
 	request := `
-        WITH RECURSIVE folder_hierarchy AS (
-            SELECT id, name, parent_id
-            FROM folders
-            WHERE id = ?
-            UNION ALL
-            SELECT f.id, f.name, f.parent_id
-            FROM folders f
-            INNER JOIN folder_hierarchy fh ON fh.id = f.parent_id
-        )
-        SELECT * FROM folder_hierarchy;
-    `
+				WITH RECURSIVE folder_hierarchy AS (
+								SELECT id, name, parent_id, 0 AS depth
+								FROM folders
+								WHERE id = ?
+								UNION ALL
+								SELECT f.id, f.name, f.parent_id, fh.depth + 1 AS depth
+								FROM folders f
+								INNER JOIN folder_hierarchy fh ON fh.id = f.parent_id
+				)
+				SELECT id, name, parent_id
+				FROM folder_hierarchy
+				ORDER BY depth DESC;
+				`
 
 	if err := e.sql.Db.Raw(request, query.ID).Scan(&folders).Error; err != nil {
 		return nil, err
@@ -158,7 +168,9 @@ func (e *EsSqlFolderRepository) Search(query SearchFolderQuery) (*SearchFolderRe
 // UpdateFolder implements FolderRepository.
 func (e *EsSqlFolderRepository) Update(query UpdateFolderQuery) (*UpdateFolderResult, error) {
 	params := map[string]json.RawMessage{}
-	params["folder_id"] = json.RawMessage(query.ID)
+	val, _ := json.Marshal(query.ID)
+
+	params["folder_id"] = val
 	// Marshal only non-nil values
 	if query.Name != nil {
 		val, _ := json.Marshal(query.Name)
@@ -169,13 +181,14 @@ func (e *EsSqlFolderRepository) Update(query UpdateFolderQuery) (*UpdateFolderRe
 		params["parent_id"] = val
 	}
 
+	log.Println(params)
 	script := `
 if (ctx._source.folder != null) {
-  if (params.containsKey('folder_id') && params.folder_id != null) {
-    ctx._source.folder.id = params.folder_id;
-  }
   if (params.containsKey('folder_name') && params.folder_name != null) {
     ctx._source.folder.name = params.folder_name;
+  }
+  if (params.containsKey('parent_id') && params.parent_id != null) {
+    ctx._source.folder.parent_id = params.parent_id;
   }
 }`
 

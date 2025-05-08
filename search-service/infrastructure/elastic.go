@@ -159,7 +159,7 @@ func (e *ElasticAdapter) UpdateByQuery(
 		Query:  &query,
 	}).Do(context.Background())
 	if err != nil {
-		return fmt.Errorf("error executing delete by query in index %s: %w", indexName, err)
+		return fmt.Errorf("error executing update by query in index %s: %w", indexName, err)
 	}
 	return nil
 }

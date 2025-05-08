@@ -5,7 +5,7 @@ import "github.com/DO-2K23-26/polypass-microservices/search-service/common/types
 type CreateFolderQuery struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
-	ParentID string `json:"parent_id"`
+	ParentID *string `json:"parent_id"`
 }
 
 type CreateFolderResult struct {
