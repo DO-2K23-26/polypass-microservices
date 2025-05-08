@@ -34,7 +34,7 @@ func (s *FolderService) CreateFolder(req CreateFolderRequest) (*FolderResponse, 
 		return nil, ErrInvalidRequest
 	}
 
-	result, err := s.folderRepo.CreateFolder(folder.CreateFolderQuery{
+	result, err := s.folderRepo.Create(folder.CreateFolderQuery{
 		ID:   req.ID,
 		Name: req.Name,
 	})
@@ -77,7 +77,7 @@ func (s *FolderService) GetFolder(req GetFolderRequest) (*FolderResponse, error)
 	}
 
 	// Get the folder
-	result, err := s.folderRepo.GetFolder(folder.GetFolderQuery{
+	result, err := s.folderRepo.Get(folder.GetFolderQuery{
 		ID: req.ID,
 	})
 	if err != nil {
@@ -99,9 +99,9 @@ func (s *FolderService) UpdateFolder(req UpdateFolderRequest) (*FolderResponse, 
 		return nil, ErrInvalidRequest
 	}
 
-	result, err := s.folderRepo.UpdateFolder(folder.UpdateFolderQuery{
+	result, err := s.folderRepo.Update(folder.UpdateFolderQuery{
 		ID:   req.ID,
-		Name: req.Name,
+		Name: &req.Name,
 	})
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (s *FolderService) DeleteFolder(req DeleteFolderRequest) error {
 		return ErrUserNotAuthorized
 	}
 
-	return s.folderRepo.DeleteFolder(folder.DeleteFolderQuery{
+	return s.folderRepo.Delete(folder.DeleteFolderQuery{
 		ID: req.ID,
 	})
 }
@@ -180,7 +180,7 @@ func (s *FolderService) SearchFolders(req SearchFoldersRequest) (*SearchFoldersR
 		folderIds = append(folderIds, folder.ID)
 	}
 	// Perform the search with user's folder access scope
-	searchResult, err := s.folderRepo.SearchFolder(folder.SearchFolderQuery{
+	searchResult, err := s.folderRepo.Search(folder.SearchFolderQuery{
 		ID:           req.ID,
 		Name:         req.Name,
 		Limit:        &limit,

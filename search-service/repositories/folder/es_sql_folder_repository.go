@@ -1,6 +1,11 @@
 package folder
 
 import (
+	"encoding/json"
+	"fmt"
+
+	esTypes "github.com/elastic/go-elasticsearch/v8/typedapi/types"
+
 	"github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/infrastructure"
 	"gorm.io/gorm"
@@ -13,12 +18,12 @@ type EsSqlFolderRepository struct {
 	es  *infrastructure.ElasticAdapter
 }
 
-func NewEsSqlFolderRepository(sqlDb *infrastructure.GormAdapter, esDb *infrastructure.ElasticAdapter) *EsSqlFolderRepository {
+func NewEsSqlFolderRepository(sqlDb *infrastructure.GormAdapter, esDb *infrastructure.ElasticAdapter) IFolderRepository {
 	return &EsSqlFolderRepository{sql: sqlDb, es: esDb}
 }
 
 // CreateFolder implements FolderRepository.
-func (e *EsSqlFolderRepository) CreateFolder(query CreateFolderQuery) (*CreateFolderResult, error) {
+func (e *EsSqlFolderRepository) Create(query CreateFolderQuery) (*CreateFolderResult, error) {
 	createdFolder := types.Folder{
 		ID:       query.ID,
 		Name:     query.Name,
@@ -28,7 +33,9 @@ func (e *EsSqlFolderRepository) CreateFolder(query CreateFolderQuery) (*CreateFo
 		if err := tx.Create(createdFolder).Error; err != nil {
 			return err
 		}
-		// TO DO: Create the folder in Elasticsearch
+		if err := e.es.CreateDocument(types.CredentialIndex, createdFolder.ID, createdFolder); err != nil {
+			return err
+		}
 		return nil
 	}); err != nil {
 		return nil, err
@@ -37,27 +44,57 @@ func (e *EsSqlFolderRepository) CreateFolder(query CreateFolderQuery) (*CreateFo
 }
 
 // DeleteFolder implements FolderRepository.
-func (e *EsSqlFolderRepository) DeleteFolder(query DeleteFolderQuery) error {
-	if err := e.sql.Db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Delete(&types.Folder{}, query.ID).Error; err != nil {
+func (e *EsSqlFolderRepository) Delete(query DeleteFolderQuery) error {
+	res, err := e.GetHierarchy(GetFolderHierarchyQuery{ID: query.ID})
+	if err != nil {
+		return err
+	}
+	for _, folder := range res.Folders {
+		if err := e.sql.Db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Delete(&types.Folder{}, folder.ID).Error; err != nil {
+				return err
+			}
+			e.es.DeleteByQuery(types.CredentialIndex, esTypes.Query{
+				Term: map[string]esTypes.TermQuery{
+					"folder.id": {
+						Value: folder.ID,
+					},
+				},
+			})
+			e.es.DeleteByQuery(types.TagIndex, esTypes.Query{
+				Term: map[string]esTypes.TermQuery{
+					"folder_id": {
+						Value: folder.ID,
+					},
+				},
+			})
+			return nil
+		}); err != nil {
 			return err
 		}
-		// TO DO: Delete the folder in Elasticsearch
-		return nil
-	}); err != nil {
-		return err
 	}
 	return nil
 }
 
 // GetFolder implements FolderRepository.
-func (e *EsSqlFolderRepository) GetFolder(query GetFolderQuery) (*GetFolderResult, error) {
-	// TODO: Implement the logic to retrieve a folder from Elasticsearch
-	panic("unimplemented")
+func (e *EsSqlFolderRepository) Get(query GetFolderQuery) (*GetFolderResult, error) {
+	if query.ID == "" {
+		return nil, fmt.Errorf("ID is required")
+	}
+	var folder types.Folder
+
+	err := e.es.GetDocument(types.TagIndex, query.ID, &folder)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting tag: %w", err)
+	}
+
+	return &GetFolderResult{
+		Folder: folder,
+	}, nil
 }
 
 // GetFolderHierarchy implements FolderRepository.
-func (e *EsSqlFolderRepository) GetFolderHierarchy(query GetFolderHierarchyQuery) (*GetFolderHierarchyResult, error) {
+func (e *EsSqlFolderRepository) GetHierarchy(query GetFolderHierarchyQuery) (*GetFolderHierarchyResult, error) {
 	var folders []types.Folder
 	request := `
         WITH RECURSIVE folder_hierarchy AS (
@@ -80,31 +117,96 @@ func (e *EsSqlFolderRepository) GetFolderHierarchy(query GetFolderHierarchyQuery
 }
 
 // SearchFolder implements FolderRepository.
-func (e *EsSqlFolderRepository) SearchFolder(query SearchFolderQuery) (*SearchFolderResult, error) {
-	// TO DO: Search the folder in Elasticsearch
-	panic("unimplemented")
-}
+func (e *EsSqlFolderRepository) Search(query SearchFolderQuery) (*SearchFolderResult, error) {
+	// Default limit and offset if not provided
+	limit := 10
+	if query.Limit != nil {
+		limit = *query.Limit
+	}
+	offset := 0
+	if query.Offset != nil {
+		offset = *query.Offset
+	}
 
-// UpdateFolder implements FolderRepository.
-func (e *EsSqlFolderRepository) UpdateFolder(query UpdateFolderQuery) (*UpdateFolderResult, error) {
-	res, err := e.GetFolder(GetFolderQuery{ID: query.ID})
+	// Construct the search query
+	res, total, err := e.es.Search(
+		types.FolderIndex,
+		query.Name,
+		[]string{"name"},
+		nil,
+	)
 	if err != nil {
 		return nil, err
 	}
+
+	// Parse the search results
+	folders := make([]types.Folder, *total)
+	for i, hit := range res {
+		if err := json.Unmarshal(hit, &folders[i]); err != nil {
+			return nil, fmt.Errorf("error unmarshalling hit source: %w", err)
+		}
+	}
+
+	return &SearchFolderResult{
+		Folders: folders,
+		Total:   *total,
+		Limit:   limit,
+		Offset:  offset,
+	}, nil
+}
+
+// UpdateFolder implements FolderRepository.
+func (e *EsSqlFolderRepository) Update(query UpdateFolderQuery) (*UpdateFolderResult, error) {
+	params := map[string]json.RawMessage{}
+	params["folder_id"] = json.RawMessage(query.ID)
+	// Marshal only non-nil values
+	if query.Name != nil {
+		val, _ := json.Marshal(query.Name)
+		params["folder_name"] = val
+	}
+	if query.ParentId != nil {
+		val, _ := json.Marshal(query.ParentId)
+		params["parent_id"] = val
+	}
+
+	script := `
+if (ctx._source.folder != null) {
+  if (params.containsKey('folder_id') && params.folder_id != null) {
+    ctx._source.folder.id = params.folder_id;
+  }
+  if (params.containsKey('folder_name') && params.folder_name != null) {
+    ctx._source.folder.name = params.folder_name;
+  }
+}`
+
+	esQuery := &esTypes.Query{
+		Term: map[string]esTypes.TermQuery{
+			"folder.id": {
+				Value: query.ID,
+			},
+		},
+	}
 	if err := e.sql.Db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&types.Folder{}).Where("id = ?", query.ID).Updates(types.Folder{
-			Name: query.Name,
-		}).Error; err != nil {
+		if err := tx.Model(&types.Folder{}).Where("id = ?", query.ID).Updates(query).Error; err != nil {
 			return err
 		}
 		// TO DO: Update the folder in Elasticsearch
+		err := e.es.UpdateDocument(types.FolderIndex, query.ID, query)
+		if err != nil {
+			return err
+		}
+
+		err = e.es.UpdateByQuery(types.CredentialIndex, *esQuery, script, &params)
+		if err != nil {
+			return err
+		}
 		return nil
 	}); err != nil {
 		return nil, err
 	}
 	return &UpdateFolderResult{Folder: types.Folder{
 		ID:       query.ID,
-		Name:     query.Name,
-		ParentID: res.Folder.ParentID,
+		Name:     *query.Name,
+		ParentID: *&query.ParentId,
 	}}, nil
 }

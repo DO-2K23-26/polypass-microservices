@@ -23,7 +23,7 @@ type App struct {
 	esClient             *infrastructure.ElasticAdapter
 	gormClient           *infrastructure.GormAdapter
 	UserRepository       *userRepository.GormUserRepository
-	FolderRepository     *folderRepository.EsSqlFolderRepository
+	FolderRepository     *folderRepository.IFolderRepository
 	CredentialRepository *credentialRepository.ICredentialRepository
 	TagRepository        *tagRepository.ITagRepository
 	GrpcServer           *grpc.Server
@@ -66,7 +66,7 @@ func NewApp(Config config.Config) (*App, error) {
 		GrpcServer:           GrpcServer,
 		HttpServer:           HttpServer,
 		UserRepository:       userRepository,
-		FolderRepository:     folderRepository,
+		FolderRepository:     &folderRepository,
 		TagRepository:        &tagRepository,
 		CredentialRepository: &credentialRepository,
 	}, nil

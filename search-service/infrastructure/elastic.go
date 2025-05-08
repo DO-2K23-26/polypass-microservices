@@ -9,6 +9,7 @@ import (
 
 	commonTypes "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/deletebyquery"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/updatebyquery"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/indices/create"
@@ -157,6 +158,17 @@ func (e *ElasticAdapter) UpdateByQuery(
 		Script: scriptPainless,
 		Query:  &query,
 	}).Do(context.Background())
+	if err != nil {
+		return fmt.Errorf("error executing delete by query in index %s: %w", indexName, err)
+	}
+	return nil
+}
+
+func (e *ElasticAdapter) DeleteByQuery(
+	indexName string,
+	query types.Query,
+) error {
+	_, err := e.Client.DeleteByQuery(indexName).Request(&deletebyquery.Request{Query: &query}).Do(context.Background())
 	if err != nil {
 		return fmt.Errorf("error executing delete by query in index %s: %w", indexName, err)
 	}
