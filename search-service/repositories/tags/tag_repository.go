@@ -1,9 +1,9 @@
 package tags
 
-type TagRepository interface {
+type ITagRepository interface {
 	Get(query GetTagQuery) (*GetTagResult, error)
 	Create(query CreateTagQuery) (*CreateTagResult, error)
-	Update(query UpdateTagQuery) (*UpdateTagResult, error)
+	Update(query UpdateTagQuery) error
 	Delete(query DeleteTagQuery) error
-	SearchTags(query SearchTagQuery) (*SearchTagResult, error)
+	Search(query SearchTagQuery) (*SearchTagResult, error)
 }

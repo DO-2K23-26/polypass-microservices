@@ -35,5 +35,5 @@ return true
 }
 
 func (a *GormAdapter) Migrate() error {
-	return a.Db.AutoMigrate(&types.User{}, &types.Folder{})
+	return a.Db.AutoMigrate(&types.User{}, &types.FolderSql{})
 }

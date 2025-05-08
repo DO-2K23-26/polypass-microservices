@@ -1,10 +1,10 @@
 package folder
 
-type FolderRepository interface {
-	CreateFolder(query CreateFolderQuery) (*CreateFolderResult, error)
-	GetFolder(query GetFolderQuery) (*GetFolderResult, error)
-	UpdateFolder(query UpdateFolderQuery) (*UpdateFolderResult, error)
-	DeleteFolder(query DeleteFolderQuery) error
-	GetFolderHierarchy(query GetFolderHierarchyQuery) (*GetFolderHierarchyResult, error)
-	SearchFolder(query SearchFolderQuery) (*SearchFolderResult, error)
+type IFolderRepository interface {
+	Create(query CreateFolderQuery) (*CreateFolderResult, error)
+	Get(query GetFolderQuery) (*GetFolderResult, error)
+	Update(query UpdateFolderQuery) (*UpdateFolderResult, error)
+	Delete(query DeleteFolderQuery) error
+	GetHierarchy(query GetFolderHierarchyQuery) (*GetFolderHierarchyResult, error)
+	Search(query SearchFolderQuery) (*SearchFolderResult, error)
 }

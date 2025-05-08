@@ -13,17 +13,18 @@ func main() {
 	if err != nil {
 		config.HandleError(err)
 	}
-	app, err := app.NewApp(*conf)
+	application, err := app.NewApp(*conf)
 	if err != nil {
 		fmt.Printf("Failed to create the application: %v\n", err)
 		os.Exit(1)
 	}
-	err = app.Init()
+	err = application.Init()
 	if err != nil {
 		fmt.Printf("Failed to initialize the application: %v\n", err)
 		os.Exit(1)
-	}	
-	err = app.Start()
+	}
+	
+	err = application.Start()
 	if err != nil {
 		fmt.Printf("Failed to start the application: %v\n", err)
 		os.Exit(1)

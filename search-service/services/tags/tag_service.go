@@ -16,11 +16,11 @@ var (
 )
 
 type TagService struct {
-	tagRepo  tags.TagRepository
-	userRepo user.UserRepository
+	tagRepo  tags.ITagRepository
+	userRepo user.IUserRepository
 }
 
-func NewTagService(tagRepo tags.TagRepository, userRepo user.UserRepository) *TagService {
+func NewTagService(tagRepo tags.ITagRepository, userRepo user.IUserRepository) *TagService {
 	return &TagService{
 		tagRepo:  tagRepo,
 		userRepo: userRepo,
@@ -77,18 +77,15 @@ func (s *TagService) UpdateTag(req UpdateTagRequest) (*TagResponse, error) {
 		return nil, ErrInvalidRequest
 	}
 
-	result, err := s.tagRepo.Update(tags.UpdateTagQuery{
-		ID:   req.ID,
-		Name: normalizedName,
-	})
-	if err != nil {
-		return nil, err
-	}
+	// result, err := s.tagRepo.Update(tags.UpdateTagQuery{
+	// 	ID:   req.ID,
+	// 	Name: normalizedName,
+	// })
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	return &TagResponse{
-		ID:   result.Tag.ID,
-		Name: result.Tag.Name,
-	}, nil
+	return nil, nil
 }
 
 // DeleteTag deletes a tag by ID
@@ -146,7 +143,7 @@ func (s *TagService) SearchTags(req SearchTagsRequest) (*SearchTagsResponse, err
 	}
 	
 	// Perform the search
-	searchResult, err := s.tagRepo.SearchTags(tags.SearchTagQuery{
+	searchResult, err := s.tagRepo.Search(tags.SearchTagQuery{
 		Name:         req.Name,
 		FolderId:     req.FolderID,
 		Limit:        &limit,

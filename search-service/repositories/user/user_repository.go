@@ -1,6 +1,6 @@
 package user
 
-type UserRepository interface {
+type IUserRepository interface {
 	Get(query GetUserQuery) (*GetUserResult, error)
 	Create(query CreateUserQuery) (*CreateUserResult, error)
 	Delete(query DeleteUserQuery) (*DeleteUserResult, error)
@@ -9,3 +9,5 @@ type UserRepository interface {
 	AddFolderAccess(query AddFolderAccessQuery) (*AddFolderAccessResult, error)
 	RemoveFolderAccess(query RemoveFolderAccessQuery) (*RemoveFolderAccessResult, error)
 }
+
+
