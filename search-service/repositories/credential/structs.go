@@ -3,10 +3,10 @@ package credential
 import "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 
 type CreateCredentialQuery struct {
-	ID     string        `json:"id"`
-	Title  string        `json:"title"`
-	Tags   []types.Tag   `json:"tags"`
-	Folder *types.Folder `json:"folder"`
+	ID     string       `json:"id"`
+	Title  string       `json:"title"`
+	Tags   []types.Tag  `json:"tags"`
+	Folder types.Folder `json:"folder"`
 }
 
 type CreateCredentialResult struct {
@@ -14,8 +14,8 @@ type CreateCredentialResult struct {
 }
 
 type UpdateCredentialQuery struct {
-	ID     string        `json:"id"`
-	Title  *string       `json:"title"`
+	ID     string       `json:"id"`
+	Title  *string      `json:"title"`
 	Folder *types.Folder `json:"folder"`
 }
 
@@ -36,11 +36,11 @@ type GetCredentialResult struct {
 }
 
 type SearchCredentialQuery struct {
-	SearchQuery  string    `json:"search_query"`
+	SearchQuery  string   `json:"search_query"`
 	TagIds       []string `json:"tag_ids"`
 	FoldersScope []string `json:"folders_scope"` // The name of the folders that the user making the request can access
-	Limit        *int      `json:"limit"`         // The limit is the maximum number of credentials to return
-	Offset       *int      `json:"offset"`        // The offset is the number of credentials to skip before returning results
+	Limit        *int     `json:"limit"`         // The limit is the maximum number of credentials to return
+	Offset       *int     `json:"offset"`        // The offset is the number of credentials to skip before returning results
 }
 
 type SearchCredentialResult struct {
@@ -51,7 +51,7 @@ type SearchCredentialResult struct {
 }
 
 type AddTagsToCredentialQuery struct {
-	ID  string      `json:"id"`
+	ID   string      `json:"id"`
 	Tags []types.Tag `json:"tag"`
 }
 

@@ -17,18 +17,16 @@ var (
 
 type TagService struct {
 	tagRepo  tags.ITagRepository
-	userRepo user.IUserRepository
 }
 
 func NewTagService(tagRepo tags.ITagRepository, userRepo user.IUserRepository) *TagService {
 	return &TagService{
 		tagRepo:  tagRepo,
-		userRepo: userRepo,
 	}
 }
 
 // CreateTag creates a new tag
-func (s *TagService) CreateTag(req CreateTagRequest) (*TagResponse, error) {
+func (s *TagService) Create(req CreateTagRequest) (*TagResponse, error) {
 	if req.Name == "" {
 		return nil, ErrInvalidRequest
 	}
@@ -47,7 +45,7 @@ func (s *TagService) CreateTag(req CreateTagRequest) (*TagResponse, error) {
 }
 
 // GetTag retrieves a tag by ID
-func (s *TagService) GetTag(req GetTagRequest) (*TagResponse, error) {
+func (s *TagService) Get(req GetTagRequest) (*TagResponse, error) {
 	if req.ID == "" {
 		return nil, ErrInvalidRequest
 	}
@@ -65,8 +63,14 @@ func (s *TagService) GetTag(req GetTagRequest) (*TagResponse, error) {
 	}, nil
 }
 
+
+func (s *TagService) mGet(req mGetTagRequest) (*mGetTagResponse, error) {
+	return nil , nil 
+}
+	
+
 // UpdateTag updates an existing tag
-func (s *TagService) UpdateTag(req UpdateTagRequest) (*TagResponse, error) {
+func (s *TagService) Update(req UpdateTagRequest) (*TagResponse, error) {
 	if req.ID == "" || req.Name == "" {
 		return nil, ErrInvalidRequest
 	}
@@ -89,7 +93,7 @@ func (s *TagService) UpdateTag(req UpdateTagRequest) (*TagResponse, error) {
 }
 
 // DeleteTag deletes a tag by ID
-func (s *TagService) DeleteTag(req DeleteTagRequest) error {
+func (s *TagService) Delete(req DeleteTagRequest) error {
 	if req.ID == "" {
 		return ErrInvalidRequest
 	}
@@ -100,31 +104,8 @@ func (s *TagService) DeleteTag(req DeleteTagRequest) error {
 }
 
 // SearchTags searches for tags based on criteria
-func (s *TagService) SearchTags(req SearchTagsRequest) (*SearchTagsResponse, error) {
+func (s *TagService) Search(req SearchTagsRequest) (*SearchTagsResponse, error) {
 	// Get user to determine folder access scope
-	userResult, err := s.userRepo.Get(user.GetUserQuery{
-		ID: req.UserID,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if userResult == nil || userResult.User.ID == "" {
-		return nil, ErrUserNotFound
-	}
-
-	// If a specific folder ID is requested, verify the user has access to it
-	if req.FolderID != nil && *req.FolderID != "" {
-		hasAccess := false
-		for _, folder := range userResult.User.Folders {
-			if folder.ID == *req.FolderID {
-				hasAccess = true
-				break
-			}
-		}
-		if !hasAccess {
-			return nil, ErrUserNotAuthorized
-		}
-	}
 
 	// Set default limit and offset if not provided
 	limit := 10
@@ -136,19 +117,13 @@ func (s *TagService) SearchTags(req SearchTagsRequest) (*SearchTagsResponse, err
 	if req.Offset != nil && *req.Offset >= 0 {
 		offset = *req.Offset
 	}
-	folderIds := make([]string, len(userResult.User.Folders))
-	
-	for _, folder := range userResult.User.Folders {
-		folderIds = append(folderIds, folder.ID)
-	}
 	
 	// Perform the search
 	searchResult, err := s.tagRepo.Search(tags.SearchTagQuery{
 		Name:         req.Name,
-		FolderId:     req.FolderID,
 		Limit:        &limit,
 		Offset:       &offset,
-		FoldersScope: &folderIds,
+		FoldersScope: &req.FolderIDs,
 	})
 	if err != nil {
 		return nil, err

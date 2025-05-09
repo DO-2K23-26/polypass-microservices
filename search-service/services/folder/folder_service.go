@@ -48,15 +48,13 @@ func (s *FolderService) CreateFolder(req CreateFolderRequest) (*FolderResponse, 
 	}
 
 	return &FolderResponse{
-		ID:       result.Folder.ID,
-		Name:     result.Folder.Name,
-		ParentID: result.Folder.ParentID,
+		Folder: result.Folder,
 	}, nil
 }
 
-// GetFolder retrieves a folder by ID, checking user permissions
+// GetFolder retrieves a folder by ID
 func (s *FolderService) Get(req GetFolderRequest) (*FolderResponse, error) {
-	if req.ID == "" || req.UserID == "" {
+	if req.ID == "" {
 		return nil, ErrInvalidRequest
 	}
 
@@ -69,9 +67,7 @@ func (s *FolderService) Get(req GetFolderRequest) (*FolderResponse, error) {
 	}
 
 	return &FolderResponse{
-		ID:       result.Folder.ID,
-		Name:     result.Folder.Name,
-		ParentID: result.Folder.ParentID,
+		Folder: result.Folder,
 	}, nil
 }
 
@@ -90,9 +86,7 @@ func (s *FolderService) Update(req UpdateFolderRequest) (*FolderResponse, error)
 	}
 
 	return &FolderResponse{
-		ID:       result.Folder.ID,
-		Name:     result.Folder.Name,
-		ParentID: &result.Folder.Parent.ID,
+		Folder: result.Folder,
 	}, nil
 }
 
@@ -120,16 +114,16 @@ func (s *FolderService) Search(req SearchFoldersRequest) (*SearchFoldersResponse
 		offset = *req.Offset
 	}
 
-	res,err  := s.userService.GetFolders(user.GetFoldersRequest{UserID: req.UserID})
+	res, err := s.userService.GetFolders(user.GetFoldersRequest{UserID: req.UserID})
 	if err != nil {
 		return nil, err
 	}
-	
+
 	folderIds := make([]string, len(res.Folders))
 	for i, folder := range res.Folders {
 		folderIds[i] = folder.ID
 	}
-	
+
 	// Perform the search with user's folder access scope
 	searchResult, err := s.folderRepo.Search(folder.SearchFolderQuery{
 		ID:           req.ID,
@@ -144,7 +138,7 @@ func (s *FolderService) Search(req SearchFoldersRequest) (*SearchFoldersResponse
 
 	// Convert to response DTO
 	response := &SearchFoldersResponse{
-		Folders: ConvertToFoldersResponse(searchResult.Folders),
+		Folders: searchResult.Folders,
 		Total:   searchResult.Total,
 		Limit:   searchResult.Limit,
 		Offset:  searchResult.Offset,

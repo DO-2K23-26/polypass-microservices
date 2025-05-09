@@ -13,10 +13,42 @@ type ESTagRepository struct {
 	esClient infrastructure.ElasticAdapter
 }
 
+// mGet implements ITagRepository.
 func NewESTagRepository(esClient infrastructure.ElasticAdapter) ITagRepository {
 	return &ESTagRepository{
 		esClient: esClient,
 	}
+}
+
+func (r *ESTagRepository) MGet(query MGetTagQuery) (*mGetTagResult, error) {
+	if len(query.IDs) == 0 {
+		return nil, fmt.Errorf("IDs are required")
+	}
+
+	var tags []types.Tag
+	res, err := r.esClient.MGetDocuments(types.TagIndex, query.IDs)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting tags: %w", err)
+	}
+
+	for _, hit := range *res {
+		itemBytes, err := json.Marshal(hit)
+		if err != nil {
+			continue
+		}
+
+		var tag types.Tag
+		if err := json.Unmarshal(itemBytes, &tag); err != nil {
+			continue
+		}
+		if tag.ID != "" {
+			tags = append(tags, tag)
+		}
+	}
+
+	return &mGetTagResult{
+		Tags: tags,
+	}, nil
 }
 
 // CreateTag creates a new tag in Elasticsearch
@@ -87,7 +119,7 @@ if (ctx._source.tags != null) {
 	params := make(map[string]json.RawMessage)
 
 	// Always include tag_id
-	
+
 	tagIDJson, _ := json.Marshal(query.ID)
 	params["tag_id"] = tagIDJson
 

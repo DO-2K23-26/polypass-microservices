@@ -7,7 +7,6 @@ type CreateCredentialRequest struct {
 	ID       string   `json:"id,omitempty"` // Optional, will be generated if not provided
 	Title    string   `json:"title"`
 	FolderID string   `json:"folder_id"`
-	TagIDs   []string `json:"tag_ids,omitempty"` // IDs of tags to associate with the credential
 }
 
 type UpdateCredentialRequest struct {

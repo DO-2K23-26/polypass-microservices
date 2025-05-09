@@ -83,21 +83,16 @@ func (s *SearchController) SearchTags(ctx context.Context, req *api.SearchTagsRe
 	// Convert gRPC request to service request
 	limit := int(req.Limit)
 	offset := int(req.Offset)
-	var folderID *string
-	if req.FolderId != "" {
-		folderID = &req.FolderId
-	}
 
 	serviceReq := tagService.SearchTagsRequest{
-		Name:     req.Name,
-		FolderID: folderID,
-		Limit:    &limit,
-		Offset:   &offset,
-		UserID:   req.UserId,
+		Name:   req.Name,
+		Limit:  &limit,
+		Offset: &offset,
+		UserID: req.UserId,
 	}
 
 	// Call service
-	result, err := s.tagService.SearchTags(serviceReq)
+	result, err := s.tagService.Search(serviceReq)
 	if err != nil {
 		return nil, err
 	}

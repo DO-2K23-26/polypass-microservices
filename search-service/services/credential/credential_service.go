@@ -2,12 +2,12 @@ package credential
 
 import (
 	"errors"
-	"slices"
 
 	"github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/credential"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/folder"
+	tag "github.com/DO-2K23-26/polypass-microservices/search-service/services/tags"
 )
 
 var (
@@ -22,7 +22,8 @@ var (
 type CredentialService struct {
 	credentialRepo credential.ICredentialRepository
 	folderService  folder.FolderService
-	userRepo       user.IUserRepository
+	userService    user.IUserRepository
+	tagService     tag.TagService
 }
 
 func NewCredentialService(
@@ -31,7 +32,6 @@ func NewCredentialService(
 ) *CredentialService {
 	return &CredentialService{
 		credentialRepo: credentialRepo,
-		userRepo:       userRepo,
 	}
 }
 
@@ -42,12 +42,17 @@ func (s *CredentialService) Create(req CreateCredentialRequest) (*CredentialResp
 		return nil, ErrInvalidRequest
 	}
 
-	s.folderService.Get(folder.GetFolderRequest{})
+	res, err := s.folderService.Get(folder.GetFolderRequest{
+		ID: req.FolderID,
+	})
+	if err != nil {
+		return nil, err
+	}
 	// Create the credential
 	result, err := s.credentialRepo.Create(credential.CreateCredentialQuery{
 		ID:     req.ID,
 		Title:  req.Title,
-		Folder: &types.Folder{},
+		Folder: res.Folder,
 	})
 	if err != nil {
 		return nil, err
@@ -87,18 +92,21 @@ func (s *CredentialService) Update(req UpdateCredentialRequest) error {
 	if req.ID == "" {
 		return ErrInvalidRequest
 	}
-
-	// Update the credential
-	// To Do: retrieve folder
-	err := s.credentialRepo.Update(credential.UpdateCredentialQuery{
-		ID:    req.ID,
-		Title: &req.Title,
-	})
-	if err != nil {
-		return err
+	var newFolder *types.Folder
+	if req.FolderID != "" {
+		res, err := s.folderService.Get(folder.GetFolderRequest{ID: req.ID})
+		if err != nil {
+			return err
+		}
+		newFolder = &res.Folder
 	}
 
-	return nil
+	// Update the credential
+	return s.credentialRepo.Update(credential.UpdateCredentialQuery{
+		ID:     req.ID,
+		Title:  &req.Title,
+		Folder: newFolder,
+	})
 }
 
 // DeleteCredential deletes a credential by ID
@@ -117,28 +125,6 @@ func (s *CredentialService) Delete(req DeleteCredentialRequest) error {
 func (s *CredentialService) Search(req SearchCredentialsRequest) (*SearchCredentialsResponse, error) {
 	if req.UserID == "" {
 		return nil, ErrInvalidRequest
-	}
-
-	// Get user to determine folder access scope
-	userResult, err := s.userRepo.Get(user.GetUserQuery{ID: req.UserID})
-	if err != nil {
-		return nil, err
-	}
-	if userResult == nil || userResult.User.ID == "" {
-		return nil, ErrUserNotFound
-	}
-
-	folderIds := make([]string, len(userResult.User.Folders))
-
-	for _, folder := range userResult.User.Folders {
-		folderIds = append(folderIds, folder.ID)
-	}
-	// If a specific folder ID is requested, verify the user has access to it
-	if req.FolderID != nil && *req.FolderID != "" {
-		hasAccess := slices.Contains(folderIds, *req.FolderID)
-		if !hasAccess {
-			return nil, ErrUserNotAuthorized
-		}
 	}
 
 	// Set default limit and offset if not provided
@@ -186,8 +172,8 @@ func (s *CredentialService) AddTags(credentialID string, tagIDs []string) error 
 	}
 	// Call the repository method to add tags
 	return s.credentialRepo.AddTags(credential.AddTagsToCredentialQuery{
-		ID: credentialID,
-		// TagIds: tagIDs,
+		ID:   credentialID,
+		Tags: []types.Tag{},
 	})
 
 }
@@ -201,5 +187,4 @@ func (s *CredentialService) RemoveTags(req RemoveTagsFromCredentialRequest) erro
 		ID:     req.ID,
 		TagIds: req.TagIds,
 	})
-
 }

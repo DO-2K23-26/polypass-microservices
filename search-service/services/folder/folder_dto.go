@@ -15,8 +15,7 @@ type UpdateFolderRequest struct {
 }
 
 type GetFolderRequest struct {
-	ID     string `json:"id"`
-	UserID string `json:"user_id"` // To check access permission
+	ID string `json:"id"`
 }
 
 type DeleteFolderRequest struct {
@@ -34,33 +33,12 @@ type SearchFoldersRequest struct {
 
 // Response DTOs
 type FolderResponse struct {
-	ID       string  `json:"id"`
-	Name     string  `json:"name"`
-	ParentID *string `json:"parent_id"`
+	Folder types.Folder `json:"folder"`
 }
 
 type SearchFoldersResponse struct {
-	Folders []FolderResponse `json:"folders"`
-	Total   int              `json:"total"`
-	Limit   int              `json:"limit"`
-	Offset  int              `json:"offset"`
-}
-
-// Conversion functions
-func ConvertToFolderResponse(folder types.Folder) FolderResponse {
-	return FolderResponse{
-		ID:   folder.ID,
-		Name: folder.Name,
-	}
-}
-
-func ConvertToFoldersResponse(folders []types.Folder) []FolderResponse {
-	response := make([]FolderResponse, len(folders))
-	for i, folder := range folders {
-		response[i] = FolderResponse{
-			ID:   folder.ID,
-			Name: folder.Name,
-		}
-	}
-	return response
+	Folders []types.Folder `json:"folders"`
+	Total   int            `json:"total"`
+	Limit   int            `json:"limit"`
+	Offset  int            `json:"offset"`
 }
