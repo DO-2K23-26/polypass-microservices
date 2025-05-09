@@ -16,12 +16,12 @@ var (
 )
 
 type TagService struct {
-	tagRepo  tags.ITagRepository
+	tagRepo tags.ITagRepository
 }
 
 func NewTagService(tagRepo tags.ITagRepository, userRepo user.IUserRepository) *TagService {
 	return &TagService{
-		tagRepo:  tagRepo,
+		tagRepo: tagRepo,
 	}
 }
 
@@ -63,11 +63,23 @@ func (s *TagService) Get(req GetTagRequest) (*TagResponse, error) {
 	}, nil
 }
 
+func (s *TagService) MGet(req MGetTagRequest) (*MGetTagResponse, error) {
+	if len(req.IDs) == 0 {
+		return nil, ErrInvalidRequest
+	}
 
-func (s *TagService) mGet(req mGetTagRequest) (*mGetTagResponse, error) {
-	return nil , nil 
+	result, err := s.tagRepo.MGet(tags.MGetTagQuery{
+		IDs: req.IDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &MGetTagResponse{
+		Tags: result.Tags,
+	}, nil
+
 }
-	
 
 // UpdateTag updates an existing tag
 func (s *TagService) Update(req UpdateTagRequest) (*TagResponse, error) {
@@ -117,7 +129,7 @@ func (s *TagService) Search(req SearchTagsRequest) (*SearchTagsResponse, error) 
 	if req.Offset != nil && *req.Offset >= 0 {
 		offset = *req.Offset
 	}
-	
+
 	// Perform the search
 	searchResult, err := s.tagRepo.Search(tags.SearchTagQuery{
 		Name:         req.Name,

@@ -170,10 +170,15 @@ func (s *CredentialService) AddTags(credentialID string, tagIDs []string) error 
 	if credentialID == "" {
 		return ErrInvalidRequest
 	}
+
+	res, err := s.tagService.MGet(tag.MGetTagRequest{})
+	if err != nil {
+		return err
+	}
 	// Call the repository method to add tags
 	return s.credentialRepo.AddTags(credential.AddTagsToCredentialQuery{
 		ID:   credentialID,
-		Tags: []types.Tag{},
+		Tags: res.Tags,
 	})
 
 }

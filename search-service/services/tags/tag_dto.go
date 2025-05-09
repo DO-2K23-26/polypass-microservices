@@ -41,11 +41,11 @@ type SearchTagsResponse struct {
 	Total  int           `json:"total"`
 }
 
-type mGetTagRequest struct {
+type MGetTagRequest struct {
 	IDs []string `json:"ids"`
 }
 
-type mGetTagResponse struct {
+type MGetTagResponse struct {
 	Tags []types.Tag `json:"tags"`
 }
 
