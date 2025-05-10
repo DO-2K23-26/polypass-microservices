@@ -3,8 +3,8 @@ package folder
 import "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 
 type CreateFolderQuery struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
+	ID       string  `json:"id"`
+	Name     string  `json:"name"`
 	ParentID *string `json:"parent_id"`
 }
 
@@ -53,5 +53,21 @@ type GetFolderHierarchyQuery struct {
 }
 
 type GetFolderHierarchyResult struct {
+	Folders []types.Folder `json:"folders"`
+}
+
+type GetFromUserQuery struct {
+	UserID string `json:"user_id"`
+}
+
+type GetFromUserResult struct {
+	Folders []types.Folder `json:"folders"`
+}
+
+type MGetFolderHierarchyQuery struct {
+	IDs []string `json:"ids"`
+}
+
+type MGetFolderHierarchyResult struct {
 	Folders []types.Folder `json:"folders"`
 }

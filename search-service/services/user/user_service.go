@@ -72,22 +72,6 @@ func (s *UserService) Delete(req *DeleteUserRequest) error {
 	return nil
 }
 
-// AddFolderAccess adds or updates a user's access to a folder
-func (s *UserService) GetFolders(req GetFoldersRequest) (*GetFoldersResponse, error) {
-
-	if req.UserID == "" {
-		return nil, errors.New("user ID is required")
-	}
-
-	result, err := s.userRepository.GetFolders(user.GetFoldersQuery{UserID: req.UserID})
-	if err != nil {
-		return nil, err
-	}
-
-	return &GetFoldersResponse{
-		Folders: result.Folders,
-	}, nil
-}
 
 // AddFolderAccess adds or updates a user's access to a folder
 func (s *UserService) AddFolderAccess(req *AddFolderAccessRequest) (*UserResponse, error) {

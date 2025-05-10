@@ -39,3 +39,11 @@ type SearchFoldersResponse struct {
 	Folders []types.Folder `json:"folders"`
 	Total   int            `json:"total"`
 }
+
+type GetUserFoldersRequest struct {
+	UserID string `json:"user_id"`
+}
+
+type GetUserFoldersResponse struct {
+	Folders []types.Folder `json:"folders"`
+}

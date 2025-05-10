@@ -35,7 +35,7 @@ func NewCredentialService(
 }
 
 // CreateCredential creates a new credential
-func (s *CredentialService) Create(req CreateCredentialRequest) (*CredentialResponse, error) {
+func (s *CredentialService) Create(req CreateCredentialRequest) (*CreateCredentialResponse, error) {
 	// Validate required fields
 	if req.Title == "" || req.FolderID == "" || req.ID == "" {
 		return nil, ErrInvalidRequest
@@ -57,16 +57,13 @@ func (s *CredentialService) Create(req CreateCredentialRequest) (*CredentialResp
 		return nil, err
 	}
 
-	return &CredentialResponse{
-		ID:     result.Credential.ID,
-		Title:  result.Credential.Title,
-		Tags:   ConvertToTagResponses(result.Credential.Tags),
-		Folder: ConvertToFolderResponse(result.Credential.Folder),
+	return &CreateCredentialResponse{
+		Credential: result.Credential,
 	}, nil
 }
 
 // GetCredential retrieves a credential by ID
-func (s *CredentialService) Get(req GetCredentialRequest) (*CredentialResponse, error) {
+func (s *CredentialService) Get(req GetCredentialRequest) (*GetCredentialResponse, error) {
 	if req.ID == "" {
 		return nil, ErrInvalidRequest
 	}
@@ -82,8 +79,10 @@ func (s *CredentialService) Get(req GetCredentialRequest) (*CredentialResponse, 
 		return nil, ErrCredentialNotFound
 	}
 
-	response := ConvertToCredentialResponse(result.Credential)
-	return &response, nil
+	response := result.Credential
+	return &GetCredentialResponse{
+		Credential: response,
+	}, nil
 }
 
 // UpdateCredential updates an existing credential
@@ -137,7 +136,7 @@ func (s *CredentialService) Search(req SearchCredentialsRequest) (*SearchCredent
 		offset = *req.Page * limit
 	}
 
-	res, err := s.userService.GetFolders(user.GetFoldersQuery{UserID: req.UserID})
+	res, err := s.folderService.GetFromUser(folder.GetUserFoldersRequest{UserID: req.UserID})
 	if err != nil {
 		return nil, err
 	}

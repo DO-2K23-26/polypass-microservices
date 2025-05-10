@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/folder"
-	"github.com/DO-2K23-26/polypass-microservices/search-service/services/user"
 )
 
 var (
@@ -15,19 +14,17 @@ var (
 )
 
 type FolderService struct {
-	folderRepo  folder.IFolderRepository
-	userService user.UserService
+	folderRepo folder.IFolderRepository
 }
 
-func NewFolderService(folderRepo folder.IFolderRepository, userService user.UserService) *FolderService {
+func NewFolderService(folderRepo folder.IFolderRepository) *FolderService {
 	return &FolderService{
-		folderRepo:  folderRepo,
-		userService: userService,
+		folderRepo: folderRepo,
 	}
 }
 
 // CreateFolder creates a new folder
-func (s *FolderService) CreateFolder(req CreateFolderRequest) (*FolderResponse, error) {
+func (s *FolderService) Create(req CreateFolderRequest) (*FolderResponse, error) {
 	if req.Name == "" {
 		return nil, ErrInvalidRequest
 	}
@@ -101,6 +98,22 @@ func (s *FolderService) Delete(req DeleteFolderRequest) error {
 	})
 }
 
+// Get Folder for a user
+func (s *FolderService) GetFromUser(req GetUserFoldersRequest) (*GetUserFoldersResponse, error) {
+	if req.UserID == "" {
+		return nil, ErrInvalidRequest
+	}
+
+	res, err := s.folderRepo.GetFromUser(folder.GetFromUserQuery{UserID: req.UserID})
+	if err != nil {
+		return nil, err
+	}
+
+	return &GetUserFoldersResponse{
+		Folders: res.Folders,
+	}, nil
+}
+
 // SearchFolders searches for folders based on criteria
 func (s *FolderService) Search(req SearchFoldersRequest) (*SearchFoldersResponse, error) {
 	// Set default limit and offset if not provided
@@ -114,7 +127,7 @@ func (s *FolderService) Search(req SearchFoldersRequest) (*SearchFoldersResponse
 		offset = *req.Page * limit
 	}
 
-	res, err := s.userService.GetFolders(user.GetFoldersRequest{UserID: req.UserID})
+	res, err := s.GetFromUser(GetUserFoldersRequest{UserID: req.UserID})
 	if err != nil {
 		return nil, err
 	}

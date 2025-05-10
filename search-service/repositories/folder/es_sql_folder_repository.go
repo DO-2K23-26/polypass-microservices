@@ -2,6 +2,7 @@ package folder
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 
@@ -21,6 +22,38 @@ type EsSqlFolderRepository struct {
 
 func NewEsSqlFolderRepository(sqlDb *infrastructure.GormAdapter, esDb *infrastructure.ElasticAdapter) IFolderRepository {
 	return &EsSqlFolderRepository{sql: sqlDb, es: esDb}
+}
+
+// GetFromUser implements IFolderRepository.
+func (e *EsSqlFolderRepository) GetFromUser(query GetFromUserQuery) (*GetFromUserResult, error) {
+	var user types.User
+	if err := e.sql.Db.Preload("Folders").Where("id = ?", query.UserID).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+	// Extract a list of ids
+	
+	folderIDs := make([]string, len(user.Folders))
+	for i, folder := range user.Folders {
+		folderIDs[i] = folder.ID
+	}
+	
+	// Get the hierarchy of folders with MGetFolderHierarchyQuery
+	hierarchyQuery := MGetFolderHierarchyQuery{
+		IDs: folderIDs,
+	}
+	
+	hierarchyResult, err := e.MGetHierarchy(hierarchyQuery)
+	if err != nil {
+		return nil, err
+	}
+	
+	
+	return &GetFromUserResult{
+		Folders: hierarchyResult.Folders,
+	}, nil
 }
 
 // CreateFolder implements FolderRepository.
@@ -124,6 +157,37 @@ func (e *EsSqlFolderRepository) GetHierarchy(query GetFolderHierarchyQuery) (*Ge
 	}
 
 	return &GetFolderHierarchyResult{Folders: folders}, nil
+}
+
+// GetFolderHierarchy implements FolderRepository.
+func (e *EsSqlFolderRepository) MGetHierarchy(query MGetFolderHierarchyQuery) (*MGetFolderHierarchyResult, error) {
+	var folders []types.Folder
+	request := `
+				WITH RECURSIVE folder_hierarchy AS (
+								SELECT id, name, parent_id, 0 AS depth
+								FROM folders
+								WHERE id IN (?)
+								UNION ALL
+								SELECT f.id, f.name, f.parent_id, fh.depth + 1 AS depth
+								FROM folders f
+								INNER JOIN folder_hierarchy fh ON fh.id = f.parent_id
+				)
+				SELECT id, name, parent_id, depth
+				FROM (
+					SELECT id, name, parent_id, depth, ROW_NUMBER() OVER (PARTITION BY id ORDER BY depth DESC) AS row_num
+					FROM folder_hierarchy
+				) AS ranked_folders
+				WHERE row_num = 1
+				ORDER BY depth DESC;
+				`
+
+	if err := e.sql.Db.Raw(request, query.IDs).Scan(&folders).Error; err != nil {
+		return nil, err
+	}
+	
+
+
+	return &MGetFolderHierarchyResult{Folders: folders}, nil
 }
 
 // SearchFolder implements FolderRepository.

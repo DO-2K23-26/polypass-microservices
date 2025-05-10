@@ -2,10 +2,9 @@ package tag
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/tags"
-	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
+	"github.com/DO-2K23-26/polypass-microservices/search-service/services/folder"
 )
 
 var (
@@ -16,50 +15,49 @@ var (
 )
 
 type TagService struct {
-	tagRepo tags.ITagRepository
+	tagRepository tags.ITagRepository
+	folderService folder.FolderService
 }
 
-func NewTagService(tagRepo tags.ITagRepository, userRepo user.IUserRepository) *TagService {
+func NewTagService(tagRepo tags.ITagRepository) *TagService {
 	return &TagService{
-		tagRepo: tagRepo,
+		tagRepository: tagRepo,
 	}
 }
 
 // CreateTag creates a new tag
-func (s *TagService) Create(req CreateTagRequest) (*TagResponse, error) {
+func (s *TagService) Create(req CreateTagRequest) (*CreateTagResponse, error) {
 	if req.Name == "" {
 		return nil, ErrInvalidRequest
 	}
 
-	result, err := s.tagRepo.Create(tags.CreateTagQuery{
+	result, err := s.tagRepository.Create(tags.CreateTagQuery{
 		Name: req.Name,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &TagResponse{
-		ID:   result.Tag.ID,
-		Name: result.Tag.Name,
+	return &CreateTagResponse{
+		Tag: *result.Tag,
 	}, nil
 }
 
 // GetTag retrieves a tag by ID
-func (s *TagService) Get(req GetTagRequest) (*TagResponse, error) {
+func (s *TagService) Get(req GetTagRequest) (*CreateTagResponse, error) {
 	if req.ID == "" {
 		return nil, ErrInvalidRequest
 	}
 
-	result, err := s.tagRepo.Get(tags.GetTagQuery{
+	result, err := s.tagRepository.Get(tags.GetTagQuery{
 		ID: req.ID,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &TagResponse{
-		ID:   result.Tag.ID,
-		Name: result.Tag.Name,
+	return &CreateTagResponse{
+		Tag: *result.Tag,
 	}, nil
 }
 
@@ -68,7 +66,7 @@ func (s *TagService) MGet(req MGetTagRequest) (*MGetTagResponse, error) {
 		return nil, ErrInvalidRequest
 	}
 
-	result, err := s.tagRepo.MGet(tags.MGetTagQuery{
+	result, err := s.tagRepository.MGet(tags.MGetTagQuery{
 		IDs: req.IDs,
 	})
 	if err != nil {
@@ -82,26 +80,17 @@ func (s *TagService) MGet(req MGetTagRequest) (*MGetTagResponse, error) {
 }
 
 // UpdateTag updates an existing tag
-func (s *TagService) Update(req UpdateTagRequest) (*TagResponse, error) {
-	if req.ID == "" || req.Name == "" {
-		return nil, ErrInvalidRequest
+func (s *TagService) Update(req UpdateTagRequest) error {
+	if req.ID == "" {
+		return ErrInvalidRequest
 	}
 
-	// Normalize tag name (e.g., lowercase, trim spaces)
-	normalizedName := strings.TrimSpace(strings.ToLower(req.Name))
-	if normalizedName == "" {
-		return nil, ErrInvalidRequest
+	err := s.tagRepository.Update(tags.UpdateTagQuery{})
+	if err != nil {
+		return err
 	}
 
-	// result, err := s.tagRepo.Update(tags.UpdateTagQuery{
-	// 	ID:   req.ID,
-	// 	Name: normalizedName,
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	return nil, nil
+	return nil
 }
 
 // DeleteTag deletes a tag by ID
@@ -110,7 +99,7 @@ func (s *TagService) Delete(req DeleteTagRequest) error {
 		return ErrInvalidRequest
 	}
 
-	return s.tagRepo.Delete(tags.DeleteTagQuery{
+	return s.tagRepository.Delete(tags.DeleteTagQuery{
 		ID: req.ID,
 	})
 }
@@ -130,12 +119,24 @@ func (s *TagService) Search(req SearchTagsRequest) (*SearchTagsResponse, error) 
 		offset = *req.Page * limit
 	}
 
+	res, err := s.folderService.GetFromUser(folder.GetUserFoldersRequest{UserID: req.UserID})
+
+	if err != nil {
+		return nil, err
+	}
+
+	//Extract folder IDs from the response
+
+	folderIDs := make([]string, len(res.Folders))
+	for i, folder := range res.Folders {
+		folderIDs[i] = folder.ID
+	}
 	// Perform the search
-	searchResult, err := s.tagRepo.Search(tags.SearchTagQuery{
+	searchResult, err := s.tagRepository.Search(tags.SearchTagQuery{
 		Name:         req.SearchQuery,
 		Limit:        &limit,
 		Offset:       &offset,
-		FoldersScope: &req.FolderIDs,
+		FoldersScope: &folderIDs,
 	})
 	if err != nil {
 		return nil, err
