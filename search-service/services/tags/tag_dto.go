@@ -21,11 +21,11 @@ type DeleteTagRequest struct {
 }
 
 type SearchTagsRequest struct {
-	Name      string   `json:"name,omitempty"`
-	FolderIDs []string `json:"folder_id,omitempty"`
-	Limit     *int     `json:"limit,omitempty"`
-	Offset    *int     `json:"offset,omitempty"`
-	UserID    string   `json:"user_id"` // Required to get the user's folder access scope
+	SearchQuery string   `json:"search_query,omitempty"`
+	FolderIDs   []string `json:"folder_id,omitempty"`
+	Limit       *int     `json:"limit,omitempty"`
+	Page        *int     `json:"page,omitempty"`
+	UserID      string   `json:"user_id"` // Required to get the user's folder access scope
 }
 
 // Response DTOs
@@ -35,10 +35,10 @@ type TagResponse struct {
 }
 
 type SearchTagsResponse struct {
-	Tags   []TagResponse `json:"tags"`
-	Limit  int           `json:"limit"`
-	Offset int           `json:"offset"`
-	Total  int           `json:"total"`
+	Tags   []types.Tag `json:"tags"`
+	Limit  int         `json:"limit"`
+	Offset int         `json:"page"`
+	Total  int         `json:"total"`
 }
 
 type MGetTagRequest struct {

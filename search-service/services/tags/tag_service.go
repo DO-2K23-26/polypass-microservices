@@ -126,13 +126,13 @@ func (s *TagService) Search(req SearchTagsRequest) (*SearchTagsResponse, error) 
 	}
 
 	offset := 0
-	if req.Offset != nil && *req.Offset >= 0 {
-		offset = *req.Offset
+	if req.Page != nil && *req.Page >= 0 {
+		offset = *req.Page * limit
 	}
 
 	// Perform the search
 	searchResult, err := s.tagRepo.Search(tags.SearchTagQuery{
-		Name:         req.Name,
+		Name:         req.SearchQuery,
 		Limit:        &limit,
 		Offset:       &offset,
 		FoldersScope: &req.FolderIDs,
@@ -143,7 +143,7 @@ func (s *TagService) Search(req SearchTagsRequest) (*SearchTagsResponse, error) 
 
 	// Convert to response DTO
 	response := &SearchTagsResponse{
-		Tags:   ConvertToTagsResponse(searchResult.Tags),
+		Tags:   searchResult.Tags,
 		Limit:  searchResult.Limit,
 		Offset: searchResult.Offset,
 		Total:  searchResult.Total,

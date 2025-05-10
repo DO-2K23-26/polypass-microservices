@@ -97,7 +97,7 @@ func (c CredentialRepository) Search(query SearchCredentialQuery) (*SearchCreden
 	)
 
 	additionalQuery := esTypes.Query{}
-	if query.TagIds == nil || len(query.TagIds) == 0 {
+	if query.TagIds == nil || len(*query.TagIds) == 0 {
 		// This allow to search on a nested field
 		// In our case we are searching on the tag name
 		additionalQuery = esTypes.Query{

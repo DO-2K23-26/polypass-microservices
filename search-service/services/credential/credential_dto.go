@@ -4,9 +4,9 @@ import "github.com/DO-2K23-26/polypass-microservices/search-service/common/types
 
 // Request DTOs
 type CreateCredentialRequest struct {
-	ID       string   `json:"id,omitempty"` // Optional, will be generated if not provided
-	Title    string   `json:"title"`
-	FolderID string   `json:"folder_id"`
+	ID       string `json:"id,omitempty"` // Optional, will be generated if not provided
+	Title    string `json:"title"`
+	FolderID string `json:"folder_id"`
 }
 
 type UpdateCredentialRequest struct {
@@ -25,14 +25,12 @@ type DeleteCredentialRequest struct {
 }
 
 type SearchCredentialsRequest struct {
-	Title      string    `json:"title,omitempty"`
-	FolderID   *string   `json:"folder_id,omitempty"`
-	FolderName *string   `json:"folder_name,omitempty"`
-	TagIDs     *[]string `json:"tag_ids,omitempty"`
-	TagName    *string   `json:"tag_name,omitempty"`
-	Limit      *int      `json:"limit,omitempty"`
-	Offset     *int      `json:"offset,omitempty"`
-	UserID     string    `json:"user_id"` // Required to get user's folder access scope
+	SearchQuery string    `json:"search_query,omitempty"`
+	FolderID    *string   `json:"folder_id,omitempty"`
+	TagIDs      *[]string `json:"tag_ids,omitempty"`
+	Limit       *int      `json:"limit,omitempty"`
+	Page        *int      `json:"offset,omitempty"`
+	UserID      string    `json:"user_id"` // Required to get user's folder access scope
 }
 
 // Response DTOs
@@ -50,10 +48,8 @@ type FolderResponse struct {
 }
 
 type SearchCredentialsResponse struct {
-	Credentials []CredentialResponse `json:"credentials"`
-	Total       int                  `json:"total"`
-	Limit       int                  `json:"limit"`
-	Offset      int                  `json:"offset"`
+	Credentials []types.Credential `json:"credentials"`
+	Total       int                `json:"total"`
 }
 
 type AddTagsToCredentialRequest struct {
@@ -99,10 +95,10 @@ func ConvertToFolderResponse(folder *types.Folder) *FolderResponse {
 
 func ConvertToCredentialResponse(credential types.Credential) CredentialResponse {
 	return CredentialResponse{
-		ID:       credential.ID,
-		Title:    credential.Title,
-		Tags:     ConvertToTagResponses(credential.Tags),
-		Folder:   ConvertToFolderResponse(credential.Folder),
+		ID:     credential.ID,
+		Title:  credential.Title,
+		Tags:   ConvertToTagResponses(credential.Tags),
+		Folder: ConvertToFolderResponse(credential.Folder),
 	}
 }
 

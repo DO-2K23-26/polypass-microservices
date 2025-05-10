@@ -24,11 +24,10 @@ type DeleteFolderRequest struct {
 }
 
 type SearchFoldersRequest struct {
-	ID     string `json:"id,omitempty"`
-	Name   string `json:"name,omitempty"`
-	Limit  *int   `json:"limit,omitempty"`
-	Offset *int   `json:"offset,omitempty"`
-	UserID string `json:"user_id"` // Required to get user's folder access scope
+	SearchQuery string `json:"search_query,omitempty"`
+	Limit       *int   `json:"limit,omitempty"`
+	Page        *int   `json:"offset,omitempty"`
+	UserID      string `json:"user_id"` // Required to get user's folder access scope
 }
 
 // Response DTOs
@@ -39,6 +38,4 @@ type FolderResponse struct {
 type SearchFoldersResponse struct {
 	Folders []types.Folder `json:"folders"`
 	Total   int            `json:"total"`
-	Limit   int            `json:"limit"`
-	Offset  int            `json:"offset"`
 }

@@ -37,8 +37,8 @@ type GetCredentialResult struct {
 
 type SearchCredentialQuery struct {
 	SearchQuery  string   `json:"search_query"`
-	TagIds       []string `json:"tag_ids"`
 	FoldersScope []string `json:"folders_scope"` // The name of the folders that the user making the request can access
+	TagIds       *[]string `json:"tag_ids"`
 	Limit        *int     `json:"limit"`         // The limit is the maximum number of credentials to return
 	Offset       *int     `json:"offset"`        // The offset is the number of credentials to skip before returning results
 }

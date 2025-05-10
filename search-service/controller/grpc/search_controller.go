@@ -40,12 +40,12 @@ func (s *SearchController) SearchFolders(ctx context.Context, req *api.SearchFol
 
 	// Convert gRPC request to service request
 	limit := int(req.Limit)
-	offset := int(req.Offset)
+	page := int(req.Page)
 	serviceReq := folderService.SearchFoldersRequest{
-		Name:   req.Name,
-		UserID: req.UserId,
-		Limit:  &limit,
-		Offset: &offset,
+		SearchQuery: req.SearchQuery,
+		UserID:      req.UserId,
+		Limit:       &limit,
+		Page:        &page,
 	}
 
 	// Call service
@@ -56,17 +56,16 @@ func (s *SearchController) SearchFolders(ctx context.Context, req *api.SearchFol
 
 	// Convert service response to gRPC response
 	response := &api.SearchFoldersResponse{
-		Total:  int32(result.Total),
-		Limit:  int32(result.Limit),
-		Offset: int32(result.Offset),
+		Total: int32(result.Total),
 	}
 
 	// Map folders
 	response.Folders = make([]*api.Folder, len(result.Folders))
 	for i, folder := range result.Folders {
 		response.Folders[i] = &api.Folder{
-			Id:   folder.ID,
-			Name: folder.Name,
+			Id:       folder.ID,
+			Name:     folder.Name,
+			ParentId: *folder.ParentID,
 		}
 	}
 
@@ -82,13 +81,13 @@ func (s *SearchController) SearchTags(ctx context.Context, req *api.SearchTagsRe
 
 	// Convert gRPC request to service request
 	limit := int(req.Limit)
-	offset := int(req.Offset)
+	page := int(req.Page)
 
 	serviceReq := tagService.SearchTagsRequest{
-		Name:   req.Name,
-		Limit:  &limit,
-		Offset: &offset,
-		UserID: req.UserId,
+		SearchQuery: req.SearchQuery,
+		Limit:       &limit,
+		Page:        &page,
+		UserID:      req.UserId,
 	}
 
 	// Call service
@@ -99,17 +98,16 @@ func (s *SearchController) SearchTags(ctx context.Context, req *api.SearchTagsRe
 
 	// Convert service response to gRPC response
 	response := &api.SearchTagsResponse{
-		Total:  int32(result.Total),
-		Limit:  int32(result.Limit),
-		Offset: int32(result.Offset),
+		Total: int32(result.Total),
 	}
 
 	// Map tags
 	response.Tags = make([]*api.Tag, len(result.Tags))
 	for i, tag := range result.Tags {
 		response.Tags[i] = &api.Tag{
-			Id:   tag.ID,
-			Name: tag.Name,
+			Id:       tag.ID,
+			Name:     tag.Name,
+			FolderId: tag.FolderId,
 		}
 	}
 
@@ -125,38 +123,25 @@ func (s *SearchController) SearchCredentials(ctx context.Context, req *api.Searc
 
 	// Convert gRPC request to service request
 	limit := int(req.Limit)
-	offset := int(req.Offset)
+	page := int(req.Page)
 
 	var folderID *string
 	if req.FolderId != "" {
 		folderID = &req.FolderId
 	}
 
-	var folderName *string
-	if req.FolderName != "" {
-		folderName = &req.FolderName
-	}
-
-	var tagName *string
-	if req.TagName != "" {
-		tagName = &req.TagName
-	}
-
 	var tagIDs *[]string
 	if len(req.TagIds) > 0 {
-		tags := req.TagIds
-		tagIDs = &tags
+		tagIDs = &req.TagIds
 	}
 
 	serviceReq := credential.SearchCredentialsRequest{
-		Title:      req.Title,
-		FolderID:   folderID,
-		FolderName: folderName,
-		TagIDs:     tagIDs,
-		TagName:    tagName,
-		Limit:      &limit,
-		Offset:     &offset,
-		UserID:     req.UserId,
+		SearchQuery: req.SearchQuery,
+		FolderID:    folderID,
+		TagIDs:      tagIDs,
+		Page:        &page,
+		Limit:       &limit,
+		UserID:      req.UserId,
 	}
 
 	// Call service
@@ -167,9 +152,7 @@ func (s *SearchController) SearchCredentials(ctx context.Context, req *api.Searc
 
 	// Convert service response to gRPC response
 	response := &api.SearchCredentialsResponse{
-		Total:  int32(result.Total),
-		Limit:  int32(result.Limit),
-		Offset: int32(result.Offset),
+		Total: int32(result.Total),
 	}
 
 	// Map credentials
@@ -179,14 +162,15 @@ func (s *SearchController) SearchCredentials(ctx context.Context, req *api.Searc
 		credential := &api.Credential{
 			Id:       cred.ID,
 			Title:    cred.Title,
-			FolderId: cred.FolderID,
+			FolderId: cred.Folder.ID,
 		}
 
 		// Add folder if present
 		if cred.Folder != nil {
 			credential.Folder = &api.Folder{
-				Id:   cred.Folder.ID,
-				Name: cred.Folder.Name,
+				Id:       cred.Folder.ID,
+				Name:     cred.Folder.Name,
+				ParentId: *cred.Folder.ParentID,
 			}
 		}
 

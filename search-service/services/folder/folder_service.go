@@ -110,8 +110,8 @@ func (s *FolderService) Search(req SearchFoldersRequest) (*SearchFoldersResponse
 	}
 
 	offset := 0
-	if req.Offset != nil && *req.Offset >= 0 {
-		offset = *req.Offset
+	if req.Page != nil && *req.Page >= 0 {
+		offset = *req.Page * limit
 	}
 
 	res, err := s.userService.GetFolders(user.GetFoldersRequest{UserID: req.UserID})
@@ -126,8 +126,7 @@ func (s *FolderService) Search(req SearchFoldersRequest) (*SearchFoldersResponse
 
 	// Perform the search with user's folder access scope
 	searchResult, err := s.folderRepo.Search(folder.SearchFolderQuery{
-		ID:           req.ID,
-		Name:         req.Name,
+		Name:         req.SearchQuery,
 		Limit:        &limit,
 		Offset:       &offset,
 		FoldersScope: &folderIds,
@@ -140,8 +139,6 @@ func (s *FolderService) Search(req SearchFoldersRequest) (*SearchFoldersResponse
 	response := &SearchFoldersResponse{
 		Folders: searchResult.Folders,
 		Total:   searchResult.Total,
-		Limit:   searchResult.Limit,
-		Offset:  searchResult.Offset,
 	}
 
 	return response, nil
