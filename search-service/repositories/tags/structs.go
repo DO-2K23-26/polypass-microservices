@@ -21,7 +21,7 @@ type CreateTagResult struct {
 }
 
 type UpdateTagQuery struct {
-	ID       string `json:"id"`
+	ID       string  `json:"id"`
 	Name     *string `json:"name"`
 	FolderId *string
 }
@@ -47,4 +47,12 @@ type SearchTagResult struct {
 	Limit  int         `json:"limit"`
 	Offset int         `json:"offset"`
 	Total  int         `json:"total"`
+}
+
+type MGetTagQuery struct {
+	IDs []string `json:"ids"`
+}
+
+type mGetTagResult struct {
+	Tags []types.Tag `json:"tags"`
 }

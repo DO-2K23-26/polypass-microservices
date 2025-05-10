@@ -33,18 +33,25 @@ type RemoveFolderAccessRequest struct {
 	FolderID string `json:"folder_id" validate:"required"`
 }
 
+type GetFoldersRequest struct {
+	UserID string `json:"user_id" validate:"required"`
+}
+
+type GetFoldersResponse struct {
+	Folders []types.Folder `json:"folders"`
+}
+
 // Response DTOs
 type UserResponse struct {
 	User types.User `json:"user"`
 }
-
 
 // Conversion methods for repository to service layer
 func toUserResponse(result *user.GetUserResult) *UserResponse {
 	if result == nil {
 		return nil
 	}
-	
+
 	return &UserResponse{
 		User: result.User,
 	}
@@ -54,7 +61,7 @@ func toCreateUserResponse(result *user.CreateUserResult) *UserResponse {
 	if result == nil {
 		return nil
 	}
-	
+
 	return &UserResponse{
 		User: result.User,
 	}
@@ -64,7 +71,7 @@ func toUpdateUserResponse(result *user.UpdateUserResult) *UserResponse {
 	if result == nil {
 		return nil
 	}
-	
+
 	return &UserResponse{
 		User: result.User,
 	}
@@ -74,7 +81,7 @@ func toAddFolderAccessResponse(result *user.AddFolderAccessResult) *UserResponse
 	if result == nil {
 		return nil
 	}
-	
+
 	return &UserResponse{
 		User: result.User,
 	}
@@ -84,7 +91,7 @@ func toRemoveFolderAccessResponse(result *user.RemoveFolderAccessResult) *UserRe
 	if result == nil {
 		return nil
 	}
-	
+
 	return &UserResponse{
 		User: result.User,
 	}

@@ -6,4 +6,5 @@ type ITagRepository interface {
 	Update(query UpdateTagQuery) error
 	Delete(query DeleteTagQuery) error
 	Search(query SearchTagQuery) (*SearchTagResult, error)
+	MGet(query MGetTagQuery) (*mGetTagResult, error)
 }

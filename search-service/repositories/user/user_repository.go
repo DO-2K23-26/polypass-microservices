@@ -9,5 +9,3 @@ type IUserRepository interface {
 	AddFolderAccess(query AddFolderAccessQuery) (*AddFolderAccessResult, error)
 	RemoveFolderAccess(query RemoveFolderAccessQuery) (*RemoveFolderAccessResult, error)
 }
-
-

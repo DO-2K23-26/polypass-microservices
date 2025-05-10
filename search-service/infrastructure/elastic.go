@@ -10,6 +10,7 @@ import (
 	commonTypes "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/deletebyquery"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/mget"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/updatebyquery"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/indices/create"
@@ -231,6 +232,35 @@ func (e *ElasticAdapter) Search(
 	return result, &totalHits, nil
 }
 
+// mGetDocuments retrieves multiple documents by their IDs
+
+func (e *ElasticAdapter) MGetDocuments(indexName string, ids []string) (*[]Source, error) {
+	res, err := e.Client.Mget().Index(indexName).Request(&mget.Request{Ids: ids}).Do(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("error getting documents in index %s: %w", indexName, err)
+	}
+
+	sources := make([]Source, len(res.Docs))
+	for _, item := range res.Docs {
+		itemBytes, err := json.Marshal(item)
+		if err != nil {
+			log.Printf("Error marshaling item: %v", err)
+			continue
+		}
+
+		var doc MGetItem
+		if err := json.Unmarshal(itemBytes, &doc); err != nil {
+			log.Printf("Error unmarshaling item into struct: %v", err)
+			continue
+		}
+		if doc.Found {
+			sources = append(sources, doc.Source)
+		}
+	}
+
+	return &sources, nil
+}
+
 func isEmptyQuery(q types.Query) bool {
 	// You can expand this if you support more query types
 	return q.Match == nil &&
@@ -241,3 +271,12 @@ func isEmptyQuery(q types.Query) bool {
 		q.Range == nil &&
 		q.Bool == nil
 }
+
+type MGetItem struct {
+	Index  string `json:"_index"`
+	ID     string `json:"_id"`
+	Found  bool   `json:"found"`
+	Source Source `json:"_source,omitempty"` // may be nil if not found
+}
+
+type Source any

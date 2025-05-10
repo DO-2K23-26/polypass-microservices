@@ -37,7 +37,7 @@ func (c CredentialRepository) Create(query CreateCredentialQuery) (*CreateCreden
 		ID:     query.ID,
 		Title:  query.Title,
 		Tags:   query.Tags,
-		Folder: query.Folder,
+		Folder: &query.Folder,
 	}
 	err := c.esClient.CreateDocument(types.CredentialIndex, credential.ID, credential)
 	if err != nil {
@@ -97,7 +97,7 @@ func (c CredentialRepository) Search(query SearchCredentialQuery) (*SearchCreden
 	)
 
 	additionalQuery := esTypes.Query{}
-	if query.TagIds == nil || len(query.TagIds) == 0 {
+	if query.TagIds == nil || len(*query.TagIds) == 0 {
 		// This allow to search on a nested field
 		// In our case we are searching on the tag name
 		additionalQuery = esTypes.Query{
@@ -196,10 +196,15 @@ func (c CredentialRepository) RemoveTags(query RemoveTagsFromCredentialQuery) er
 
 // UpdateCredential implements ICredentialRepository.
 func (c CredentialRepository) Update(query UpdateCredentialQuery) error {
-	updateCredential := types.Credential{
-		Title:  *query.Title,
-		Folder: query.Folder,
+
+	updateCredential := types.Credential{}
+	if query.Title != nil {
+		updateCredential.Title = *query.Title
 	}
+	if query.Folder != nil {
+		updateCredential.Folder = query.Folder
+	}
+	
 	err := c.esClient.UpdateDocument(types.CredentialIndex, query.ID, updateCredential)
 	if err != nil {
 		return err

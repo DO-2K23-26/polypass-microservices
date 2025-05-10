@@ -17,7 +17,7 @@ func NewUserService(userRepository user.IUserRepository) *UserService {
 }
 
 // GetUser retrieves a user by ID
-func (s *UserService) GetUser(req *GetUserRequest) (*UserResponse, error) {
+func (s *UserService) Get(req *GetUserRequest) (*UserResponse, error) {
 	if req == nil {
 		return nil, errors.New("request cannot be nil")
 	}
@@ -40,7 +40,7 @@ func (s *UserService) GetUser(req *GetUserRequest) (*UserResponse, error) {
 }
 
 // CreateUser creates a new user
-func (s *UserService) CreateUser(req *CreateUserRequest) (*UserResponse, error) {
+func (s *UserService) Create(req *CreateUserRequest) (*UserResponse, error) {
 	if req == nil {
 		return nil, errors.New("request cannot be nil")
 	}
@@ -54,9 +54,8 @@ func (s *UserService) CreateUser(req *CreateUserRequest) (*UserResponse, error) 
 	return toCreateUserResponse(result), nil
 }
 
-
 // DeleteUser deletes a user by ID
-func (s *UserService) DeleteUser(req *DeleteUserRequest) error {
+func (s *UserService) Delete(req *DeleteUserRequest) error {
 	if req == nil {
 		return errors.New("request cannot be nil")
 	}
@@ -72,6 +71,7 @@ func (s *UserService) DeleteUser(req *DeleteUserRequest) error {
 	}
 	return nil
 }
+
 
 // AddFolderAccess adds or updates a user's access to a folder
 func (s *UserService) AddFolderAccess(req *AddFolderAccessRequest) (*UserResponse, error) {

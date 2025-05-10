@@ -3,10 +3,7 @@ package folder
 import (
 	"errors"
 
-	"slices"
-
 	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/folder"
-	"github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
 )
 
 var (
@@ -18,62 +15,44 @@ var (
 
 type FolderService struct {
 	folderRepo folder.IFolderRepository
-	userRepo   user.IUserRepository
 }
 
-func NewFolderService(folderRepo folder.IFolderRepository, userRepo user.IUserRepository) *FolderService {
+func NewFolderService(folderRepo folder.IFolderRepository) *FolderService {
 	return &FolderService{
 		folderRepo: folderRepo,
-		userRepo:   userRepo,
 	}
 }
 
 // CreateFolder creates a new folder
-func (s *FolderService) CreateFolder(req CreateFolderRequest) (*FolderResponse, error) {
+func (s *FolderService) Create(req CreateFolderRequest) (*FolderResponse, error) {
 	if req.Name == "" {
 		return nil, ErrInvalidRequest
 	}
 
-	result, err := s.folderRepo.Create(folder.CreateFolderQuery{
+	query := folder.CreateFolderQuery{
 		ID:   req.ID,
 		Name: req.Name,
-	})
+	}
+
+	if req.ParentID != nil {
+		//TO DO: Check the right of the user to create a folder inside another folder
+		query.ParentID = req.ParentID
+	}
+
+	result, err := s.folderRepo.Create(query)
 	if err != nil {
 		return nil, err
 	}
 
 	return &FolderResponse{
-		ID:   result.Folder.ID,
-		Name: result.Folder.Name,
+		Folder: result.Folder,
 	}, nil
 }
 
-// GetFolder retrieves a folder by ID, checking user permissions
-func (s *FolderService) GetFolder(req GetFolderRequest) (*FolderResponse, error) {
-	if req.ID == "" || req.UserID == "" {
+// GetFolder retrieves a folder by ID
+func (s *FolderService) Get(req GetFolderRequest) (*FolderResponse, error) {
+	if req.ID == "" {
 		return nil, ErrInvalidRequest
-	}
-
-	// Check if user has access to the folder
-	userResult, err := s.userRepo.Get(user.GetUserQuery{
-		ID: req.UserID,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if userResult == nil || userResult.User.ID == "" {
-		return nil, ErrUserNotFound
-	}
-
-	folderIds := make([]string, len(userResult.User.Folders))
-	
-	for _, folder := range userResult.User.Folders {
-		folderIds = append(folderIds, folder.ID)
-	}
-	// Check if user has access to the folder
-	hasAccess := slices.Contains(folderIds, req.ID)
-	if !hasAccess {
-		return nil, ErrUserNotAuthorized
 	}
 
 	// Get the folder
@@ -83,18 +62,14 @@ func (s *FolderService) GetFolder(req GetFolderRequest) (*FolderResponse, error)
 	if err != nil {
 		return nil, err
 	}
-	if result == nil {
-		return nil, ErrFolderNotFound
-	}
 
 	return &FolderResponse{
-		ID:   result.Folder.ID,
-		Name: result.Folder.Name,
+		Folder: result.Folder,
 	}, nil
 }
 
 // UpdateFolder updates an existing folder
-func (s *FolderService) UpdateFolder(req UpdateFolderRequest) (*FolderResponse, error) {
+func (s *FolderService) Update(req UpdateFolderRequest) (*FolderResponse, error) {
 	if req.ID == "" || req.Name == "" {
 		return nil, ErrInvalidRequest
 	}
@@ -108,37 +83,14 @@ func (s *FolderService) UpdateFolder(req UpdateFolderRequest) (*FolderResponse, 
 	}
 
 	return &FolderResponse{
-		ID:   result.Folder.ID,
-		Name: result.Folder.Name,
+		Folder: result.Folder,
 	}, nil
 }
 
 // DeleteFolder deletes a folder by ID, checking user permissions
-func (s *FolderService) DeleteFolder(req DeleteFolderRequest) error {
+func (s *FolderService) Delete(req DeleteFolderRequest) error {
 	if req.ID == "" || req.UserID == "" {
 		return ErrInvalidRequest
-	}
-
-	// Check if user has access to the folder
-	userResult, err := s.userRepo.Get(user.GetUserQuery{
-		ID: req.UserID,
-	})
-	if err != nil {
-		return err
-	}
-	if userResult == nil || userResult.User.ID == "" {
-		return ErrUserNotFound
-	}
-	
-	folderIds := make([]string, len(userResult.User.Folders))
-	
-	for _, folder := range userResult.User.Folders {
-		folderIds = append(folderIds, folder.ID)
-	}
-	// Check if user has access to the folder
-	hasAccess := slices.Contains(folderIds, req.ID)
-	if !hasAccess {
-		return ErrUserNotAuthorized
 	}
 
 	return s.folderRepo.Delete(folder.DeleteFolderQuery{
@@ -146,23 +98,24 @@ func (s *FolderService) DeleteFolder(req DeleteFolderRequest) error {
 	})
 }
 
-// SearchFolders searches for folders based on criteria
-func (s *FolderService) SearchFolders(req SearchFoldersRequest) (*SearchFoldersResponse, error) {
+// Get Folder for a user
+func (s *FolderService) GetFromUser(req GetUserFoldersRequest) (*GetUserFoldersResponse, error) {
 	if req.UserID == "" {
 		return nil, ErrInvalidRequest
 	}
 
-	// Get user to determine folder access scope
-	userResult, err := s.userRepo.Get(user.GetUserQuery{
-		ID: req.UserID,
-	})
+	res, err := s.folderRepo.GetFromUser(folder.GetFromUserQuery{UserID: req.UserID})
 	if err != nil {
 		return nil, err
 	}
-	if userResult == nil || userResult.User.ID == "" {
-		return nil, ErrUserNotFound
-	}
 
+	return &GetUserFoldersResponse{
+		Folders: res.Folders,
+	}, nil
+}
+
+// SearchFolders searches for folders based on criteria
+func (s *FolderService) Search(req SearchFoldersRequest) (*SearchFoldersResponse, error) {
 	// Set default limit and offset if not provided
 	limit := 10
 	if req.Limit != nil && *req.Limit > 0 {
@@ -170,19 +123,23 @@ func (s *FolderService) SearchFolders(req SearchFoldersRequest) (*SearchFoldersR
 	}
 
 	offset := 0
-	if req.Offset != nil && *req.Offset >= 0 {
-		offset = *req.Offset
+	if req.Page != nil && *req.Page >= 0 {
+		offset = *req.Page * limit
 	}
 
-	folderIds := make([]string, len(userResult.User.Folders))
-	
-	for _, folder := range userResult.User.Folders {
-		folderIds = append(folderIds, folder.ID)
+	res, err := s.GetFromUser(GetUserFoldersRequest{UserID: req.UserID})
+	if err != nil {
+		return nil, err
 	}
+
+	folderIds := make([]string, len(res.Folders))
+	for i, folder := range res.Folders {
+		folderIds[i] = folder.ID
+	}
+
 	// Perform the search with user's folder access scope
 	searchResult, err := s.folderRepo.Search(folder.SearchFolderQuery{
-		ID:           req.ID,
-		Name:         req.Name,
+		Name:         req.SearchQuery,
 		Limit:        &limit,
 		Offset:       &offset,
 		FoldersScope: &folderIds,
@@ -193,10 +150,8 @@ func (s *FolderService) SearchFolders(req SearchFoldersRequest) (*SearchFoldersR
 
 	// Convert to response DTO
 	response := &SearchFoldersResponse{
-		Folders: ConvertToFoldersResponse(searchResult.Folders),
+		Folders: searchResult.Folders,
 		Total:   searchResult.Total,
-		Limit:   searchResult.Limit,
-		Offset:  searchResult.Offset,
 	}
 
 	return response, nil

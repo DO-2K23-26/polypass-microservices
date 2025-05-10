@@ -11,7 +11,7 @@ type GormUserRepository struct {
 	DB *gorm.DB
 }
 
-func NewGormUserRepository(db *gorm.DB) *GormUserRepository {
+func NewGormUserRepository(db *gorm.DB) IUserRepository {
 	return &GormUserRepository{
 		DB: db,
 	}
@@ -116,3 +116,4 @@ func (r *GormUserRepository) RemoveFolderAccess(query RemoveFolderAccessQuery) (
 		User: user,
 	}, nil
 }
+

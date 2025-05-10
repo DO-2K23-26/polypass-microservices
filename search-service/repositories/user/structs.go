@@ -52,3 +52,11 @@ type RemoveFolderAccessQuery struct {
 type RemoveFolderAccessResult struct {
 	User types.User `json:"user"`
 }
+
+type GetFoldersQuery struct {
+	UserID string `json:"user_id"`
+}
+
+type GetFoldersResult struct {
+	Folders []types.Folder `json:"folders"`
+}

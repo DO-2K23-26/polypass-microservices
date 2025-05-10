@@ -18,11 +18,13 @@ service SearchService {
 message Folder {
   string id = 1;
   string name = 2;
+  string parent_id = 3; // Required for permission check
 }
 
 message Tag {
   string id = 1;
   string name = 2;
+  string folder_id = 3;
 }
 
 message Credential {
@@ -35,50 +37,42 @@ message Credential {
 
 // Folder search
 message SearchFoldersRequest {
-  string name = 1;
+  string search_query = 1;
   int32 limit = 2;
-  int32 offset = 3;
+  int32 page = 3;
   string user_id = 4; // Required for permission check
 }
 
 message SearchFoldersResponse {
   repeated Folder folders = 1;
   int32 total = 2;
-  int32 limit = 3;
-  int32 offset = 4;
 }
 
 // Tag search
 message SearchTagsRequest {
-  string name = 1;
+  string search_query = 1;
   string folder_id = 2;
   int32 limit = 3;
-  int32 offset = 4;
+  int32 page = 4;
   string user_id = 5; // Required for permission check
 }
 
 message SearchTagsResponse {
   repeated Tag tags = 1;
   int32 total = 2;
-  int32 limit = 3;
-  int32 offset = 4;
 }
 
 // Credential search
 message SearchCredentialsRequest {
-  string title = 1;
+  string search_query = 1;
   string folder_id = 2;
-  string folder_name = 3;
   repeated string tag_ids = 4;
-  string tag_name = 5;
   int32 limit = 6;
-  int32 offset = 7;
+  int32 page = 7;
   string user_id = 8; // Required for permission check
 }
 
 message SearchCredentialsResponse {
   repeated Credential credentials = 1;
   int32 total = 2;
-  int32 limit = 3;
-  int32 offset = 4;
 }

@@ -8,8 +8,13 @@ type CreateTagRequest struct {
 }
 
 type UpdateTagRequest struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID       string  `json:"id"`
+	Name     *string `json:"name"`
+	FolderID *string `json:"folder_id"`
+}
+
+type UpdateTagResponse struct {
+	Tag types.Tag `json:"tag"`
 }
 
 type GetTagRequest struct {
@@ -21,41 +26,33 @@ type DeleteTagRequest struct {
 }
 
 type SearchTagsRequest struct {
-	Name       string  `json:"name,omitempty"`
-	FolderID   *string `json:"folder_id,omitempty"`
-	Limit      *int    `json:"limit,omitempty"`
-	Offset     *int    `json:"offset,omitempty"`
-	UserID     string  `json:"user_id"` // Required to get the user's folder access scope
+	SearchQuery string `json:"search_query,omitempty"`
+	Limit       *int   `json:"limit,omitempty"`
+	Page        *int   `json:"page,omitempty"`
+	UserID      string `json:"user_id"` // Required to get the user's folder access scope
 }
 
 // Response DTOs
-type TagResponse struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+
+type CreateTagResponse struct {
+	Tag types.Tag `json:"tag"`
+}
+
+type GetTagResponse struct {
+	Tag types.Tag `json:"tag"`
 }
 
 type SearchTagsResponse struct {
-	Tags   []TagResponse `json:"tags"`
-	Limit  int           `json:"limit"`
-	Offset int           `json:"offset"`
-	Total  int           `json:"total"`
+	Tags   []types.Tag `json:"tags"`
+	Limit  int         `json:"limit"`
+	Offset int         `json:"page"`
+	Total  int         `json:"total"`
 }
 
-// Conversion functions
-func ConvertToTagResponse(tag *types.Tag) TagResponse {
-	return TagResponse{
-		ID:   tag.ID,
-		Name: tag.Name,
-	}
+type MGetTagRequest struct {
+	IDs []string `json:"ids"`
 }
 
-func ConvertToTagsResponse(tags []types.Tag) []TagResponse {
-	response := make([]TagResponse, len(tags))
-	for i, tag := range tags {
-		response[i] = TagResponse{
-			ID:   tag.ID,
-			Name: tag.Name,
-		}
-	}
-	return response
+type MGetTagResponse struct {
+	Tags []types.Tag `json:"tags"`
 }
