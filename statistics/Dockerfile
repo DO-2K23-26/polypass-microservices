@@ -1,15 +1,16 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
-# Copy go mod and sum files
-COPY go.mod go.sum ./
+# Copy go.mod and go.sum files
+COPY go.mod ./
+COPY go.sum ./
 
 # Download dependencies
 RUN go mod download
 
-# Copy source code
+# Copy the source code
 COPY . .
 
 # Build the application
@@ -20,11 +21,14 @@ FROM alpine:latest
 
 WORKDIR /app
 
-# Copy the binary from builder
+# Copy the binary from the builder stage
 COPY --from=builder /app/statistics-service .
 
-# Expose port
+# Copy configuration files if needed
+COPY --from=builder /app/config.json .
+
+# Expose the port the service listens on
 EXPOSE 8080
 
-# Run the application
-CMD ["./statistics-service"] 
+# Run the service
+CMD ["./statistics-service"]

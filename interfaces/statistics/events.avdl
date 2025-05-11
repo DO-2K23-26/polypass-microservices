@@ -1,0 +1,88 @@
+@namespace("com.polypass.statistics")
+
+protocol StatisticsEvents {
+  // Base event record
+  record Event {
+    string id;
+    string type;
+    timestamp_ms timestamp;
+    string source;
+    union { null, string } data = null;
+  }
+
+  // User-related events
+  record UserLoginEvent {
+    string userId;
+    timestamp_ms timestamp;
+    string deviceInfo;
+    string ipAddress;
+    union { null, string } location = null;
+  }
+
+  record UserLogoutEvent {
+    string userId;
+    timestamp_ms timestamp;
+    string sessionId;
+    long sessionDuration;
+  }
+
+  record UserCreatedEvent {
+    string userId;
+    timestamp_ms timestamp;
+    string email;
+    union { null, string } username = null;
+  }
+
+  // Password-related events
+  record PasswordCreatedEvent {
+    string passwordId;
+    string userId;
+    timestamp_ms timestamp;
+    int strengthScore;
+    array<string> categories;
+  }
+
+  record PasswordUpdatedEvent {
+    string passwordId;
+    string userId;
+    timestamp_ms timestamp;
+    int oldStrengthScore;
+    int newStrengthScore;
+    array<string> categories;
+  }
+
+  record PasswordDeletedEvent {
+    string passwordId;
+    string userId;
+    timestamp_ms timestamp;
+    array<string> categories;
+  }
+
+  record PasswordAccessedEvent {
+    string passwordId;
+    string userId;
+    timestamp_ms timestamp;
+    string accessType;  // e.g., "VIEW", "COPY", "AUTOFILL"
+    union { null, string } deviceInfo = null;
+  }
+
+  // Security-related events
+  record SecurityAlertEvent {
+    string alertId;
+    string userId;
+    timestamp_ms timestamp;
+    string alertType;
+    string description;
+    string severity;
+    union { null, string } resolution = null;
+  }
+
+  record FailedLoginAttemptEvent {
+    string userId;
+    timestamp_ms timestamp;
+    string ipAddress;
+    string deviceInfo;
+    union { null, string } location = null;
+    string failureReason;
+  }
+}
