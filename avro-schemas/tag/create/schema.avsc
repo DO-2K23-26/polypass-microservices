@@ -1,0 +1,27 @@
+{
+	"namespace": "com.polypass.events.tag",
+	"type": "record",
+	"name": "EventTagCreated",
+	"fields": [
+		{
+			"name": "tagId",
+			"type": "string"
+		},
+		{
+			"name": "name",
+			"type": "string"
+		},
+		{
+			"name": "color",
+			"type": "string"
+		},
+		{
+			"name": "organizationId",
+			"type": "string"
+		},
+		{
+			"name": "timestamp",
+			"type": "long"
+		}
+	]
+}
