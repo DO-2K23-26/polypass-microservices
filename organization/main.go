@@ -15,23 +15,15 @@ func main() {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		config.HandleError(err)
+		return
 	}
 
 	kafka, err := infrastructure.NewKafkaAdapter(cfg.KafkaHost, cfg.ClientId)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	schema := `{
-		"type": "record",
-		"name": "create_folder",
-		"fields": [
-			{"name": "name", "type": "string"},
-			{"name": "age", "type": "int"}
-		]
-	}`
 	subject := "create_folder-value"
-	encoder, err := infrastructure.NewAvroEncoder(cfg.SchemaRegistryURL, subject, schema)
+	encoder, err := infrastructure.NewOrganizationEncoder(cfg.SchemaRegistryURL, subject)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,8 +38,9 @@ func main() {
 		defer wg.Done()
 		for {
 			data := map[string]interface{}{
+				"id":   fmt.Sprintf("Workder_%d", workerID),
 				"name": fmt.Sprintf("User_%d_Worker_%d", atomic.AddUint64(&messageCount, 1), workerID),
-				"age":  int(atomic.LoadUint64(&messageCount) % 100),
+				// "age":  int(atomic.LoadUint64(&messageCount) % 100),
 			}
 
 			err = kafka.ProduceAvro("create_folder", encoder, data)
