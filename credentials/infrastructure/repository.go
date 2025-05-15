@@ -5,5 +5,5 @@ type Repository interface {
 	Setup() error
 
 	// script to be launched when the repository is deregistered (most of the time for graceful shutdown)
-	Stop() error
+	Shutdown() error
 }
