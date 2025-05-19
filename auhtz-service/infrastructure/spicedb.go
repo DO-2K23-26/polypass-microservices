@@ -42,7 +42,7 @@ func (s *SpiceDBAdapter) Migrate() error {
 		return err
 	}
 	schemaString := string(schema)
-	
+
 	// Check if schema is up to date
 	isUpToDate, err := s.authzedClient.SchemaServiceClient.DiffSchema(context.Background(), &v1.DiffSchemaRequest{
 		ComparisonSchema: schemaString,
@@ -54,7 +54,7 @@ func (s *SpiceDBAdapter) Migrate() error {
 		log.Printf("failed to diff schema: %v", err)
 		return err
 	}
-	if len(isUpToDate.Diffs)==0 {
+	if len(isUpToDate.Diffs) == 0 {
 		log.Println("Authzed schema is up to date")
 		return nil
 	}
@@ -70,7 +70,14 @@ func (s *SpiceDBAdapter) Migrate() error {
 	return nil
 }
 
-func (s *SpiceDBAdapter) CreateRelationship(ctx context.Context, subjectType types.ObjectType, subjectId string, relation string, resourceType types.ObjectType, resourceId string) error {
+func (s *SpiceDBAdapter) CreateRelationship(
+	ctx context.Context,
+	subjectType types.ObjectType,
+	subjectId string,
+	relation types.Relation,
+	resourceType types.ObjectType,
+	resourceId string,
+) error {
 	_, err := s.authzedClient.WriteRelationships(ctx, &v1.WriteRelationshipsRequest{
 		Updates: []*v1.RelationshipUpdate{
 			{
@@ -80,7 +87,7 @@ func (s *SpiceDBAdapter) CreateRelationship(ctx context.Context, subjectType typ
 						Object: &v1.ObjectReference{ObjectType: string(subjectType), ObjectId: subjectId},
 					},
 					Resource: &v1.ObjectReference{ObjectType: string(resourceType), ObjectId: resourceId},
-					Relation: relation,
+					Relation: string(relation),
 				},
 			},
 		},
@@ -89,5 +96,133 @@ func (s *SpiceDBAdapter) CreateRelationship(ctx context.Context, subjectType typ
 		log.Printf("failed to create relationship: %v", err)
 		return err
 	}
+	return nil
+}
+
+func (s *SpiceDBAdapter) UpdateRelationship(
+	ctx context.Context,
+	subjectType types.ObjectType,
+	subjectId string,
+	relation types.Relation,
+	resourceType types.ObjectType,
+	resourceId string,
+) error {
+	// Perform the delete and create operations in a single transaction
+	_, err := s.authzedClient.WriteRelationships(ctx, &v1.WriteRelationshipsRequest{
+		Updates: []*v1.RelationshipUpdate{
+			// Delete all existing relationships for the given resource and relation
+			{
+				Operation: v1.RelationshipUpdate_OPERATION_DELETE,
+				Relationship: &v1.Relationship{
+					Resource: &v1.ObjectReference{
+						ObjectType: string(resourceType),
+						ObjectId:   resourceId,
+					},
+					Relation: string(relation),
+				},
+			},
+			// Create the new relationship
+			{
+				Operation: v1.RelationshipUpdate_OPERATION_CREATE,
+				Relationship: &v1.Relationship{
+					Subject: &v1.SubjectReference{
+						Object: &v1.ObjectReference{ObjectType: string(subjectType), ObjectId: subjectId},
+					},
+					Resource: &v1.ObjectReference{ObjectType: string(resourceType), ObjectId: resourceId},
+					Relation: string(relation),
+				},
+			},
+		},
+	})
+	if err != nil {
+		log.Printf("failed to update relationship: %v", err)
+		return err
+	}
+
+	log.Printf("successfully updated relationship between subject %s:%s and resource %s:%s with relation %s", subjectType, subjectId, resourceType, resourceId, relation)
+	return nil
+}
+
+func (s *SpiceDBAdapter) DeleteRelationship(
+	ctx context.Context,
+	subjectType types.ObjectType,
+	subjectId string,
+	resourceType types.ObjectType,
+	resourceId string,
+) error {
+	_, err := s.authzedClient.DeleteRelationships(ctx, &v1.DeleteRelationshipsRequest{
+		RelationshipFilter: &v1.RelationshipFilter{
+			ResourceType:       string(resourceType),
+			OptionalResourceId: resourceId,
+			OptionalSubjectFilter: &v1.SubjectFilter{
+				SubjectType:       string(subjectType),
+				OptionalSubjectId: subjectId,
+			},
+		},
+	})
+	if err != nil {
+		log.Printf("failed to delete relationship: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (s *SpiceDBAdapter) Delete(ctx context.Context, resourceType types.ObjectType, id string) error {
+	_, err := s.authzedClient.DeleteRelationships(ctx, &v1.DeleteRelationshipsRequest{
+
+		RelationshipFilter: &v1.RelationshipFilter{
+			OptionalResourceId: id,
+			ResourceType:       string(resourceType),
+		},
+	})
+	if err != nil {
+		log.Printf("failed to delete all occurrences of id %s: %v", id, err)
+		return err
+	}
+
+	log.Printf("successfully deleted all occurrences of id %s", id)
+	return nil
+}
+
+func (s *SpiceDBAdapter) ChangeParent(ctx context.Context, folderId string, newParentId string) error {
+	// Perform the delete and create operations in a single transaction
+	_, err := s.authzedClient.WriteRelationships(ctx, &v1.WriteRelationshipsRequest{
+		Updates: []*v1.RelationshipUpdate{
+			// Delete all existing parent relationships for the folder
+			{
+				Operation: v1.RelationshipUpdate_OPERATION_DELETE,
+				Relationship: &v1.Relationship{
+					Resource: &v1.ObjectReference{
+						ObjectType: "folder",
+						ObjectId:   folderId,
+					},
+					Relation: "parent",
+				},
+			},
+			// Create the new parent relationship
+			{
+				Operation: v1.RelationshipUpdate_OPERATION_CREATE,
+				Relationship: &v1.Relationship{
+					Resource: &v1.ObjectReference{
+						ObjectType: "folder",
+						ObjectId:   folderId,
+					},
+					Relation: "parent",
+					Subject: &v1.SubjectReference{
+						Object: &v1.ObjectReference{
+							ObjectType: "folder",
+							ObjectId:   newParentId,
+						},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		log.Printf("failed to change parent relationship: %v", err)
+		return err
+	}
+
+	log.Printf("successfully changed parent of folder %s to %s", folderId, newParentId)
 	return nil
 }
