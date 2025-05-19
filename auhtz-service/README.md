@@ -1,77 +1,98 @@
-# Authorization service
----
+# Authorization Service
 
-## Launch the application
+This service is responsible for managing authorization logic using SpiceDB and Kafka consumers. It handles events related to folders, credentials, tags, and users.
 
-Populate the env.local.sh file then :
-```sh
-source env.local.sh
-```
+## Services
 
-Start the external services:
-```sh
-docker-compose up -d
-```
+The following services are implemented to handle the logic for each event type. Each service uses the `SpiceDBAdapter` to interact with SpiceDB.
 
-Start the application:
-```sh
-go run main.go
-```
+### Folder Service
 
-## Purpose
+**Path:** `services/folder/folder_service.go`
 
-This service will hold the logic to do data aggregation form other services.
-We will use [Authzed](https://authzed.com/) to manage authorization.
+Handles folder-related events such as:
+- Creating a folder
+- Deleting a folder
+- Updating a folder (e.g., changing its parent)
 
-## Main feature
+### Credential Service
 
-The main feature of this service is to provide a centralized authorization logic for all the microservices in the Polypass ecosystem.
-We will listen to kafka topics to aggregate the authorization datas in Authzed database.
-Then we will expose the GRPC api of Authzed so that it can be called by other services.
+**Path:** `services/credential/credential_service.go`
 
-## Authorization Logic
+Handles credential-related events such as:
+- Creating a credential
+- Updating a credential
+- Deleting a credential
 
-Need authorization logic on
-- folder
-- tag
-- credential
+### Tag Service
 
-Role are hold at folder level. Either a user is a folder user either it a folder viewer or  a folder viewer.
-A folder admin will inherit all the folder permission that as a folder viewer.
+**Path:** `services/tag/tag_service.go`
 
-Basically the folder viewer will only be able to perform read operation on:
-- folder
-- tag
-- credential
-- sub-folders
-- credentials in sub-folders
-- tags in sub-folders
+Handles tag-related events such as:
+- Creating a tag
+- Updating a tag
+- Deleting a tag
 
-The folder admin admin will have the right to:
-- create sub-folders
-- update folder and sub-folders
-- create & update tags in the folder and sub-folders
-- create & update  credentials in the folder and sub-folders
+### User Service
 
-## Some reliationship writing help
+**Path:** `services/user/user_service.go`
 
-For example, if you want to add some credential to a folder you will have to write this reliationship:
+Handles user-related events such as:
+- Adding a user to a folder
+- Removing a user from a folder
 
-```
-Resource Type: credentials
-Resource Id: "ascsd1234567890"
-Subject Type: folder
-Subject Id: "fo1234567890"
-```
+## Event Controllers
 
-## Open the playground Authzed
+The event controllers in the `controllers/events` directory delegate the event handling logic to the corresponding services.
 
-```sh
-docker run -it -p 3000:3000 ghcr.io/authzed/spicedb-playground:latest
-```
+### Folder Event Controller
 
-Open the playground Authzed
+**Path:** `controllers/events/folder.go`
 
-## Discussion
+Delegates folder-related events to the `FolderService`.
 
-It could be interesting to let the check api of Authzed directly exposed in order to not re-implement in this service.
+### Credential Event Controller
+
+**Path:** `controllers/events/credential.go`
+
+Delegates credential-related events to the `CredentialService`.
+
+### Tag Event Controller
+
+**Path:** `controllers/events/tag.go`
+
+Delegates tag-related events to the `TagService`.
+
+### User Event Controller
+
+**Path:** `controllers/events/user.go`
+
+Delegates user-related events to the `UserService`.
+
+## Kafka Consumers
+
+The Kafka consumers in `internal/consumers/consumers.go` are responsible for consuming events from Kafka topics and passing them to the appropriate event controllers.
+
+### Topics
+
+- **Folder Events**: `create_folder`, `delete_folder`, `update_folder`
+- **Credential Events**: `create_credential`, `update_credential`, `delete_credential`
+- **Tag Events**: `create_tag`, `update_tag`, `delete_tag`
+- **User Events**: `add_user`, `revoke_user`
+
+## Dependencies
+
+- **SpiceDB**: Used for managing relationships and permissions.
+- **Kafka**: Used for event-driven communication.
+
+## How to Add a New Event Type
+
+1. Create a new service in the `services` directory.
+2. Implement the logic for the new event type in the service.
+3. Add a new event controller in the `controllers/events` directory.
+4. Register the new Kafka topic in `internal/consumers/consumers.go`.
+
+## Testing
+
+- Unit tests should be written for each service to ensure the logic is correct.
+- Integration tests should verify the interaction between Kafka, the event controllers, and the services.
