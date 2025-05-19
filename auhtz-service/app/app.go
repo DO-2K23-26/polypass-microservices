@@ -9,6 +9,10 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/authz-service/infrastructure"
 	"github.com/DO-2K23-26/polypass-microservices/authz-service/internal/consumers"
 	"github.com/DO-2K23-26/polypass-microservices/authz-service/producer"
+	"github.com/DO-2K23-26/polypass-microservices/authz-service/services/credential"
+	"github.com/DO-2K23-26/polypass-microservices/authz-service/services/folder"
+	"github.com/DO-2K23-26/polypass-microservices/authz-service/services/tag"
+	"github.com/DO-2K23-26/polypass-microservices/authz-service/services/user"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
 	"google.golang.org/grpc"
@@ -36,10 +40,19 @@ func NewApp(config config.Config) (*App, error) {
 	// producer := producer.NewProducer(*kafkaClient)
 
 	authzedClient := infrastructure.NewSpiceDBAdapter(authzedRawClient)
-	folderEventController := events.NewFolderEventController()
-	credentialEventController := events.NewCredentialEventController()
-	tagEventController := events.NewTagEventController()
-	userEventController := events.NewUserEventController()
+	// Instantiate services
+	folderService := folder.NewFolderService(authzedClient)
+	credentialService := credential.NewCredentialService(authzedClient)
+	userService := user.NewUserService(authzedClient)
+	tagService := tag.NewTagService(authzedClient)
+	
+	
+	
+	// Instantiate the event controllers
+	folderEventController := events.NewFolderEventController(folderService)
+	credentialEventController := events.NewCredentialEventController(credentialService)
+	userEventController := events.NewUserEventController(userService)
+	tagEventController := events.NewTagEventController(tagService)
 
 	consumersController := consumers.NewConsumers(folderEventController, credentialEventController, tagEventController, userEventController, *kafkaClient)
 	return &App{
@@ -56,6 +69,8 @@ func (a *App) Start() error {
 	if err != nil {
 		log.Fatal("Error while starting:", err)
 		return err
+	} else {
+		log.Println("Consumers started")
 	}
 	<-ctx.Done()
 	return nil
