@@ -98,3 +98,22 @@ kubectl apply -f confluent-platform.yaml
 ```
 
 It can take up to 10 min to deploy.
+
+
+## Deploy Authzed Operator
+
+
+[Deploy the operator:](https://github.com/authzed/spicedb-operator?tab=readme-ov-file#getting-started)
+```sh
+kubectl apply --server-side -f https://github.com/authzed/spicedb-operator/releases/latest/download/bundle.yaml
+```
+
+Create a namespace for the authorization service:
+```sh
+kubectl create namespace authz
+```
+
+Deploy the spicedb cluster:
+```sh
+kubectl apply -f ./authzed/cluster-spicedb.yaml
+```
