@@ -1,4 +1,19 @@
 services:
+  authz-service:
+    image: hugo08/authz-service:0.0.3
+    container_name: authz-service
+    depends_on:
+      spicedb:
+        condition: service_started
+      broker-1:
+        condition: service_healthy
+      broker-2:
+        condition: service_healthy
+    environment:
+      AUTHZED_HOST: "spicedb:50051"
+      AUTHZED_API_KEY: "somerandomkeyhere"
+      KAFKA_CLIENT_ID: "authz-service"
+      KAFKA_HOST: "broker-1:19092"
   spicedb:
     image: authzed/spicedb:latest
     container_name: spicedb

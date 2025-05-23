@@ -92,6 +92,15 @@ The Kafka consumers in `internal/consumers/consumers.go` are responsible for con
 3. Add a new event controller in the `controllers/events` directory.
 4. Register the new Kafka topic in `internal/consumers/consumers.go`.
 
+## Build & Run
+
+To build the project, run the following command:
+
+```bash
+docker build . -t polypass-authz
+docker run polypass-authz
+```
+
 ## Testing
 
 - Unit tests should be written for each service to ensure the logic is correct.
