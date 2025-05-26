@@ -10,12 +10,12 @@ image:
   tag: 0.0.3
 
 authzed:
-  host: "authzed.com"
-  apiKey: "averysecretkey"
+  host: "dev:50051"
+  apiKey: "averysecretpresharedkey"
 
 kafka:
   clientId: "authz-service"
-  host: "localhost:9092"
+  host: "kafka.confluent.svc.cluster.local:9092"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -34,11 +34,9 @@ podSecurityContext: {}
 
 securityContext: {}
 
-
 service:
   type: ClusterIP
   port: 80
-
 
 resources: {}
 
@@ -49,7 +47,6 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
 
 volumes: []
-
 
 volumeMounts: []
 nodeSelector: {}

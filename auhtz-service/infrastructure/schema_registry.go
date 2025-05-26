@@ -36,3 +36,11 @@ func (sr *SchemaRegistry) GetValue(message kafka.Message, result any) error {
 	}
 	return fmt.Errorf("failed to cast value to the desired type")
 }
+
+func (sr *SchemaRegistry) CheckHealth() error {
+	_, err := sr.client.GetSubjects()
+	if err != nil {
+		return fmt.Errorf("schema registry health check failed: %w", err)
+	}
+	return nil
+}
