@@ -8,6 +8,7 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/search-service/infrastructure"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/grpc"
 	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/http"
+	"github.com/DO-2K23-26/polypass-microservices/search-service/internal/api/kafka"
 	credentialRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/credential"
 	folderRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/folder"
 	tagRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/tags"
@@ -22,12 +23,14 @@ type App struct {
 	Config               config.Config
 	esClient             *infrastructure.ElasticAdapter
 	gormClient           *infrastructure.GormAdapter
+	kafkaClient          *infrastructure.KafkaAdapter
 	UserRepository       *userRepository.IUserRepository
 	FolderRepository     *folderRepository.IFolderRepository
 	CredentialRepository *credentialRepository.ICredentialRepository
 	TagRepository        *tagRepository.ITagRepository
 	GrpcServer           *grpc.Server
 	HttpServer           *http.Server
+	KafkaConsumers       []kafka.KafkaConsumerConfig
 }
 
 func NewApp(Config config.Config) (*App, error) {
@@ -59,16 +62,32 @@ func NewApp(Config config.Config) (*App, error) {
 	folderRepository := folderRepository.NewEsSqlFolderRepository(gormClient, esClient)
 	credentialRepository := credentialRepository.NewCredentialRepository(*esClient)
 	tagRepository := tagRepository.NewESTagRepository(*esClient)
+
+	// Define Kafka consumers
+	kafkaConsumers := []kafka.KafkaConsumerConfig{
+		{Topic: "tag_creation", HandleMessage: kafka.HandleTagCreation, HandleError: kafka.HandleError},
+		{Topic: "tag_deletion", HandleMessage: kafka.HandleTagDeletion, HandleError: kafka.HandleError},
+		{Topic: "tag_update", HandleMessage: kafka.HandleTagUpdate, HandleError: kafka.HandleError},
+		{Topic: "folder_creation", HandleMessage: kafka.HandleFolderCreation, HandleError: kafka.HandleError},
+		{Topic: "folder_deletion", HandleMessage: kafka.HandleFolderDeletion, HandleError: kafka.HandleError},
+		{Topic: "folder_update", HandleMessage: kafka.HandleFolderUpdate, HandleError: kafka.HandleError},
+		{Topic: "credential_creation", HandleMessage: kafka.HandleCredentialCreation, HandleError: kafka.HandleError},
+		{Topic: "credential_deletion", HandleMessage: kafka.HandleCredentialDeletion, HandleError: kafka.HandleError},
+		{Topic: "credential_update", HandleMessage: kafka.HandleCredentialUpdate, HandleError: kafka.HandleError},
+	}
+
 	return &App{
 		Config:               Config,
 		esClient:             esClient,
 		gormClient:           gormClient,
+		kafkaClient:          kafkaClient,
 		GrpcServer:           GrpcServer,
 		HttpServer:           HttpServer,
 		UserRepository:       &userRepository,
 		FolderRepository:     &folderRepository,
 		TagRepository:        &tagRepository,
 		CredentialRepository: &credentialRepository,
+		KafkaConsumers:       kafkaConsumers,
 	}, nil
 }
 func (app *App) Init() error {
@@ -89,7 +108,19 @@ func (app *App) Init() error {
 
 func (app *App) Start() error {
 	var wg sync.WaitGroup
-	errChan := make(chan error, 2)
+	errChan := make(chan error, len(app.KafkaConsumers)+2)
+
+	// Start Kafka consumers
+	for _, consumer := range app.KafkaConsumers {
+		wg.Add(1)
+		go func(c kafka.KafkaConsumerConfig) {
+			defer wg.Done()
+			err := app.kafkaClient.Consume(c.Topic, c.HandleMessage, c.HandleError)
+			if err != nil {
+				errChan <- err
+			}
+		}(consumer)
+	}
 
 	wg.Add(1)
 	go func() {
