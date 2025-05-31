@@ -11,6 +11,7 @@ import (
 	credentialService "github.com/DO-2K23-26/polypass-microservices/search-service/services/credential"
 	folderService "github.com/DO-2K23-26/polypass-microservices/search-service/services/folder"
 	tagService "github.com/DO-2K23-26/polypass-microservices/search-service/services/tags"
+	userService "github.com/DO-2K23-26/polypass-microservices/search-service/services/user"
 )
 
 // ConsumerInterface defines the interface for Kafka consumers
@@ -34,6 +35,7 @@ type Consumers struct {
 	credentialService *credentialService.CredentialService
 	folderService     *folderService.FolderService
 	tagService        *tagService.TagService
+	userService       *userService.UserService
 }
 
 // NewConsumers contains the set of services used by Kafka messages handlers
@@ -41,6 +43,7 @@ func NewConsumers(
 	credentialService *credentialService.CredentialService,
 	folderService *folderService.FolderService,
 	tagService *tagService.TagService,
+	userService *userService.UserService,
 ) *Consumers {
 	if credentialService == nil || folderService == nil || tagService == nil {
 		log.Fatal("Services must not be nil")
@@ -83,6 +86,9 @@ var (
 	credentialCreationSchema, _ = LoadAvroSchema(filepath.Join("..", "..", "..", "interfaces", "avro", "credential_event_created.avsc"))
 	credentialDeletionSchema, _ = LoadAvroSchema(filepath.Join("..", "..", "..", "interfaces", "avro", "credential_event_deleted.avsc"))
 	credentialUpdateSchema, _   = LoadAvroSchema(filepath.Join("..", "..", "..", "interfaces", "avro", "credential_event_updated.avsc"))
+	userCreationSchema, _       = LoadAvroSchema(filepath.Join("..", "..", "..", "interfaces", "avro", "user_event_created.avsc"))
+	userDeletionSchema, _       = LoadAvroSchema(filepath.Join("..", "..", "..", "interfaces", "avro", "user_event_deleted.avsc"))
+	userUpdateSchema, _         = LoadAvroSchema(filepath.Join("..", "..", "..", "interfaces", "avro", "user_event_updated.avsc"))
 )
 
 // Tag Handlers
@@ -202,6 +208,46 @@ func (c Consumers) HandleCredentialUpdate(msg *kafka.Message) error {
 	}
 
 	err := c.credentialService.Update(req)
+	return err
+}
+
+// User Handlers
+func (c Consumers) HandleUserCreation(msg *kafka.Message) error {
+	log.Println("Handling user creation:", string(msg.Value))
+
+	var req userService.CreateUserRequest
+	if err := avro.Unmarshal(userCreationSchema, msg.Value, &req); err != nil {
+		log.Println("Error deserializing user creation message:", err)
+		return err
+	}
+
+	_, err := c.userService.Create(&req)
+	return err
+}
+
+func (c Consumers) HandleUserDeletion(msg *kafka.Message) error {
+	log.Println("Handling user deletion:", string(msg.Value))
+
+	var req userService.DeleteUserRequest
+	if err := avro.Unmarshal(userDeletionSchema, msg.Value, &req); err != nil {
+		log.Println("Error deserializing user deletion message:", err)
+		return err
+	}
+
+	err := c.userService.Delete(&req)
+	return err
+}
+
+func (c Consumers) HandleUserUpdate(msg *kafka.Message) error {
+	log.Println("Handling user update:", string(msg.Value))
+
+	var req userService.UpdateUserRequest
+	if err := avro.Unmarshal(userUpdateSchema, msg.Value, &req); err != nil {
+		log.Println("Error deserializing user update message:", err)
+		return err
+	}
+
+	_, err := c.userService.Update(&req)
 	return err
 }
 
