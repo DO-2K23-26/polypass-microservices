@@ -12,7 +12,11 @@ import (
 	credentialRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/credential"
 	folderRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/folder"
 	tagRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/tags"
-	userRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
+	//userRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
+	credentialService"github.com/DO-2K23-26/polypass-microservices/search-service/services/credential"
+	folderService "github.com/DO-2K23-26/polypass-microservices/search-service/services/folder"
+	tagService "github.com/DO-2K23-26/polypass-microservices/search-service/services/tags"
+	//userService "github.com/DO-2K23-26/polypass-microservices/search-service/services/user"
 
 	"github.com/DO-2K23-26/polypass-microservices/search-service/services/health"
 
@@ -24,10 +28,6 @@ type App struct {
 	esClient             *infrastructure.ElasticAdapter
 	gormClient           *infrastructure.GormAdapter
 	kafkaClient          *infrastructure.KafkaAdapter
-	UserRepository       *userRepository.IUserRepository
-	FolderRepository     *folderRepository.IFolderRepository
-	CredentialRepository *credentialRepository.ICredentialRepository
-	TagRepository        *tagRepository.ITagRepository
 	GrpcServer           *grpc.Server
 	HttpServer           *http.Server
 	KafkaConsumers       []kafka.KafkaConsumerConfig
@@ -48,32 +48,45 @@ func NewApp(Config config.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	GrpcServer, err := grpc.NewServer(nil, nil, nil, Config.GrpcPort)
-	if err != nil {
-		return nil, err
-	}
 	healthService := health.NewHealthService(esClient, kafkaClient, gormClient)
 	healthController := httpController.NewHealthController(healthService)
 	HttpServer := http.NewServer(healthController, Config.HttpPort)
 
 	// Initialize repos
-	userRepository := userRepository.NewGormUserRepository(gormClient.Db)
+	//userRepository := userRepository.NewGormUserRepository(gormClient.Db)
 	folderRepository := folderRepository.NewEsSqlFolderRepository(gormClient, esClient)
 	credentialRepository := credentialRepository.NewCredentialRepository(*esClient)
 	tagRepository := tagRepository.NewESTagRepository(*esClient)
 
+	// Initialize services
+	credentialService := credentialService.NewCredentialService(credentialRepository)
+	folderService := folderService.NewFolderService(folderRepository)
+	tagService := tagService.NewTagService(tagRepository)
+	//userService := userService.NewUserService(userRepository)
+
+	GrpcServer, err := grpc.NewServer(credentialService, folderService, tagService, Config.GrpcPort)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create an instance of Consumers
+	consumers := kafka.NewConsumers(
+		credentialService,
+		folderService,
+		tagService,
+	)
+
 	// Define Kafka consumers
 	kafkaConsumers := []kafka.KafkaConsumerConfig{
-		{Topic: "tag_creation", HandleMessage: kafka.HandleTagCreation, HandleError: kafka.HandleError},
-		{Topic: "tag_deletion", HandleMessage: kafka.HandleTagDeletion, HandleError: kafka.HandleError},
-		{Topic: "tag_update", HandleMessage: kafka.HandleTagUpdate, HandleError: kafka.HandleError},
-		{Topic: "folder_creation", HandleMessage: kafka.HandleFolderCreation, HandleError: kafka.HandleError},
-		{Topic: "folder_deletion", HandleMessage: kafka.HandleFolderDeletion, HandleError: kafka.HandleError},
-		{Topic: "folder_update", HandleMessage: kafka.HandleFolderUpdate, HandleError: kafka.HandleError},
-		{Topic: "credential_creation", HandleMessage: kafka.HandleCredentialCreation, HandleError: kafka.HandleError},
-		{Topic: "credential_deletion", HandleMessage: kafka.HandleCredentialDeletion, HandleError: kafka.HandleError},
-		{Topic: "credential_update", HandleMessage: kafka.HandleCredentialUpdate, HandleError: kafka.HandleError},
+		{Topic: "tag_creation", HandleMessage: consumers.HandleTagCreation, HandleError: kafka.HandleError},
+		{Topic: "tag_deletion", HandleMessage: consumers.HandleTagDeletion, HandleError: kafka.HandleError},
+		{Topic: "tag_update", HandleMessage: consumers.HandleTagUpdate, HandleError: kafka.HandleError},
+		{Topic: "folder_creation", HandleMessage: consumers.HandleFolderCreation, HandleError: kafka.HandleError},
+		{Topic: "folder_deletion", HandleMessage: consumers.HandleFolderDeletion, HandleError: kafka.HandleError},
+		{Topic: "folder_update", HandleMessage: consumers.HandleFolderUpdate, HandleError: kafka.HandleError},
+		{Topic: "credential_creation", HandleMessage: consumers.HandleCredentialCreation, HandleError: kafka.HandleError},
+		{Topic: "credential_deletion", HandleMessage: consumers.HandleCredentialDeletion, HandleError: kafka.HandleError},
+		{Topic: "credential_update", HandleMessage: consumers.HandleCredentialUpdate, HandleError: kafka.HandleError},
 	}
 
 	return &App{
@@ -83,10 +96,6 @@ func NewApp(Config config.Config) (*App, error) {
 		kafkaClient:          kafkaClient,
 		GrpcServer:           GrpcServer,
 		HttpServer:           HttpServer,
-		UserRepository:       &userRepository,
-		FolderRepository:     &folderRepository,
-		TagRepository:        &tagRepository,
-		CredentialRepository: &credentialRepository,
 		KafkaConsumers:       kafkaConsumers,
 	}, nil
 }
