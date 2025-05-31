@@ -204,7 +204,7 @@ func (c CredentialRepository) Update(query UpdateCredentialQuery) error {
 	if query.Folder != nil {
 		updateCredential.Folder = query.Folder
 	}
-	
+
 	err := c.esClient.UpdateDocument(types.CredentialIndex, query.ID, updateCredential)
 	if err != nil {
 		return err

@@ -51,6 +51,26 @@ func (r *GormUserRepository) Delete(query DeleteUserQuery) (*DeleteUserResult, e
 	}, nil
 }
 
+func (r *GormUserRepository) Update(query UpdateUserQuery) (*UpdateUserResult, error) {
+	var user types.User
+	if err := r.DB.Where("id = ?", query.ID).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+
+	// Update the user's folder
+	user.Folders = append(user.Folders, types.Folder{ID: query.NewFolder})
+	if err := r.DB.Save(&user).Error; err != nil {
+		return nil, err
+	}
+
+	return &UpdateUserResult{
+		User: user,
+	}, nil
+}
+
 func (r *GormUserRepository) AddFolderAccess(query AddFolderAccessQuery) (*AddFolderAccessResult, error) {
 	var user types.User
 	if err := r.DB.Where("id = ?", query.UserID).First(&user).Error; err != nil {
@@ -116,4 +136,3 @@ func (r *GormUserRepository) RemoveFolderAccess(query RemoveFolderAccessQuery) (
 		User: user,
 	}, nil
 }
-
