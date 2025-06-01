@@ -45,7 +45,7 @@ func NewConsumers(
 	tagService *tagService.TagService,
 	userService *userService.UserService,
 ) *Consumers {
-	if credentialService == nil || folderService == nil || tagService == nil {
+	if credentialService == nil || folderService == nil || tagService == nil || userService == nil {
 		log.Fatal("Services must not be nil")
 	}
 	return &Consumers{
