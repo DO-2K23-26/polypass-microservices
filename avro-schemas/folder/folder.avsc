@@ -1,9 +1,0 @@
-{
-    "type": "record",
-    "name": "Folder",
-    "namespace": "com.example",
-    "fields": [
-        { "name": "id", "type": "string", "default": "default-id" },
-        { "name": "name", "type": "string", "default": "default-name" }
-    ]
-}

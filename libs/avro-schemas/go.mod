@@ -1,8 +1,9 @@
 module github.com/DO-2K23-26/polypass-microservices/avro-schemas
 
-go 1.20
+go 1.24.3
 
 require (
+	github.com/actgardner/gogen-avro/v7 v7.3.1 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/linkedin/goavro/v2 v2.13.1 // indirect
 	github.com/riferrei/srclient v0.7.2 // indirect

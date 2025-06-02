@@ -1,6 +1,6 @@
 module github.com/DO-2K23-26/polypass-microservices/organization
 
-go 1.24.1
+go 1.24.3
 
 require (
 	github.com/DO-2K23-26/polypass-microservices/avro-schemas v0.0.0
