@@ -1,29 +1,33 @@
 package app
 
 import (
-    "github.com/DO-2K23-26/polypass-microservices/interfaces/organization"
-    "github.com/DO-2K23-26/polypass-microservices/avro-schemas/schemautils"
-    "github.com/DO-2K23-26/polypass-microservices/organization/internal/infrastructure"
+    "github.com/DO-2K23-26/polypass-microservices/organization/internal/domain"
+    "github.com/DO-2K23-26/polypass-microservices/libs/schemautils"
 )
 
+type EventPublisher interface {
+    Publish(topic string, data []byte) error
+}
+
 type FolderService struct {
-    kafka   *infrastructure.KafkaAdapter
-    encoder *schemautils.AvroEncoder
+    publisher EventPublisher
+    encoder   *schemautils.AvroEncoder
 }
 
-func NewFolderService(kafka *infrastructure.KafkaAdapter, encoder *schemautils.AvroEncoder) *FolderService {
-    return &FolderService{
-        kafka:   kafka,
-        encoder: encoder,
-    }
+func NewFolderService(publisher EventPublisher, encoder *schemautils.AvroEncoder) *FolderService {
+    return &FolderService{publisher: publisher, encoder: encoder}
 }
 
-func (s *FolderService) CreateFolder(folder organization.Folder) error {
-    // Convertir le modèle en map pour Avro
+func (s *FolderService) CreateFolder(folder domain.Folder) error {
     data := map[string]interface{}{
         "id":   folder.Id,
         "name": folder.Name,
-        // si besoin, ajouter d'autres champs compatibles avec ton schéma Avro
     }
-    return s.kafka.ProduceAvro("create_folder", s.encoder, data)
+
+    encoded, err := s.encoder.Encode(data)
+    if err != nil {
+        return err
+    }
+
+    return s.publisher.Publish("create_folder", encoded)
 }
