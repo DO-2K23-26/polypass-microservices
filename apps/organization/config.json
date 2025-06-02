@@ -1,17 +1,7 @@
 {
-	"grpcPort": "8081",
-	"httpPort": "8082",
-	"kafkaHost": "localhost:19092",
+	"schemaRegistryURL": "http://localhost:8081",
+	"kafkaHost": "localhost:9092",
 	"clientId": "organization-service",
-	"pgHost": "localhost",
-	"pgUser": "postgres",
-	"pgPassword": "postgres",
-	"pgDBName": "postgres",
-	"pgPort": "5432",
-	"mongoHost": "localhost",
-	"mongoUser": "mongo",
-	"mongoPassword": "mongo",
-	"mongoDBName": "mongo",
-	"mongoPort": "27017",
-	"schemaRegistryURL": "http://localhost:8085"
+	"httpPort": ":8080",
+	"grpcPort": ":50051"
 }
