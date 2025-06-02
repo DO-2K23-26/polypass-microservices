@@ -16,8 +16,9 @@ func NewTagService(publisher EventPublisher, encoder *schemautils.AvroEncoder) *
 
 func (s *TagService) CreateTag(tag organization.Tag) error {
 	data := map[string]interface{}{
-		"id":   tag.Id,
-		"name": tag.Name,
+		"event_type": "create",
+		"id":         tag.Id,
+		"name":       tag.Name,
 	}
 
 	encoded, err := s.encoder.Encode(data)
@@ -25,5 +26,5 @@ func (s *TagService) CreateTag(tag organization.Tag) error {
 		return err
 	}
 
-	return s.publisher.Publish("create_tag", encoded)
+	return s.publisher.Publish("Tag", encoded)
 }

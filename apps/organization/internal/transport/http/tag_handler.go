@@ -9,24 +9,24 @@ import (
 )
 
 type TagHandler struct {
-    service *app.TagService
+	service *app.TagService
 }
 
 func NewTagHandler(service *app.TagService) *TagHandler {
-    return &TagHandler{service: service}
+	return &TagHandler{service: service}
 }
 
 func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
-    var tag organization.Tag
-    if err := json.NewDecoder(r.Body).Decode(&tag); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+	var tag organization.Tag
+	if err := json.NewDecoder(r.Body).Decode(&tag); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-    if err := h.service.CreateTag(tag); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+	if err := h.service.CreateTag(tag); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-    w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusCreated)
 }

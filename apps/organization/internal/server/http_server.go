@@ -9,23 +9,23 @@ import (
 )
 
 type HttpServer struct {
-    port          string
-    folderHandler *folderHttp.FolderHandler
-    tagHandler    *tagHttp.TagHandler
+	port          string
+	folderHandler *folderHttp.FolderHandler
+	tagHandler    *tagHttp.TagHandler
 }
 
 func NewHttpServer(port string, folderHandler *folderHttp.FolderHandler, tagHandler *tagHttp.TagHandler) *HttpServer {
-    return &HttpServer{
-        port:          port,
-        folderHandler: folderHandler,
-        tagHandler:    tagHandler,
-    }
+	return &HttpServer{
+		port:          port,
+		folderHandler: folderHandler,
+		tagHandler:    tagHandler,
+	}
 }
 
 func (s *HttpServer) Start() {
-    http.HandleFunc("/folders", s.folderHandler.CreateFolder)
-    http.HandleFunc("/tags", s.tagHandler.CreateTag)
+	http.HandleFunc("/folders", s.folderHandler.CreateFolder)
+	http.HandleFunc("/tags", s.tagHandler.CreateTag)
 
-    log.Printf("Starting HTTP server on %s", s.port)
-    log.Fatal(http.ListenAndServe(s.port, nil))
+	log.Printf("Starting HTTP server on %s", s.port)
+	log.Fatal(http.ListenAndServe(s.port, nil))
 }
