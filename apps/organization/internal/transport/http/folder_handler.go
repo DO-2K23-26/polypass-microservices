@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/DO-2K23-26/polypass-microservices/interfaces/organization"
+	"github.com/DO-2K23-26/polypass-microservices/libs/interfaces/organization"
 	"github.com/DO-2K23-26/polypass-microservices/organization/internal/app"
 )
 
@@ -19,12 +19,12 @@ func NewFolderHandler(service *app.FolderService) *FolderHandler {
 func (h *FolderHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
     var folder organization.Folder
     if err := json.NewDecoder(r.Body).Decode(&folder); err != nil {
-        http.Error(w, "Invalid request", http.StatusBadRequest)
+        http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
 
     if err := h.service.CreateFolder(folder); err != nil {
-        http.Error(w, "Failed to produce message", http.StatusInternalServerError)
+        http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
 

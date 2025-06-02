@@ -1,11 +1,11 @@
 package server
 
 import (
-    "log"
-    "net/http"
+	"log"
+	"net/http"
 
-    folderHttp "github.com/DO-2K23-26/polypass-microservices/organization/internal/ports/http"
-    tagHttp "github.com/DO-2K23-26/polypass-microservices/organization/internal/ports/http"
+	folderHttp "github.com/DO-2K23-26/polypass-microservices/organization/internal/transport/http"
+	tagHttp "github.com/DO-2K23-26/polypass-microservices/organization/internal/transport/http"
 )
 
 type HttpServer struct {

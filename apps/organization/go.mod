@@ -3,12 +3,14 @@ module github.com/DO-2K23-26/polypass-microservices/organization
 go 1.24.3
 
 require (
-	github.com/DO-2K23-26/polypass-microservices/avro-schemas v0.0.0
+	github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas v0.0.0
+	github.com/DO-2K23-26/polypass-microservices/libs/interfaces v0.0.0
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/spf13/viper v1.20.1
 )
 
 require (
+	github.com/actgardner/gogen-avro/v10 v10.2.1 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
@@ -30,4 +32,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/DO-2K23-26/polypass-microservices/avro-schemas => ../avro-schemas
+replace github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas => ../../libs/avro-schemas
+
+replace github.com/DO-2K23-26/polypass-microservices/libs/interfaces => ../../libs/interfaces

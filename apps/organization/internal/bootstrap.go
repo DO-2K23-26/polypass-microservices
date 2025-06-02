@@ -1,16 +1,14 @@
 package internal
 
 import (
+	avroschemas "github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas"
+	generated "github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/generated"
+
 	"github.com/DO-2K23-26/polypass-microservices/organization/internal/app"
 	"github.com/DO-2K23-26/polypass-microservices/organization/internal/config"
-	"github.com/DO-2K23-26/polypass-microservices/organization/internal/infrastructure/avro"
 	"github.com/DO-2K23-26/polypass-microservices/organization/internal/infrastructure/kafka"
-	httpPorts "github.com/DO-2K23-26/polypass-microservices/organization/internal/ports/http"
 	"github.com/DO-2K23-26/polypass-microservices/organization/internal/server"
-
-	"github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas"
-	"github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/folder"
-	"github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/tag"
+	httpPorts "github.com/DO-2K23-26/polypass-microservices/organization/internal/transport/http"
 )
 
 type App struct {
@@ -28,12 +26,13 @@ func NewApp() (*App, error) {
         return nil, err
     }
 
-    folderEncoder, err := avroschemas.NewEncoder(cfg.SchemaRegistryURL, "create_folder-value", folder.Schema)
+    // On utilise maintenant le Schema() de la struct générée
+    folderEncoder, err := avroschemas.NewEncoder(cfg.SchemaRegistryURL, "organization-folder-event-value", generated.FolderEvent{}.Schema())
     if err != nil {
         return nil, err
     }
 
-    tagEncoder, err := avroschemas.NewEncoder(cfg.SchemaRegistryURL, "create_tag-value", tag.Schema)
+    tagEncoder, err := avroschemas.NewEncoder(cfg.SchemaRegistryURL, "organization-tag-event-value", generated.TagEvent{}.Schema())
     if err != nil {
         return nil, err
     }
