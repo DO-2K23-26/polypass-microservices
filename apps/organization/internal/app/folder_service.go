@@ -20,8 +20,9 @@ func NewFolderService(publisher EventPublisher, encoder *schemautils.AvroEncoder
 
 func (s *FolderService) CreateFolder(folder organization.Folder) error {
 	data := map[string]interface{}{
-		"id":   folder.Id,
-		"name": folder.Name,
+		"event_type": "create",
+		"id":         folder.Id,
+		"name":       folder.Name,
 	}
 
 	encoded, err := s.encoder.Encode(data)
@@ -29,5 +30,5 @@ func (s *FolderService) CreateFolder(folder organization.Folder) error {
 		return err
 	}
 
-	return s.publisher.Publish("create_folder", encoded)
+	return s.publisher.Publish("Folder", encoded)
 }

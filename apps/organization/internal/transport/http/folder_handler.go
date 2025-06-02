@@ -9,24 +9,24 @@ import (
 )
 
 type FolderHandler struct {
-    service *app.FolderService
+	service *app.FolderService
 }
 
 func NewFolderHandler(service *app.FolderService) *FolderHandler {
-    return &FolderHandler{service: service}
+	return &FolderHandler{service: service}
 }
 
 func (h *FolderHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
-    var folder organization.Folder
-    if err := json.NewDecoder(r.Body).Decode(&folder); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+	var folder organization.Folder
+	if err := json.NewDecoder(r.Body).Decode(&folder); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-    if err := h.service.CreateFolder(folder); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+	if err := h.service.CreateFolder(folder); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-    w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusCreated)
 }

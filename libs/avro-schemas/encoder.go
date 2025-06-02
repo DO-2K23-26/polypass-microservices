@@ -5,5 +5,5 @@ import (
 )
 
 func NewEncoder(schemaRegistryURL, subject, schema string) (*schemautils.AvroEncoder, error) {
-    return schemautils.NewAvroEncoder(schemaRegistryURL, subject, schema)
+	return schemautils.NewAvroEncoder(schemaRegistryURL, subject, schema)
 }

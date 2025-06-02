@@ -51,16 +51,16 @@ func (a *AvroEncoder) Encode(data map[string]interface{}) ([]byte, error) {
 }
 
 func (a *AvroEncoder) Decode(data []byte) (map[string]interface{}, error) {
-    if len(data) < 5 {
-        return nil, fmt.Errorf("invalid data length: %d", len(data))
-    }
+	if len(data) < 5 {
+		return nil, fmt.Errorf("invalid data length: %d", len(data))
+	}
 
-    payload := data[5:]
+	payload := data[5:]
 
-    decoded, _, err := a.codec.NativeFromBinary(payload)
-    if err != nil {
-        return nil, err
-    }
+	decoded, _, err := a.codec.NativeFromBinary(payload)
+	if err != nil {
+		return nil, err
+	}
 
-    return decoded.(map[string]interface{}), nil
+	return decoded.(map[string]interface{}), nil
 }
