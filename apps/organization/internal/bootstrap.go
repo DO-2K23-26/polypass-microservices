@@ -1,15 +1,16 @@
 package internal
 
 import (
-    "github.com/DO-2K23-26/polypass-microservices/organization/internal/app"
-    "github.com/DO-2K23-26/polypass-microservices/organization/internal/config"
-    "github.com/DO-2K23-26/polypass-microservices/organization/internal/infrastructure/avro"
-    "github.com/DO-2K23-26/polypass-microservices/organization/internal/infrastructure/kafka"
-    "github.com/DO-2K23-26/polypass-microservices/organization/internal/server"
-    httpPorts "github.com/DO-2K23-26/polypass-microservices/organization/internal/ports/http"
+	"github.com/DO-2K23-26/polypass-microservices/organization/internal/app"
+	"github.com/DO-2K23-26/polypass-microservices/organization/internal/config"
+	"github.com/DO-2K23-26/polypass-microservices/organization/internal/infrastructure/avro"
+	"github.com/DO-2K23-26/polypass-microservices/organization/internal/infrastructure/kafka"
+	httpPorts "github.com/DO-2K23-26/polypass-microservices/organization/internal/ports/http"
+	"github.com/DO-2K23-26/polypass-microservices/organization/internal/server"
 
-    "github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/folder"
-    "github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/tag"
+	"github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas"
+	"github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/folder"
+	"github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/tag"
 )
 
 type App struct {
@@ -27,12 +28,12 @@ func NewApp() (*App, error) {
         return nil, err
     }
 
-    folderEncoder, err := avro.NewEncoder(cfg.SchemaRegistryURL, "create_folder-value", folder.Schema)
+    folderEncoder, err := avroschemas.NewEncoder(cfg.SchemaRegistryURL, "create_folder-value", folder.Schema)
     if err != nil {
         return nil, err
     }
 
-    tagEncoder, err := avro.NewEncoder(cfg.SchemaRegistryURL, "create_tag-value", tag.Schema)
+    tagEncoder, err := avroschemas.NewEncoder(cfg.SchemaRegistryURL, "create_tag-value", tag.Schema)
     if err != nil {
         return nil, err
     }
