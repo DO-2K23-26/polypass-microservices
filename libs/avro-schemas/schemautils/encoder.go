@@ -3,6 +3,7 @@ package schemautils
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 
 	"github.com/linkedin/goavro/v2"
 	"github.com/riferrei/srclient"
@@ -42,7 +43,7 @@ func (a *AvroEncoder) Encode(data map[string]interface{}) ([]byte, error) {
 	}
 
 	var buf bytes.Buffer
-	buf.WriteByte(0) // Magic byte
+	buf.WriteByte(0)
 	binary.Write(&buf, binary.BigEndian, int32(a.schemaID))
 	buf.Write(avroBinary)
 
@@ -50,10 +51,16 @@ func (a *AvroEncoder) Encode(data map[string]interface{}) ([]byte, error) {
 }
 
 func (a *AvroEncoder) Decode(data []byte) (map[string]interface{}, error) {
-	decoded, _, err := a.codec.NativeFromBinary(data[1:])
-	if err != nil {
-		return nil, err
-	}
+    if len(data) < 5 {
+        return nil, fmt.Errorf("invalid data length: %d", len(data))
+    }
 
-	return decoded.(map[string]interface{}), nil
+    payload := data[5:]
+
+    decoded, _, err := a.codec.NativeFromBinary(payload)
+    if err != nil {
+        return nil, err
+    }
+
+    return decoded.(map[string]interface{}), nil
 }
