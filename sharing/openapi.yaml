@@ -60,7 +60,39 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /sharing/history:
+    get:
+      summary: "Get user's secret sharing history"
+      description: "Retrieve the history of secrets shared by the authenticated user"
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: "History retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetHistoryResponse"
+        '401':
+          description: "Unauthorized - missing or invalid authorization header"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: "http"
+      scheme: "bearer"
+      description: "JWT Authorization header using the Bearer scheme"
+
   schemas:
     PostSecretRequest:
       type: "object"
@@ -70,6 +102,9 @@ components:
       - "isEncrypted"
       - "isOneTimeUse"
       properties:
+        name:
+          type: "string"
+          description: "Optional name for the secret"
         content:
           type: "object"
           additionalProperties:
@@ -112,6 +147,39 @@ components:
           additionalProperties:
             type: "string"
           description: "The content of the secret as key-value pairs"
+
+    HistorySecret:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          description: "The ID of the secret"
+        name:
+          type: "string"
+          description: "Name of the secret"
+        created_at:
+          type: "integer"
+          format: "int64"
+          description: "Unix timestamp of when the secret was created"
+        expiration:
+          type: "integer"
+          format: "int64"
+          description: "Unix timestamp for when the secret expires"
+        content_size:
+          type: "integer"
+          description: "Size of the content (number of key-value pairs)"
+        is_one_time_use:
+          type: "boolean"
+          description: "Whether the secret is set for one-time use"
+
+    GetHistoryResponse:
+      type: "object"
+      properties:
+        secrets:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/HistorySecret"
+          description: "List of secret history entries"
 
     ErrorResponse:
       type: "object"
