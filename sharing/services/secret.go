@@ -9,8 +9,9 @@ import (
 )
 
 type SecretService interface {
-	CreateSecret(secret dto.PostSecretRequest) (dto.PostSecretResponse, error)
+	CreateSecret(secret dto.PostSecretRequest, userId string) (dto.PostSecretResponse, error)
 	GetSecret(id string) (*dto.GetSecretResponse, error)
+	GetHistory(userId string) (*[]models.HistorySecret, error)
 }
 
 type secretService struct{
@@ -23,12 +24,15 @@ func NewSecretService() SecretService {
 	}
 }
 
-func (s *secretService) CreateSecret(secret dto.PostSecretRequest) (dto.PostSecretResponse, error) {
+func (s *secretService) CreateSecret(secret dto.PostSecretRequest, userId string) (dto.PostSecretResponse, error) {
 	secretEntity := models.Secret{
 		Content:      secret.Content,
+		Name:         secret.Name,
 		Expiration:   secret.Expiration,
+		CreatedAt:    time.Now().Unix(),
 		IsEncrypted:  secret.IsEncrypted,
 		IsOneTimeUse: secret.IsOneTimeUse,
+		User:         userId,
 	}
 
 	createdSecret, err := s.repository.CreateSecret(&secretEntity)
@@ -63,4 +67,18 @@ func (s *secretService) GetSecret(id string) (*dto.GetSecretResponse, error) {
 	}
 
 	return &secretResponse, nil
+}
+
+func (s *secretService) GetHistory(userId string) (*[]models.HistorySecret, error) {
+	history, err := s.repository.GetHistory(userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if history == nil {
+		return nil, fmt.Errorf("No history found")
+	}
+
+	return &history, nil
 }

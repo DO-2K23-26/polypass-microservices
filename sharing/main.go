@@ -27,7 +27,21 @@ func main() {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
 		}
 
-		response, err := service.CreateSecret(request)
+		useUserID := os.Getenv("USE_USER_ID")
+		var userId string
+		if useUserID == "false" {
+			userId = ""
+		} else {
+			userId = ""
+			authHeader := c.Get("Authorization")
+			if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+				userId = authHeader[7:]
+			} else {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Missing or invalid Authorization header"})
+			}
+		}
+
+		response, err := service.CreateSecret(request, userId)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create secret"})
 		}
@@ -43,6 +57,29 @@ func main() {
 		}
 		return c.JSON(response)
 	})
+
+	app.Get("/sharing/history", func(c *fiber.Ctx) error {
+		useUserID := os.Getenv("USE_USER_ID")
+
+		if useUserID == "false" {
+			return c.JSON([]dto.GetHistoryResponse{})
+		}
+		authHeader := c.Get("Authorization")
+		var userId string
+		if len(authHeader) > 7 && authHeader[:0] == "Bearer " {
+			userId = authHeader[7:]
+		} else if authHeader == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Missing Authorization header"})
+		} else {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid Authorization header"})
+		}
+		response, err := service.GetHistory(userId)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to retrieve history"})
+		}
+		return c.JSON(response)
+	})
+	
 
 	app.Listen(":"+os.Getenv("PORT"))
 }

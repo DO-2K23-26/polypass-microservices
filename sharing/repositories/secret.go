@@ -15,15 +15,19 @@ import (
 
 type StoredSecret struct {
 	Id           primitive.ObjectID `bson:"_id,omitempty"`
+	Name		 string            `bson:"name"`
 	Content      map[string]string `bson:"content"`
 	Expiration   primitive.DateTime `bson:"expiration"`
 	IsEncrypted  bool              `bson:"is_encrypted"`
 	IsOneTimeUse bool              `bson:"is_one_time_use"`
+	User         string				`bson:"user_id"`
+	CreatedAt    primitive.DateTime `bson:"created_at"`
 }
 
 type SecretRepository interface {
     CreateSecret(secret *models.Secret) (models.Secret, error)
     GetSecret(id string) (*models.Secret, error)
+	GetHistory(userId string) ([]models.HistorySecret, error)
 }
 
 func NewSecretRepository() SecretRepository {
@@ -73,9 +77,11 @@ func (r *secretRepository) CreateSecret(secret *models.Secret) (models.Secret, e
 
 	storedSecret := StoredSecret{
 		Content:      secret.Content,
+		Name:         secret.Name,
 		Expiration:   primitive.NewDateTimeFromTime(time.Unix(secret.Expiration, 0)),
 		IsEncrypted:  secret.IsEncrypted,
 		IsOneTimeUse: secret.IsOneTimeUse,
+		User: 		  secret.User,
 	}
 
 	// Insert the secret into the collection
@@ -111,6 +117,8 @@ func (r *secretRepository) GetSecret(id string) (*models.Secret, error) {
 	secret = models.Secret{
 		Id:           storedSecret.Id.Hex(),
 		Content:      storedSecret.Content,
+		Name:         storedSecret.Name,
+		CreatedAt:    storedSecret.CreatedAt.Time().Unix(),
 		Expiration:   storedSecret.Expiration.Time().Unix(),
 		IsEncrypted:  storedSecret.IsEncrypted,
 		IsOneTimeUse: storedSecret.IsOneTimeUse,
@@ -125,4 +133,39 @@ func (r *secretRepository) GetSecret(id string) (*models.Secret, error) {
 	}
 
 	return &secret, nil
+}
+
+func (r *secretRepository) GetHistory(userId string) ([]models.HistorySecret, error) {
+	collection := r.db.Collection("secrets")
+
+	// Find all secrets for the given user_id
+	filter := bson.M{"user_id": userId}
+	cursor, err := collection.Find(context.TODO(), filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
+
+	var history []models.HistorySecret
+	for cursor.Next(context.TODO()) {
+		var storedSecret StoredSecret
+		if err := cursor.Decode(&storedSecret); err != nil {
+			return nil, err
+		}
+
+		history = append(history, models.HistorySecret{
+			Id:           storedSecret.Id.Hex(),
+			CreatedAt:    storedSecret.CreatedAt.Time().Unix(),
+			Expiration:   storedSecret.Expiration.Time().Unix(),
+			ContentSize:  len(storedSecret.Content),
+			IsOneTimeUse: storedSecret.IsOneTimeUse,
+			Name: 	      storedSecret.Name,
+		})
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return history, nil
 }
