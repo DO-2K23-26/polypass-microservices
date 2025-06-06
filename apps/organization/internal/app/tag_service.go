@@ -16,8 +16,13 @@ func NewTagService(publisher EventPublisher, encoder *schemautils.AvroEncoder) *
 
 func (s *TagService) CreateTag(tag organization.Tag) error {
 	data := map[string]interface{}{
-		"id":   tag.Id,
-		"name": tag.Name,
+		"id":         tag.Id,
+		"name":       tag.Name,
+		"color":      tag.Color,
+		"created_at": tag.CreatedAt,
+		"updated_at": tag.UpdatedAt,
+		"folder_id":  tag.FolderId,
+		"created_by": tag.CreatedBy,
 	}
 
 	encoded, err := s.encoder.Encode(data)
@@ -30,8 +35,13 @@ func (s *TagService) CreateTag(tag organization.Tag) error {
 
 func (s *TagService) UpdateTag(tag organization.Tag) error {
 	data := map[string]interface{}{
-		"id":   tag.Id,
-		"name": tag.Name,
+		"id":         tag.Id,
+		"name":       tag.Name,
+		"color":      tag.Color,
+		"created_at": tag.CreatedAt,
+		"updated_at": tag.UpdatedAt,
+		"folder_id":  tag.FolderId,
+		"created_by": tag.CreatedBy,
 	}
 	encoded, err := s.encoder.Encode(data)
 	if err != nil {

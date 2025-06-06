@@ -20,8 +20,15 @@ func NewFolderService(publisher EventPublisher, encoder *schemautils.AvroEncoder
 
 func (s *FolderService) CreateFolder(folder organization.Folder) error {
 	data := map[string]interface{}{
-		"id":   folder.Id,
-		"name": folder.Name,
+		"id":          folder.Id,
+		"name":        folder.Name,
+		"description": folder.Description,
+		"icon":        folder.Icon,
+		"created_at":  folder.CreatedAt,
+		"updated_at":  folder.UpdatedAt,
+		"parent_id":   folder.ParentId,
+		"members":     folder.Members,
+		"created_by":  folder.CreatedBy,
 	}
 
 	encoded, err := s.encoder.Encode(data)
@@ -34,8 +41,15 @@ func (s *FolderService) CreateFolder(folder organization.Folder) error {
 
 func (s *FolderService) UpdateFolder(folder organization.Folder) error {
 	data := map[string]interface{}{
-		"id":   folder.Id,
-		"name": folder.Name,
+		"id":          folder.Id,
+		"name":        folder.Name,
+		"description": folder.Description,
+		"icon":        folder.Icon,
+		"created_at":  folder.CreatedAt,
+		"updated_at":  folder.UpdatedAt,
+		"parent_id":   folder.ParentId,
+		"members":     folder.Members,
+		"created_by":  folder.CreatedBy,
 	}
 	encoded, err := s.encoder.Encode(data)
 	if err != nil {
