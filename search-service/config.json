@@ -4,7 +4,7 @@
   "esHost": "http://localhost:9200",
   "esPassword": "changeme",
   "esUsername": "elastic",
-  "kafkaHost": "0.0.0.0:9092",
+  "kafkaHost": "0.0.0.0:19092",
   "clientId": "search-service",
   "pgHost": "localhost",
   "pgUser": "postgres",

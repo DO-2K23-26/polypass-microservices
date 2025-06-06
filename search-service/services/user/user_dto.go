@@ -20,7 +20,7 @@ type UpdateUserRequest struct {
 }
 
 type DeleteUserRequest struct {
-	ID string `json:"id" validate:"required"`
+	ID string `json:"userId" validate:"required"`
 }
 
 type AddFolderAccessRequest struct {
