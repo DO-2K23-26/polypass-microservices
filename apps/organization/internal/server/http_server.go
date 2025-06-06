@@ -6,6 +6,7 @@ import (
 
 	folderHttp "github.com/DO-2K23-26/polypass-microservices/organization/internal/transport/http"
 	tagHttp "github.com/DO-2K23-26/polypass-microservices/organization/internal/transport/http"
+	"github.com/gorilla/mux"
 )
 
 type HttpServer struct {
@@ -23,9 +24,22 @@ func NewHttpServer(port string, folderHandler *folderHttp.FolderHandler, tagHand
 }
 
 func (s *HttpServer) Start() {
-	http.HandleFunc("/folders", s.folderHandler.CreateFolder)
-	http.HandleFunc("/tags", s.tagHandler.CreateTag)
+	r := mux.NewRouter()
+
+	// Folders
+	r.HandleFunc("/folders", s.folderHandler.CreateFolder).Methods("POST")
+	r.HandleFunc("/folders", s.folderHandler.ListFolders).Methods("GET")
+	r.HandleFunc("/folders/{id}", s.folderHandler.GetFolder).Methods("GET")
+	r.HandleFunc("/folders/{id}", s.folderHandler.UpdateFolder).Methods("PUT")
+	r.HandleFunc("/folders/{id}", s.folderHandler.DeleteFolder).Methods("DELETE")
+
+	// Tags
+	r.HandleFunc("/tags", s.tagHandler.CreateTag).Methods("POST")
+	r.HandleFunc("/tags", s.tagHandler.ListTags).Methods("GET")
+	r.HandleFunc("/tags/{id}", s.tagHandler.GetTag).Methods("GET")
+	r.HandleFunc("/tags/{id}", s.tagHandler.UpdateTag).Methods("PUT")
+	r.HandleFunc("/tags/{id}", s.tagHandler.DeleteTag).Methods("DELETE")
 
 	log.Printf("Starting HTTP server on %s", s.port)
-	log.Fatal(http.ListenAndServe(s.port, nil))
+	log.Fatal(http.ListenAndServe(s.port, r))
 }

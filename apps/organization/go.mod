@@ -6,6 +6,7 @@ require (
 	github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas v0.0.0
 	github.com/DO-2K23-26/polypass-microservices/libs/interfaces v0.0.0
 	github.com/confluentinc/confluent-kafka-go v1.9.2
+	github.com/gorilla/mux v1.8.1
 	github.com/spf13/viper v1.20.1
 )
 

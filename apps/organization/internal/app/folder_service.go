@@ -32,3 +32,38 @@ func (s *FolderService) CreateFolder(folder organization.Folder) error {
 
 	return s.publisher.Publish("Folder", encoded)
 }
+
+func (s *FolderService) UpdateFolder(folder organization.Folder) error {
+	data := map[string]interface{}{
+		"event_type": "update",
+		"id":         folder.Id,
+		"name":       folder.Name,
+	}
+	encoded, err := s.encoder.Encode(data)
+	if err != nil {
+		return err
+	}
+	return s.publisher.Publish("Folder", encoded)
+}
+
+func (s *FolderService) DeleteFolder(id string) error {
+	data := map[string]interface{}{
+		"event_type": "delete",
+		"id":         id,
+	}
+	encoded, err := s.encoder.Encode(data)
+	if err != nil {
+		return err
+	}
+	return s.publisher.Publish("Folder", encoded)
+}
+
+func (s *FolderService) ListFolders() ([]organization.Folder, error) {
+	// TODO: Replace with real implementation
+	return []organization.Folder{}, nil
+}
+
+func (s *FolderService) GetFolder(id string) (organization.Folder, error) {
+	// TODO: Replace with real implementation
+	return organization.Folder{Id: id}, nil
+}

@@ -28,3 +28,38 @@ func (s *TagService) CreateTag(tag organization.Tag) error {
 
 	return s.publisher.Publish("Tag", encoded)
 }
+
+func (s *TagService) UpdateTag(tag organization.Tag) error {
+	data := map[string]interface{}{
+		"event_type": "update",
+		"id":         tag.Id,
+		"name":       tag.Name,
+	}
+	encoded, err := s.encoder.Encode(data)
+	if err != nil {
+		return err
+	}
+	return s.publisher.Publish("Tag", encoded)
+}
+
+func (s *TagService) DeleteTag(id string) error {
+	data := map[string]interface{}{
+		"event_type": "delete",
+		"id":         id,
+	}
+	encoded, err := s.encoder.Encode(data)
+	if err != nil {
+		return err
+	}
+	return s.publisher.Publish("Tag", encoded)
+}
+
+func (s *TagService) ListTags() ([]organization.Tag, error) {
+	// TODO: Replace with real implementation
+	return []organization.Tag{}, nil
+}
+
+func (s *TagService) GetTag(id string) (organization.Tag, error) {
+	// TODO: Replace with real implementation
+	return organization.Tag{Id: id}, nil
+}
