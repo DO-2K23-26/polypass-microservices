@@ -20,9 +20,8 @@ func NewFolderService(publisher EventPublisher, encoder *schemautils.AvroEncoder
 
 func (s *FolderService) CreateFolder(folder organization.Folder) error {
 	data := map[string]interface{}{
-		"event_type": "create",
-		"id":         folder.Id,
-		"name":       folder.Name,
+		"id":   folder.Id,
+		"name": folder.Name,
 	}
 
 	encoded, err := s.encoder.Encode(data)
@@ -30,32 +29,30 @@ func (s *FolderService) CreateFolder(folder organization.Folder) error {
 		return err
 	}
 
-	return s.publisher.Publish("Folder", encoded)
+	return s.publisher.Publish("Folder-Create", encoded)
 }
 
 func (s *FolderService) UpdateFolder(folder organization.Folder) error {
 	data := map[string]interface{}{
-		"event_type": "update",
-		"id":         folder.Id,
-		"name":       folder.Name,
+		"id":   folder.Id,
+		"name": folder.Name,
 	}
 	encoded, err := s.encoder.Encode(data)
 	if err != nil {
 		return err
 	}
-	return s.publisher.Publish("Folder", encoded)
+	return s.publisher.Publish("Folder-Update", encoded)
 }
 
 func (s *FolderService) DeleteFolder(id string) error {
 	data := map[string]interface{}{
-		"event_type": "delete",
-		"id":         id,
+		"id": id,
 	}
 	encoded, err := s.encoder.Encode(data)
 	if err != nil {
 		return err
 	}
-	return s.publisher.Publish("Folder", encoded)
+	return s.publisher.Publish("Folder-Delete", encoded)
 }
 
 func (s *FolderService) ListFolders() ([]organization.Folder, error) {
