@@ -6,7 +6,7 @@ import (
 )
 
 type Folder struct {
-	ID          string         `gorm:"primaryKey;type:uuid"`
+	Id          string         `gorm:"primaryKey;type:uuid"`
 	Name        string         `gorm:"not null"`
 	Description *string
 	Icon        *string
