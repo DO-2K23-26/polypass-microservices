@@ -7,7 +7,7 @@ import (
 
 	"github.com/DO-2K23-26/polypass-microservices/credentials/application"
 	"github.com/DO-2K23-26/polypass-microservices/credentials/infrastructure"
-	"github.com/optique-dev/core"
+	"github.com/optique-dev/optique"
 )
 
 // Cycle is the component in charge of the life cycle of the application
@@ -51,7 +51,7 @@ func (c *cycle) AddApplication(app application.Application) {
 
 func (c *cycle) Setup() error {
 	if len(c.repos) == 0 {
-		core.Info("No repository to setup")
+		optique.Info("No repository to setup")
 		return nil
 	}
 	for _, repository := range c.repos {
@@ -65,7 +65,7 @@ func (c *cycle) Setup() error {
 // Ignite starts the application
 func (c *cycle) Ignite() error {
 	if len(c.apps) == 0 {
-		core.Info("No application to start")
+		optique.Info("No application to start")
 		return nil
 	}
 
@@ -73,7 +73,7 @@ func (c *cycle) Ignite() error {
 		go func(app application.Application) {
 			err := app.Ignite()
 			if err != nil {
-				core.Error(err.Error())
+				optique.Error(err.Error())
 			}
 		}(app)
 	}
@@ -89,7 +89,7 @@ func (c *cycle) Ignite() error {
 
 // Stop stops the application
 func (c *cycle) Stop() error {
-	core.Info("Stopping applications with graceful shutdown")
+	optique.Info("Stopping applications with graceful shutdown")
 	close(c.shutdown)
 	for _, app := range c.apps {
 		err := app.Stop()
