@@ -109,8 +109,12 @@ services:
           /opt/kafka/bin/kafka-topics.sh --bootstrap-server broker-1:9092 --list && break || sleep 2;
         done;
         echo "Creating topics...";
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic Folder --partitions 2 --replication-factor 2 &&
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic Tag --partitions 2 --replication-factor 2 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic Folder-Create --partitions 2 --replication-factor 2 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic Folder-Update --partitions 2 --replication-factor 2 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic Folder-Delete --partitions 2 --replication-factor 2 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic Tag-Create --partitions 2 --replication-factor 2 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic Tag-Update --partitions 2 --replication-factor 2 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic Tag-Delete --partitions 2 --replication-factor 2 &&
         echo "Kafka initialization complete.";'
 
   schema-registry:
