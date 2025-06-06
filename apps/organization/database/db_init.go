@@ -3,19 +3,14 @@ package database
 import (
     "fmt"
     "log"
-    "os"
     "gorm.io/driver/postgres"
 	organization "github.com/DO-2K23-26/polypass-microservices/libs/interfaces/organization"
 	"gorm.io/gorm"
 )
 
 func main() {
-    user := os.Getenv("POSTGRES_USER")
-    password := os.Getenv("POSTGRES_PASSWORD")
-    dbname := os.Getenv("POSTGRES_DB")
-
-    dsn := fmt.Sprintf("host=localhost user=%s password=%s dbname=%s port=5432 sslmode=disable",
-        user, password, dbname)
+    
+    dsn := fmt.Sprintf("host=localhost user=postgres password=postgres dbname=postgres port=5432 sslmode=disable")
 
     db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
     if err != nil {
@@ -29,8 +24,8 @@ func main() {
 		&organization.TagCredential{},
 		&organization.Tag{})
     if err != nil {
-        log.Fatal("Erreur de migration :", err)
+        fmt.Errorf("Failed to auto-migrate models: %w", err)
     }
 
-    log.Println("Tables créée ou à jour.")
+    log.Println("Database connected and tables migrated.")
 }
