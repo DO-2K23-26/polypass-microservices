@@ -12,8 +12,8 @@ type CredentialsService interface {
 	GetCardCredentials(ids []string) ([]types.CardCredential, error)
 	GetSSHKeyCredentials(ids []string) ([]types.SSHKeyCredential, error)
 
-	CreateCredential(credential types.CreateCredentialOpts) error
-	CheckCredentialValidity(credential types.CreateCredentialOpts) error
+	CreateCredential(credential *types.CreateCredentialOpts) error
+	CheckCredentialValidity(credential *types.CreateCredentialOpts) error
 	CreatePasswordCredential(credential types.PasswordCredential) (types.PasswordCredential, error)
 	CreateCardCredential(credential types.CardCredential) (types.CardCredential, error)
 	CreateSSHKeyCredential(credential types.SSHKeyCredential) (types.SSHKeyCredential, error)
@@ -90,10 +90,37 @@ var ERR_INVALID_CREDENTIAL_TYPE error = errors.New("invalid credential type")
 func (c *credentialService) CreateCredential(credentialOpts *types.CreateCredentialOpts) error {
 	switch credentialOpts.Type {
 	case types.CredentialTypeCard:
-		return c.CreateCardCredential(credentialOpts.CardAttributes)
+		_, err := c.CreateCardCredential(types.CardCredential{
+			Credential: types.Credential{
+				Title:        credentialOpts.Title,
+				Note:         credentialOpts.Note,
+				CustomFields: &credentialOpts.CustomFields,
+			},
+			CardAttributes: credentialOpts.CardAttributes,
+			UserIdentifierAttribute: types.UserIdentifierAttribute{
+				UserIdentifier: credentialOpts.UserIdentifierAttribute.UserIdentifier,
+			},
+		})
+		return err
 	case types.CredentialTypePassword:
-		return c.CreatePasswordCredential(credentialOpts.PasswordAttributes)
+		_, err := c.CreatePasswordCredential(types.PasswordCredential{
+			Credential: types.Credential{
+				Title:        credentialOpts.Title,
+				Note:         credentialOpts.Note,
+				CustomFields: &credentialOpts.CustomFields,
+			},
+			PasswordAttributes: credentialOpts.PasswordAttributes,
+			UserIdentifierAttribute: types.UserIdentifierAttribute{
+				UserIdentifier: credentialOpts.UserIdentifierAttribute.UserIdentifier,
+			},
+		})
+		return err
 	default:
 		return ERR_INVALID_CREDENTIAL_TYPE
 	}
+}
+
+func (s *credentialService) CheckCredentialValidity(credentialOpts *types.CreateCredentialOpts) error {
+	panic("implement me")
+	return nil
 }

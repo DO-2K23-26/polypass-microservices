@@ -2,6 +2,7 @@ package sql
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/DO-2K23-26/polypass-microservices/credentials/types"
 	"github.com/golang-migrate/migrate/v4"
@@ -80,9 +81,13 @@ func (m sql) Shutdown() error {
 	return m.db.Close()
 }
 
+func sliceToString(slice []string) string {
+	return strings.Join(slice, ",")
+}
+
 func (m sql) GetPasswordCredentials(ids []string) ([]types.PasswordCredential, error) {
 	var credentials []types.PasswordCredential
-	err := m.db.Select(&credentials, "SELECT * FROM password_credentials WHERE id = ANY($1)", ids)
+	err := m.db.Select(&credentials, "SELECT * FROM password_credentials WHERE id IN ($1)", sliceToString(ids))
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +96,7 @@ func (m sql) GetPasswordCredentials(ids []string) ([]types.PasswordCredential, e
 
 func (m sql) GetCardCredentials(ids []string) ([]types.CardCredential, error) {
 	var credentials []types.CardCredential
-	err := m.db.Select(&credentials, "SELECT * FROM card_credentials WHERE id = ANY($1)", ids)
+	err := m.db.Select(&credentials, "SELECT * FROM card_credentials WHERE id IN ($1)", sliceToString(ids))
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +105,7 @@ func (m sql) GetCardCredentials(ids []string) ([]types.CardCredential, error) {
 
 func (m sql) GetSSHKeyCredentials(ids []string) ([]types.SSHKeyCredential, error) {
 	var credentials []types.SSHKeyCredential
-	err := m.db.Select(&credentials, "SELECT * FROM ssh_keys WHERE id = ANY($1)", ids)
+	err := m.db.Select(&credentials, "SELECT * FROM ssh_keys WHERE id IN ($1)", sliceToString(ids))
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +167,7 @@ func (m sql) UpdateSSHKeyCredential(credential types.SSHKeyCredential) (types.SS
 }
 
 func (m sql) DeletePasswordCredentials(ids []string) error {
-	_, err := m.db.Exec("DELETE FROM password_credentials WHERE id = ANY($1)", ids)
+	_, err := m.db.Exec("DELETE FROM password_credentials WHERE id IN ($1)", sliceToString(ids))
 	if err != nil {
 		return err
 	}
@@ -170,7 +175,7 @@ func (m sql) DeletePasswordCredentials(ids []string) error {
 }
 
 func (m sql) DeleteCardCredentials(ids []string) error {
-	_, err := m.db.Exec("DELETE FROM card_credentials WHERE id = ANY($1)", ids)
+	_, err := m.db.Exec("DELETE FROM card_credentials WHERE id IN ($1)", sliceToString(ids))
 	if err != nil {
 		return err
 	}
@@ -178,7 +183,7 @@ func (m sql) DeleteCardCredentials(ids []string) error {
 }
 
 func (m sql) DeleteSSHKeyCredentials(ids []string) error {
-	_, err := m.db.Exec("DELETE FROM ssh_keys WHERE id = ANY($1)", ids)
+	_, err := m.db.Exec("DELETE FROM ssh_keys WHERE id IN ($1)", sliceToString(ids))
 	if err != nil {
 		return err
 	}
