@@ -118,7 +118,7 @@ func (m sql) CreatePasswordCredential(credential types.PasswordCredential) (type
 
 func (m sql) CreateCardCredential(credential types.CardCredential) (types.CardCredential, error) {
 	var createdCredential types.CardCredential
-	_, err := m.db.NamedExec("INSERT INTO card_credentials (title, note, owner_name, cvc, expiration_date, card_number) VALUES (:owner_name, :cvc, :expiration_date, :card_number, :title, :note)", credential)
+	_, err := m.db.NamedExec("INSERT INTO card_credentials (title, note, owner_name, cvc, expiration_date, card_number) VALUES (:title, :note, :owner_name, :cvc, :expiration_date, :card_number)", credential)
 	if err != nil {
 		return createdCredential, err
 	}
@@ -127,7 +127,7 @@ func (m sql) CreateCardCredential(credential types.CardCredential) (types.CardCr
 
 func (m sql) CreateSSHKeyCredential(credential types.SSHKeyCredential) (types.SSHKeyCredential, error) {
 	var createdCredential types.SSHKeyCredential
-	_, err := m.db.NamedExec("INSERT INTO ssh_keys (title, note, private_key, public_key, hostname, user_identifier) VALUES (:private_key, :public_key, :hostname, :user_identifier, :title, :note)", credential)
+	_, err := m.db.NamedExec("INSERT INTO ssh_keys (title, note, private_key, public_key, hostname, user_identifier) VALUES (:title, :note, :private_key, :public_key, :hostname, :user_identifier)", credential)
 	if err != nil {
 		return createdCredential, err
 	}

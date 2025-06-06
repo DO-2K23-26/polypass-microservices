@@ -16,7 +16,6 @@ import (
 // @contact.email tristan-mihai.radulescu@etu.umontpellier.fr
 func main() {
 	conf, err := config.LoadConfig()
-	// core.Init() // init logger
 
 	if err != nil {
 		config.HandleError(err)

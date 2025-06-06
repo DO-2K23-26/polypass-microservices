@@ -14,6 +14,7 @@ type Credential struct {
 type CardCredential struct {
 	Credential
 	CardAttributes
+	UserIdentifierAttribute
 }
 
 type CardAttributes struct {
