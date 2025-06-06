@@ -3,7 +3,6 @@
 	"name": "TagEvent",
 	"namespace": "com.example",
 	"fields": [
-		{ "name": "event_type", "type": "string" },
 		{ "name": "id", "type": "string", "default": "default-id" },
 		{ "name": "name", "type": "string", "default": "default-name" }
 	]
