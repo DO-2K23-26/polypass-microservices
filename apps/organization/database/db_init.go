@@ -1,4 +1,4 @@
-package database
+package main
 
 import (
     "fmt"
@@ -16,7 +16,6 @@ func main() {
     if err != nil {
         log.Fatal("Erreur de connexion à la base de données :", err)
     }
-
 
     err = db.AutoMigrate(
 		&organization.FolderCredential{}, 

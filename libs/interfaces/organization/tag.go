@@ -1,11 +1,15 @@
 package organization
 
+import "time"
+
 type Tag struct {
-	Id        string `json:"id" db:"id" validate:"required,uuid"`
-	Name      string `json:"name" db:"name" validate:"required"`
-	Color     string `json:"color" db:"color" validate:"required,hexadecimal"`
-	CreatedAt string `json:"created_at" db:"created_at" validate:"required,datetime"`
-	UpdatedAt string `json:"updated_at" db:"updated_at" validate:"required,datetime"`
-	FolderId  string `json:"folder_id" db:"folder_id" validate:"required,uuid"`
-	CreatedBy string `json:"created_by" db:"created_by" validate:"required,uuid"`
+	Id       string    `gorm:"column:id;type:uuid;primaryKey" json:"id" validate:"required,uuid"`
+	Name      string    `gorm:"column:name;not null" json:"name" validate:"required"`
+	Color     string    `gorm:"column:color;not null" json:"color" validate:"required,hexadecimal"`
+	CreatedAt time.Time `gorm:"column:created_at;not null" json:"created_at" validate:"required,datetime"`
+	UpdatedAt time.Time `gorm:"column:updated_at;not null" json:"updated_at" validate:"required,datetime"`
+	FolderID  string    `gorm:"column:folder_id;type:uuid;not null" json:"folder_id" validate:"required,uuid"`
+	CreatedBy string    `gorm:"column:created_by;type:uuid;not null" json:"created_by" validate:"required,uuid"`
+
 }
+
