@@ -1,6 +1,4 @@
-<h1 align="center"><b>(⌐■_■)</b><h1/>
-
-<h2 align="center">optique : rest api template for microservices written in go (a little opinionated)</h2>
+# Credentials Microservice
 
 ## Getting Started
 
@@ -17,7 +15,20 @@ Optional:
 - [Just](https://github.com/casey/just) : for running the application and other helpers
 - [Air](https://github.com/cosmtrek/air) : for hot reloading
 
+## Running the migrations
+
+Modify the `config.json` file to add the bootstrap flag to true.
+
+```json
+{
+  "bootstrap": true
+    ...
+}
+```
+
 ### Running the application
+
+Turn the bootstrap flag to false and run the application.
 
 ```bash
 docker compose up -d
