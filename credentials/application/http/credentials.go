@@ -328,6 +328,161 @@ func (c *CredentialsController) DeleteCardCredentials() fiber.Handler {
 	}
 }
 
+// GetSSHKeyCredentials godoc
+//	@Summary		Get SSHKey credentials
+//	@Description	Get a list of SSHKey credentials
+//	@Tags			credentials
+//	@Accept			json
+//	@Produce		json
+//	@Param			ids	query		string	true	"Comma-separated list of credential IDs"
+//	@Success		200	{object}	[]types.SSHKeyCredential
+//	@Failure		404	{object}	fiber.Map
+//	@Router			/credentials/sshkey [get]
+func (c *CredentialsController) GetSSHKeyCredentials() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		ids_query := ctx.Query("ids")
+		if ids_query == "" {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "ids is required",
+			})
+		}
+
+		ids := strings.Split(ids_query, ",")
+		credentials, err := c.service.GetSSHKeyCredentials(ids)
+		if err != nil {
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		return ctx.Status(fiber.StatusOK).JSON(credentials)
+	}
+}
+
+type CreateSSHCredentialOpts struct {
+	BaseValidator
+	Title        string               `json:"title" db:"title"`
+	Note         string               `json:"note" db:"note"`
+	CustomFields map[string]any       `json:"custom_fields" db:"custom_fields"`
+	types.SSHKeyAttributes
+}
+
+func (c *CreateSSHCredentialOpts) Validate(ctx *fiber.Ctx) error {
+	return c.BaseValidator.Validate(ctx, c)
+}
+
+// CreateSSHKeyCredential godoc
+//	@Summary		Create SSHKey credential
+//	@Description	Create a SSHKey credential
+//	@Tags			credentials
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		CreateSSHCredentialOpts	true	"Create SSHKey credential options"
+//	@Success		200		{object}	types.SSHKeyCredential
+//	@Failure		400		{object}	fiber.Map
+//	@Failure		500		{object}	fiber.Map
+//	@Router			/credentials/sshkey [post]
+func (c *CredentialsController) CreateSSHKeyCredential() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		payload := new(CreateSSHCredentialOpts)
+		if err := payload.Validate(ctx); err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		cred, err := c.service.CreateSSHKeyCredential(types.SSHKeyCredential{
+			Credential: types.Credential{
+				Title:        payload.Title,
+				Note:         payload.Note,
+				CustomFields: &payload.CustomFields,
+			},
+			SSHKeyAttributes: payload.SSHKeyAttributes,
+		})
+		if err != nil {
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		return ctx.Status(fiber.StatusOK).JSON(cred)
+	}
+}
+
+// UpdateSSHKeyCredential godoc
+//	@Summary		Update SSHKey credential
+//	@Description	Update a SSHKey credential
+//	@Tags			credentials
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		CreateSSHCredentialOpts	true	"Update SSHKey credential options"
+//	@Param			id		path		string						true	"Credential ID"
+//	@Success		200		{object}	types.SSHKeyCredential
+//	@Failure		400		{object}	fiber.Map
+//	@Failure		500		{object}	fiber.Map
+//	@Router			/credentials/sshkey/:id [put]
+func (c *CredentialsController) UpdateSSHKeyCredential() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		payload := new(CreateSSHCredentialOpts)
+		if err := payload.Validate(ctx); err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		cred, err := c.service.UpdateSSHKeyCredential(types.SSHKeyCredential{
+			Credential: types.Credential{
+				ID:           ctx.Params("id"),
+				Title:        payload.Title,
+				Note:         payload.Note,
+				CustomFields: &payload.CustomFields,
+			},
+			SSHKeyAttributes: payload.SSHKeyAttributes,
+		})
+		if err != nil {
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		return ctx.Status(fiber.StatusOK).JSON(cred)
+	}
+}
+
+// DeleteSSHKeyCredentials godoc
+//	@Summary		Delete SSHKey credentials
+//	@Description	Delete a list of SSHKey credentials
+//	@Tags			credentials
+//	@Accept			json
+//	@Produce		json
+//	@Param			ids	query		string	true	"Comma-separated list of credential IDs"
+//	@Success		200	{object}	fiber.Map
+//	@Failure		400	{object}	fiber.Map
+//	@Failure		500	{object}	fiber.Map
+//	@Router			/credentials/sshkey [delete]
+func (c *CredentialsController) DeleteSSHKeyCredentials() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		ids_query := ctx.Query("ids")
+		if ids_query == "" {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "ids is required",
+			})
+		}
+
+		ids := strings.Split(ids_query, ",")
+		err := c.service.DeleteSSHKeyCredentials(ids)
+		if err != nil {
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+			"message": "success",
+		})
+	}
+}
+
 func (c *CredentialsController) Register(app *fiber.App) {
 	app.Get("/credentials/password", c.GetPasswordCredentials())
 	app.Post("/credentials/password", c.CreatePasswordCredential())
@@ -337,4 +492,8 @@ func (c *CredentialsController) Register(app *fiber.App) {
 	app.Post("/credentials/card", c.CreateCardCredential())
 	app.Put("/credentials/card/:id", c.UpdateCardCredential())
 	app.Delete("/credentials/card", c.DeleteCardCredentials())
+	app.Get("/credentials/sshkey", c.GetSSHKeyCredentials())
+	app.Post("/credentials/sshkey", c.CreateSSHKeyCredential())
+	app.Put("/credentials/sshkey/:id", c.UpdateSSHKeyCredential())
+	app.Delete("/credentials/sshkey", c.DeleteSSHKeyCredentials())
 }
