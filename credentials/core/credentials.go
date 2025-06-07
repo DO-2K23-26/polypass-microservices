@@ -115,6 +115,19 @@ func (c *credentialService) CreateCredential(credentialOpts *types.CreateCredent
 			},
 		})
 		return err
+	case types.CredentialTypeSSHKey:
+		_, err := c.CreateSSHKeyCredential(types.SSHKeyCredential{
+			Credential: types.Credential{
+				Title:        credentialOpts.Title,
+				Note:         credentialOpts.Note,
+				CustomFields: &credentialOpts.CustomFields,
+			},
+			SSHKeyAttributes: credentialOpts.SSHKeyAttributes,
+			UserIdentifierAttribute: types.UserIdentifierAttribute{
+				UserIdentifier: credentialOpts.UserIdentifierAttribute.UserIdentifier,
+			},
+		})
+		return err
 	default:
 		return ERR_INVALID_CREDENTIAL_TYPE
 	}
