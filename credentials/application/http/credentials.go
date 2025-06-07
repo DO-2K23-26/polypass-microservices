@@ -182,7 +182,7 @@ func (c *CredentialsController) DeletePasswordCredentials() fiber.Handler {
 //	@Param			ids	query		string	true	"Comma-separated list of card IDs"
 //	@Success		200	{object}	[]types.CardCredential
 //	@Failure		404	{object}	fiber.Map
-//	@Router			/card/password [get]
+//	@Router			/credentials/card [get]
 func (c *CredentialsController) GetCardCredentials() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		ids_query := ctx.Query("ids")

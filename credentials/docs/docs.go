@@ -19,7 +19,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/card/password": {
+        "/credentials/card": {
             "get": {
                 "description": "Get a list of card credentials",
                 "consumes": [
@@ -58,9 +58,7 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/credentials/card": {
+            },
             "post": {
                 "description": "Create a card credential",
                 "consumes": [
