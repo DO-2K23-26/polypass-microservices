@@ -10,12 +10,12 @@ import (
 	"github.com/optique-dev/optique"
 )
 
-// @title Polypass Credentials Microservice
-// @version 0.1.0
-// @description Polypass Credentials Microservice
-// @contact.name Tristan-Mihai Radulescu
-// @contact.url https://github.com/DO-2K23-26
-// @contact.email tristan-mihai.radulescu@etu.umontpellier.fr
+//	@title			Polypass Credentials Microservice
+//	@version		0.1.0
+//	@description	Polypass Credentials Microservice
+//	@contact.name	Tristan-Mihai Radulescu
+//	@contact.url	https://github.com/DO-2K23-26
+//	@contact.email	tristan-mihai.radulescu@etu.umontpellier.fr
 func main() {
 	conf, err := config.LoadConfig()
 
