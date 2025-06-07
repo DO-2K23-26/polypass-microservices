@@ -2,6 +2,9 @@ package core
 
 import (
 	"errors"
+	"regexp"
+	"time"
+	"strconv"
 
 	"github.com/DO-2K23-26/polypass-microservices/credentials/infrastructure/sql"
 	"github.com/DO-2K23-26/polypass-microservices/credentials/types"
@@ -88,6 +91,11 @@ func (c *credentialService) DeletePasswordCredentials(ids []string) error {
 var ERR_INVALID_CREDENTIAL_TYPE error = errors.New("invalid credential type")
 
 func (c *credentialService) CreateCredential(credentialOpts *types.CreateCredentialOpts) error {
+	
+	if err := c.CheckCredentialValidity(credentialOpts); err != nil {
+        return err
+    }
+
 	switch credentialOpts.Type {
 	case types.CredentialTypeCard:
 		_, err := c.CreateCardCredential(types.CardCredential{
@@ -134,6 +142,52 @@ func (c *credentialService) CreateCredential(credentialOpts *types.CreateCredent
 }
 
 func (s *credentialService) CheckCredentialValidity(credentialOpts *types.CreateCredentialOpts) error {
-	panic("implement me")
+	if credentialOpts == nil {
+		return errors.New("credential options cannot be nil")
+	}
+	if credentialOpts.Title == "" {
+		return errors.New("title cannot be empty")
+	}
+
+	switch credentialOpts.Type {
+	case types.CredentialTypeCard:
+		re := regexp.MustCompile(`^\d{16}$`) // FIXME modify the type on card number, because int is too small
+		if !re.MatchString(strconv.Itoa(credentialOpts.CardAttributes.CardNumber)) {
+			return errors.New("invalid card number format: must be exactly 16 digits")
+		}
+		if credentialOpts.CardAttributes.CVC < 100 || credentialOpts.CardAttributes.CVC > 999 {
+			return errors.New("CVC must be between 100 and 999")
+		}
+		expDate, err := time.Parse("2006-01-02", credentialOpts.CardAttributes.ExpirationDate)
+		if err != nil {
+			return errors.New("invalid expiry date format: expected YYYY-MM-DD")
+		}
+		if expDate.Before(time.Now()) {
+			return errors.New("expired card")
+		}
+
+	case types.CredentialTypePassword:
+		if credentialOpts.PasswordAttributes.DomainName == "" {
+			return errors.New("domain name cannot be empty")
+		}
+		if credentialOpts.PasswordAttributes.Password == "" {
+			return errors.New("password cannot be empty")
+		}
+
+	case types.CredentialTypeSSHKey:
+		if credentialOpts.SSHKeyAttributes.Hostname == "" {
+			return errors.New("hostname cannot be empty")
+		}
+		if credentialOpts.SSHKeyAttributes.PrivateKey == "" {
+			return errors.New("private key cannot be empty")
+		}
+		if credentialOpts.SSHKeyAttributes.PublicKey == "" {
+			return errors.New("public key cannot be empty")
+		}
+
+	default:
+		return ERR_INVALID_CREDENTIAL_TYPE
+	}
+
 	return nil
 }

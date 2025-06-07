@@ -19,6 +19,7 @@ func NewCredentialsController(service core.CredentialsService) *CredentialsContr
 }
 
 // GetPasswordCredentials godoc
+//
 //	@Summary		Get password credentials
 //	@Description	Get a list of password credentials
 //	@Tags			credentials
@@ -51,9 +52,9 @@ func (c *CredentialsController) GetPasswordCredentials() fiber.Handler {
 
 type CreatePasswordCredentialOpts struct {
 	BaseValidator
-	Title        string               `json:"title" db:"title"`
-	Note         string               `json:"note" db:"note"`
-	CustomFields map[string]any       `json:"custom_fields" db:"custom_fields"`
+	Title        string         `json:"title" db:"title"`
+	Note         string         `json:"note" db:"note"`
+	CustomFields map[string]any `json:"custom_fields" db:"custom_fields"`
 	types.PasswordAttributes
 }
 
@@ -62,6 +63,7 @@ func (c *CreatePasswordCredentialOpts) Validate(ctx *fiber.Ctx) error {
 }
 
 // CreatePasswordCredential godoc
+//
 //	@Summary		Create password credential
 //	@Description	Create a password credential
 //	@Tags			credentials
@@ -79,6 +81,20 @@ func (c *CredentialsController) CreatePasswordCredential() fiber.Handler {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
 			})
+		}
+
+		// ajout du check de validité
+		if err := c.service.CheckCredentialValidity(&types.CreateCredentialOpts{
+			Type:               types.CredentialTypePassword,
+			Title:              payload.Title,
+			Note:               payload.Note,
+			CustomFields:       payload.CustomFields,
+			PasswordAttributes: payload.PasswordAttributes,
+			UserIdentifierAttribute: types.UserIdentifierAttribute{
+				UserIdentifier: payload.DomainName, // FIXME to check
+			},
+		}); err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		cred, err := c.service.CreatePasswordCredential(types.PasswordCredential{
@@ -100,6 +116,7 @@ func (c *CredentialsController) CreatePasswordCredential() fiber.Handler {
 }
 
 // UpdatePasswordCredential godoc
+//
 //	@Summary		Update password credential
 //	@Description	Update a password credential
 //	@Tags			credentials
@@ -140,6 +157,7 @@ func (c *CredentialsController) UpdatePasswordCredential() fiber.Handler {
 }
 
 // DeletePasswordCredentials godoc
+//
 //	@Summary		Delete password credentials
 //	@Description	Delete a list of password credentials
 //	@Tags			credentials
@@ -174,6 +192,7 @@ func (c *CredentialsController) DeletePasswordCredentials() fiber.Handler {
 }
 
 // GetCardCredentials godoc
+//
 //	@Summary		Get card credentials
 //	@Description	Get a list of card credentials
 //	@Tags			card
@@ -186,7 +205,7 @@ func (c *CredentialsController) DeletePasswordCredentials() fiber.Handler {
 func (c *CredentialsController) GetCardCredentials() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		ids_query := ctx.Query("ids")
-		if ids_query == "" { 	
+		if ids_query == "" {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "ids is required",
 			})
@@ -206,9 +225,9 @@ func (c *CredentialsController) GetCardCredentials() fiber.Handler {
 
 type CreateCardCredentialOpts struct {
 	BaseValidator
-	Title        string               `json:"title" db:"title"`
-	Note         string               `json:"note" db:"note"`
-	CustomFields map[string]any       `json:"custom_fields" db:"custom_fields"`
+	Title        string         `json:"title" db:"title"`
+	Note         string         `json:"note" db:"note"`
+	CustomFields map[string]any `json:"custom_fields" db:"custom_fields"`
 	types.CardAttributes
 }
 
@@ -217,6 +236,7 @@ func (c *CreateCardCredentialOpts) Validate(ctx *fiber.Ctx) error {
 }
 
 // CreateCardCredential godoc
+//
 //	@Summary		Create card credential
 //	@Description	Create a card credential
 //	@Tags			credentials
@@ -234,6 +254,19 @@ func (c *CredentialsController) CreateCardCredential() fiber.Handler {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
 			})
+		}
+
+		if err := c.service.CheckCredentialValidity(&types.CreateCredentialOpts{
+			Type:           types.CredentialTypeCard,
+			Title:          payload.Title,
+			Note:           payload.Note,
+			CustomFields:   payload.CustomFields,
+			CardAttributes: payload.CardAttributes,
+			UserIdentifierAttribute: types.UserIdentifierAttribute{
+				UserIdentifier: payload.OwnerName, // FIXME to check
+			},
+		}); err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		cred, err := c.service.CreateCardCredential(types.CardCredential{
@@ -255,6 +288,7 @@ func (c *CredentialsController) CreateCardCredential() fiber.Handler {
 }
 
 // UpdateCardCredential godoc
+//
 //	@Summary		Update card credential
 //	@Description	Update a card credential
 //	@Tags			credentials
@@ -295,6 +329,7 @@ func (c *CredentialsController) UpdateCardCredential() fiber.Handler {
 }
 
 // DeleteCardCredentials godoc
+//
 //	@Summary		Delete card credentials
 //	@Description	Delete a list of Card credentials
 //	@Tags			credentials
@@ -329,6 +364,7 @@ func (c *CredentialsController) DeleteCardCredentials() fiber.Handler {
 }
 
 // GetSSHKeyCredentials godoc
+//
 //	@Summary		Get SSHKey credentials
 //	@Description	Get a list of SSHKey credentials
 //	@Tags			credentials
@@ -361,9 +397,9 @@ func (c *CredentialsController) GetSSHKeyCredentials() fiber.Handler {
 
 type CreateSSHCredentialOpts struct {
 	BaseValidator
-	Title        string               `json:"title" db:"title"`
-	Note         string               `json:"note" db:"note"`
-	CustomFields map[string]any       `json:"custom_fields" db:"custom_fields"`
+	Title        string         `json:"title" db:"title"`
+	Note         string         `json:"note" db:"note"`
+	CustomFields map[string]any `json:"custom_fields" db:"custom_fields"`
 	types.SSHKeyAttributes
 }
 
@@ -372,6 +408,7 @@ func (c *CreateSSHCredentialOpts) Validate(ctx *fiber.Ctx) error {
 }
 
 // CreateSSHKeyCredential godoc
+//
 //	@Summary		Create SSHKey credential
 //	@Description	Create a SSHKey credential
 //	@Tags			credentials
@@ -389,6 +426,20 @@ func (c *CredentialsController) CreateSSHKeyCredential() fiber.Handler {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
 			})
+		}
+
+		// ajout du check de validité
+		if err := c.service.CheckCredentialValidity(&types.CreateCredentialOpts{
+			Type:             types.CredentialTypeSSHKey,
+			Title:            payload.Title,
+			Note:             payload.Note,
+			CustomFields:     payload.CustomFields,
+			SSHKeyAttributes: payload.SSHKeyAttributes,
+			UserIdentifierAttribute: types.UserIdentifierAttribute{
+				UserIdentifier: payload.SSHKeyAttributes.Hostname, //FIXME to check
+			},
+		}); err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		cred, err := c.service.CreateSSHKeyCredential(types.SSHKeyCredential{
@@ -410,6 +461,7 @@ func (c *CredentialsController) CreateSSHKeyCredential() fiber.Handler {
 }
 
 // UpdateSSHKeyCredential godoc
+//
 //	@Summary		Update SSHKey credential
 //	@Description	Update a SSHKey credential
 //	@Tags			credentials
@@ -450,6 +502,7 @@ func (c *CredentialsController) UpdateSSHKeyCredential() fiber.Handler {
 }
 
 // DeleteSSHKeyCredentials godoc
+//
 //	@Summary		Delete SSHKey credentials
 //	@Description	Delete a list of SSHKey credentials
 //	@Tags			credentials
