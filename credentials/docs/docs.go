@@ -19,6 +19,188 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/card/password": {
+            "get": {
+                "description": "Get a list of card credentials",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "card"
+                ],
+                "summary": "Get card credentials",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comma-separated list of card IDs",
+                        "name": "ids",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/types.CardCredential"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/credentials/card": {
+            "post": {
+                "description": "Create a card credential",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "credentials"
+                ],
+                "summary": "Create card credential",
+                "parameters": [
+                    {
+                        "description": "Create card credential options",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateCardCredentialOpts"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.CardCredential"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a list of Card credentials",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "credentials"
+                ],
+                "summary": "Delete card credentials",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comma-separated list of credential IDs",
+                        "name": "ids",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/credentials/card/:id": {
+            "put": {
+                "description": "Update a card credential",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "credentials"
+                ],
+                "summary": "Update card credential",
+                "parameters": [
+                    {
+                        "description": "Update card credential options",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CreateCardCredentialOpts"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.CardCredential"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/credentials/password": {
             "get": {
                 "description": "Get a list of password credentials",
@@ -205,6 +387,33 @@ const docTemplate = `{
             "type": "object",
             "additionalProperties": true
         },
+        "http.CreateCardCredentialOpts": {
+            "type": "object",
+            "properties": {
+                "card_number": {
+                    "type": "integer"
+                },
+                "custom_fields": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "cvc": {
+                    "type": "integer"
+                },
+                "expiration_date": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "owner_name": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "http.CreatePasswordCredentialOpts": {
             "type": "object",
             "properties": {
@@ -226,11 +435,56 @@ const docTemplate = `{
                 }
             }
         },
+        "types.CardCredential": {
+            "type": "object",
+            "properties": {
+                "card_number": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "custom_fields": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "cvc": {
+                    "type": "integer"
+                },
+                "expiration_date": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_read_at": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "owner_name": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_identifier": {
+                    "type": "string"
+                }
+            }
+        },
         "types.PasswordCredential": {
             "type": "object",
             "properties": {
                 "created_at": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "custom_fields": {
                     "type": "object",
@@ -240,13 +494,13 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "expires_at": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
                 "last_read_at": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "note": {
                     "type": "string"
@@ -258,7 +512,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updated_at": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "user_identifier": {
                     "type": "string"
