@@ -3,8 +3,8 @@ package core
 import (
 	"errors"
 	"regexp"
-	"time"
 	"strconv"
+	"time"
 
 	"github.com/DO-2K23-26/polypass-microservices/credentials/infrastructure/sql"
 	"github.com/DO-2K23-26/polypass-microservices/credentials/types"
@@ -90,11 +90,12 @@ func (c *credentialService) DeletePasswordCredentials(ids []string) error {
 
 var ERR_INVALID_CREDENTIAL_TYPE error = errors.New("invalid credential type")
 
+// TODO it is not used yet
 func (c *credentialService) CreateCredential(credentialOpts *types.CreateCredentialOpts) error {
-	
+
 	if err := c.CheckCredentialValidity(credentialOpts); err != nil {
-        return err
-    }
+		return err
+	}
 
 	switch credentialOpts.Type {
 	case types.CredentialTypeCard:
@@ -151,8 +152,9 @@ func (s *credentialService) CheckCredentialValidity(credentialOpts *types.Create
 
 	switch credentialOpts.Type {
 	case types.CredentialTypeCard:
-		re := regexp.MustCompile(`^\d{16}$`) // FIXME modify the type on card number, because int is too small
-		if !re.MatchString(strconv.Itoa(credentialOpts.CardAttributes.CardNumber)) {
+		re := regexp.MustCompile(`^\d{16}$`)
+		cardStr := strconv.FormatInt(credentialOpts.CardAttributes.CardNumber, 10)
+		if !re.MatchString(cardStr) {
 			return errors.New("invalid card number format: must be exactly 16 digits")
 		}
 		if credentialOpts.CardAttributes.CVC < 100 || credentialOpts.CardAttributes.CVC > 999 {
@@ -164,6 +166,9 @@ func (s *credentialService) CheckCredentialValidity(credentialOpts *types.Create
 		}
 		if expDate.Before(time.Now()) {
 			return errors.New("expired card")
+		}
+		if credentialOpts.CardAttributes.OwnerName == "" {
+			return errors.New("owner name cannot be empty")
 		}
 
 	case types.CredentialTypePassword:

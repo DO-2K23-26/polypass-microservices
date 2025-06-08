@@ -83,7 +83,6 @@ func (c *CredentialsController) CreatePasswordCredential() fiber.Handler {
 			})
 		}
 
-		// ajout du check de validité
 		if err := c.service.CheckCredentialValidity(&types.CreateCredentialOpts{
 			Type:               types.CredentialTypePassword,
 			Title:              payload.Title,
@@ -91,7 +90,7 @@ func (c *CredentialsController) CreatePasswordCredential() fiber.Handler {
 			CustomFields:       payload.CustomFields,
 			PasswordAttributes: payload.PasswordAttributes,
 			UserIdentifierAttribute: types.UserIdentifierAttribute{
-				UserIdentifier: payload.DomainName, // FIXME to check
+				UserIdentifier: "",
 			},
 		}); err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
@@ -263,7 +262,7 @@ func (c *CredentialsController) CreateCardCredential() fiber.Handler {
 			CustomFields:   payload.CustomFields,
 			CardAttributes: payload.CardAttributes,
 			UserIdentifierAttribute: types.UserIdentifierAttribute{
-				UserIdentifier: payload.OwnerName, // FIXME to check
+				UserIdentifier: "",
 			},
 		}); err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
@@ -436,7 +435,7 @@ func (c *CredentialsController) CreateSSHKeyCredential() fiber.Handler {
 			CustomFields:     payload.CustomFields,
 			SSHKeyAttributes: payload.SSHKeyAttributes,
 			UserIdentifierAttribute: types.UserIdentifierAttribute{
-				UserIdentifier: payload.SSHKeyAttributes.Hostname, //FIXME to check
+				UserIdentifier: "",
 			},
 		}); err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
