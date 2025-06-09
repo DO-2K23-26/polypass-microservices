@@ -5,11 +5,11 @@
 	"fields": [
 		{ "name": "id", "type": "string", "default": "default-id" },
 		{ "name": "name", "type": "string", "default": "default-name" },
-		{ "name": "description", "type": ["null", "string"], "default": null },
-		{ "name": "icon", "type": ["null", "string"], "default": null },
+		{ "name": "description", "type": "string", "default": "" },
+		{ "name": "icon", "type": "string", "default": "" },
 		{ "name": "created_at", "type": "string" },
 		{ "name": "updated_at", "type": "string" },
-		{ "name": "parent_id", "type": ["null", "string"], "default": null },
+		{ "name": "parent_id", "type": "string", "default": "" },
 		{ "name": "members", "type": {"type": "array", "items": "string"}, "default": [] },
 		{ "name": "created_by", "type": "string" }
 	]

@@ -22,30 +22,30 @@ type FolderEvent struct {
 
 	Name string `json:"name"`
 
-	Description *UnionNullString `json:"description"`
+	Description string `json:"description"`
 
-	Icon *UnionNullString `json:"icon"`
+	Icon string `json:"icon"`
 
 	Created_at string `json:"created_at"`
 
 	Updated_at string `json:"updated_at"`
 
-	Parent_id *UnionNullString `json:"parent_id"`
+	Parent_id string `json:"parent_id"`
 
 	Members []string `json:"members"`
 
 	Created_by string `json:"created_by"`
 }
 
-const FolderEventAvroCRC64Fingerprint = "Ù\xc5!cO\xd8e"
+const FolderEventAvroCRC64Fingerprint = "K\xf4&۷\ru\x18"
 
 func NewFolderEvent() FolderEvent {
 	r := FolderEvent{}
 	r.Id = "default-id"
 	r.Name = "default-name"
-	r.Description = nil
-	r.Icon = nil
-	r.Parent_id = nil
+	r.Description = ""
+	r.Icon = ""
+	r.Parent_id = ""
 	r.Members = make([]string, 0)
 
 	r.Members = make([]string, 0)
@@ -86,11 +86,11 @@ func writeFolderEvent(r FolderEvent, w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = writeUnionNullString(r.Description, w)
+	err = vm.WriteString(r.Description, w)
 	if err != nil {
 		return err
 	}
-	err = writeUnionNullString(r.Icon, w)
+	err = vm.WriteString(r.Icon, w)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func writeFolderEvent(r FolderEvent, w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = writeUnionNullString(r.Parent_id, w)
+	err = vm.WriteString(r.Parent_id, w)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (r FolderEvent) Serialize(w io.Writer) error {
 }
 
 func (r FolderEvent) Schema() string {
-	return "{\"fields\":[{\"default\":\"default-id\",\"name\":\"id\",\"type\":\"string\"},{\"default\":\"default-name\",\"name\":\"name\",\"type\":\"string\"},{\"default\":null,\"name\":\"description\",\"type\":[\"null\",\"string\"]},{\"default\":null,\"name\":\"icon\",\"type\":[\"null\",\"string\"]},{\"name\":\"created_at\",\"type\":\"string\"},{\"name\":\"updated_at\",\"type\":\"string\"},{\"default\":null,\"name\":\"parent_id\",\"type\":[\"null\",\"string\"]},{\"default\":[],\"name\":\"members\",\"type\":{\"items\":\"string\",\"type\":\"array\"}},{\"name\":\"created_by\",\"type\":\"string\"}],\"name\":\"com.example.FolderEvent\",\"type\":\"record\"}"
+	return "{\"fields\":[{\"default\":\"default-id\",\"name\":\"id\",\"type\":\"string\"},{\"default\":\"default-name\",\"name\":\"name\",\"type\":\"string\"},{\"default\":\"\",\"name\":\"description\",\"type\":\"string\"},{\"default\":\"\",\"name\":\"icon\",\"type\":\"string\"},{\"name\":\"created_at\",\"type\":\"string\"},{\"name\":\"updated_at\",\"type\":\"string\"},{\"default\":\"\",\"name\":\"parent_id\",\"type\":\"string\"},{\"default\":[],\"name\":\"members\",\"type\":{\"items\":\"string\",\"type\":\"array\"}},{\"name\":\"created_by\",\"type\":\"string\"}],\"name\":\"com.example.FolderEvent\",\"type\":\"record\"}"
 }
 
 func (r FolderEvent) SchemaName() string {
@@ -151,13 +151,15 @@ func (r *FolderEvent) Get(i int) types.Field {
 		return w
 
 	case 2:
-		r.Description = NewUnionNullString()
+		w := types.String{Target: &r.Description}
 
-		return r.Description
+		return w
+
 	case 3:
-		r.Icon = NewUnionNullString()
+		w := types.String{Target: &r.Icon}
 
-		return r.Icon
+		return w
+
 	case 4:
 		w := types.String{Target: &r.Created_at}
 
@@ -169,9 +171,10 @@ func (r *FolderEvent) Get(i int) types.Field {
 		return w
 
 	case 6:
-		r.Parent_id = NewUnionNullString()
+		w := types.String{Target: &r.Parent_id}
 
-		return r.Parent_id
+		return w
+
 	case 7:
 		r.Members = make([]string, 0)
 
@@ -197,13 +200,13 @@ func (r *FolderEvent) SetDefault(i int) {
 		r.Name = "default-name"
 		return
 	case 2:
-		r.Description = nil
+		r.Description = ""
 		return
 	case 3:
-		r.Icon = nil
+		r.Icon = ""
 		return
 	case 6:
-		r.Parent_id = nil
+		r.Parent_id = ""
 		return
 	case 7:
 		r.Members = make([]string, 0)
@@ -215,15 +218,6 @@ func (r *FolderEvent) SetDefault(i int) {
 
 func (r *FolderEvent) NullField(i int) {
 	switch i {
-	case 2:
-		r.Description = nil
-		return
-	case 3:
-		r.Icon = nil
-		return
-	case 6:
-		r.Parent_id = nil
-		return
 	}
 	panic("Not a nullable field index")
 }
@@ -326,9 +320,7 @@ func (r *FolderEvent) UnmarshalJSON(data []byte) error {
 			return err
 		}
 	} else {
-		r.Description = NewUnionNullString()
-
-		r.Description = nil
+		r.Description = ""
 	}
 	val = func() json.RawMessage {
 		if v, ok := fields["icon"]; ok {
@@ -342,9 +334,7 @@ func (r *FolderEvent) UnmarshalJSON(data []byte) error {
 			return err
 		}
 	} else {
-		r.Icon = NewUnionNullString()
-
-		r.Icon = nil
+		r.Icon = ""
 	}
 	val = func() json.RawMessage {
 		if v, ok := fields["created_at"]; ok {
@@ -386,9 +376,7 @@ func (r *FolderEvent) UnmarshalJSON(data []byte) error {
 			return err
 		}
 	} else {
-		r.Parent_id = NewUnionNullString()
-
-		r.Parent_id = nil
+		r.Parent_id = ""
 	}
 	val = func() json.RawMessage {
 		if v, ok := fields["members"]; ok {
