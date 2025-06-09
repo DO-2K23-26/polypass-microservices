@@ -15,15 +15,17 @@ services:
 
   db_init:
     build:
-      context: .            
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.org_db
     depends_on:
       postgres:
         condition: service_healthy
     environment:
+      POSTGRES_HOST: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
+      POSTGRES_PORT: 5432
 
   broker-1:
     image: apache/kafka:latest
