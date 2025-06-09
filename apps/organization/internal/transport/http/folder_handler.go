@@ -18,13 +18,13 @@ func NewFolderHandler(service *app.FolderService) *FolderHandler {
 }
 
 func (h *FolderHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
-	var folder organization.Folder
-	if err := json.NewDecoder(r.Body).Decode(&folder); err != nil {
+	var folderRequest organization.CreateFolderRequest
+	if err := json.NewDecoder(r.Body).Decode(&folderRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := h.service.CreateFolder(folder); err != nil {
+	if err := h.service.CreateFolder(folderRequest); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
