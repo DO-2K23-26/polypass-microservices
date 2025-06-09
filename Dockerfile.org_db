@@ -1,0 +1,28 @@
+# Dockerfile
+FROM golang:1.24.3-alpine AS build-stage
+
+WORKDIR /app
+
+COPY libs ./libs
+
+COPY apps/organization/go.mod apps/organization/go.sum ./apps/organization/
+
+WORKDIR /app/apps/organization
+
+RUN go mod download
+
+COPY apps/organization/database/db_init.go /app/apps/organization/database/db_init.go
+
+WORKDIR /app/apps/organization/database
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o /db_init
+
+FROM gcr.io/distroless/base-debian11 AS build-release-stage
+
+WORKDIR /
+
+COPY --from=build-stage /db_init /db_init
+
+USER nonroot:nonroot
+
+ENTRYPOINT ["/db_init"]
