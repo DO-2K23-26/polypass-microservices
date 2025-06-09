@@ -1,6 +1,9 @@
 package app
 
 import (
+	"bytes"
+
+	avroGeneratedSchema "github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/generated"
 	"github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/schemautils"
 	"github.com/DO-2K23-26/polypass-microservices/libs/interfaces/organization"
 )
@@ -19,43 +22,51 @@ func NewFolderService(publisher EventPublisher, encoder *schemautils.AvroEncoder
 }
 
 func (s *FolderService) CreateFolder(folder organization.Folder) error {
-	data := map[string]interface{}{
-		"id":          folder.Id,
-		"name":        folder.Name,
-		"description": folder.Description,
-		"icon":        folder.Icon,
-		"created_at":  folder.CreatedAt,
-		"updated_at":  folder.UpdatedAt,
-		"parent_id":   folder.ParentId,
-		"members":     folder.Members,
-		"created_by":  folder.CreatedBy,
+	data := avroGeneratedSchema.FolderEvent{
+		Id:          folder.Id,
+		Name:        folder.Name,
+		Description: &avroGeneratedSchema.UnionNullString{String: *folder.Description},
+		Icon:        &avroGeneratedSchema.UnionNullString{String: *folder.Icon},
+		Created_at:  folder.CreatedAt.String(),
+		Updated_at:  folder.UpdatedAt.String(),
+		Parent_id:   &avroGeneratedSchema.UnionNullString{String: *folder.ParentID},
+		Members:     folder.Members,
+		Created_by:  folder.CreatedBy,
 	}
 
-	encoded, err := s.encoder.Encode(data)
+	var buf bytes.Buffer
+	err := data.Serialize(&buf)
 	if err != nil {
 		return err
 	}
 
-	return s.publisher.Publish("Folder-Create", encoded)
+	// encoded, err := s.encoder.Encode(data)
+	// if err != nil {
+	// 	return err
+	// }
+
+	return s.publisher.Publish("Folder-Create", buf.Bytes())
 }
 
 func (s *FolderService) UpdateFolder(folder organization.Folder) error {
-	data := map[string]interface{}{
-		"id":          folder.Id,
-		"name":        folder.Name,
-		"description": folder.Description,
-		"icon":        folder.Icon,
-		"created_at":  folder.CreatedAt,
-		"updated_at":  folder.UpdatedAt,
-		"parent_id":   folder.ParentId,
-		"members":     folder.Members,
-		"created_by":  folder.CreatedBy,
+	data := avroGeneratedSchema.FolderEvent{
+		Id:          folder.Id,
+		Name:        folder.Name,
+		Description: &avroGeneratedSchema.UnionNullString{String: *folder.Description},
+		Icon:        &avroGeneratedSchema.UnionNullString{String: *folder.Icon},
+		Created_at:  folder.CreatedAt.String(),
+		Updated_at:  folder.UpdatedAt.String(),
+		Parent_id:   &avroGeneratedSchema.UnionNullString{String: *folder.ParentID},
+		Members:     folder.Members,
+		Created_by:  folder.CreatedBy,
 	}
-	encoded, err := s.encoder.Encode(data)
+
+	var buf bytes.Buffer
+	err := data.Serialize(&buf)
 	if err != nil {
 		return err
 	}
-	return s.publisher.Publish("Folder-Update", encoded)
+	return s.publisher.Publish("Folder-Update", buf.Bytes())
 }
 
 func (s *FolderService) DeleteFolder(id string) error {
