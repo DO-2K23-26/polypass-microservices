@@ -114,36 +114,35 @@ func (m sql) GetSSHKeyCredentials(ids []string) ([]types.SSHKeyCredential, error
 
 func (m sql) CreatePasswordCredential(credential types.PasswordCredential) (types.PasswordCredential, error) {
 	var createdCredential types.PasswordCredential
-	_, err := m.db.NamedExec("INSERT INTO password_credentials (title, note, user_identifier, password, domain_name) VALUES (:user_identifier, :password, :domain_name, :title, :note)", credential)
+	err := m.db.Get(&createdCredential, "INSERT INTO password_credentials (title, note, user_identifier, password, domain_name) VALUES ($1, $2, $3, $4, $5) RETURNING *", credential.Title, credential.Note, credential.UserIdentifier, credential.Password, credential.DomainName)
 	if err != nil {
 		return createdCredential, err
 	}
-	return credential, nil
+	return createdCredential, nil
 }
 
 func (m sql) CreateCardCredential(credential types.CardCredential) (types.CardCredential, error) {
 	var createdCredential types.CardCredential
-	_, err := m.db.NamedExec("INSERT INTO card_credentials (title, note, owner_name, cvc, expiration_date, card_number) VALUES (:title, :note, :owner_name, :cvc, :expiration_date, :card_number)", credential)
+	err := m.db.Get(&createdCredential ,"INSERT INTO card_credentials (title, note, owner_name, cvc, expiration_date, card_number) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *", credential.Title, credential.Note, credential.OwnerName, credential.CVC, credential.ExpirationDate, credential.CardNumber)
 	if err != nil {
 		return createdCredential, err
 	}
-	return credential, nil
+	return createdCredential, nil
 }
 
 func (m sql) CreateSSHKeyCredential(credential types.SSHKeyCredential) (types.SSHKeyCredential, error) {
 	var createdCredential types.SSHKeyCredential
-	_, err := m.db.NamedExec("INSERT INTO ssh_keys (title, note, private_key, public_key, hostname, user_identifier) VALUES (:title, :note, :private_key, :public_key, :hostname, :user_identifier)", credential)
+	err := m.db.Get(&createdCredential, "INSERT INTO ssh_keys (title, note, private_key, public_key, hostname, user_identifier) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *", credential.Title, credential.Note, credential.PrivateKey, credential.PublicKey, credential.Hostname, credential.UserIdentifier)
 	if err != nil {
 		return createdCredential, err
 	}
-	return credential, nil
+	return createdCredential, nil
 }
 
 func (m sql) UpdatePasswordCredential(credential types.PasswordCredential) (types.PasswordCredential, error) {
-	var updatedCredential types.PasswordCredential
 	_, err := m.db.NamedExec("UPDATE password_credentials SET title = :title, note = :note, password = :password, domain_name = :domain_name WHERE id = :id", credential)
 	if err != nil {
-		return updatedCredential, err
+		return credential, err
 	}
 	return credential, nil
 }
