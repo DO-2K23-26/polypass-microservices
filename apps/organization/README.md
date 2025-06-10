@@ -5,7 +5,7 @@ This service is responsible for managing folders and tags in Polypass applicatio
 1. Clone the repository:
 ```bash
 git clone git@github.com:DO-2K23-26/polypass-microservices.git
-cd polypass-microservices/organization
+cd polypass-microservices
 ```
 
 2. Start the Docker containers:
@@ -15,5 +15,5 @@ docker compose up -d
 
 3. Start the service:
 ```bash
-go run main.go
+go run apps/organization/cmd/organization/main.go
 ```

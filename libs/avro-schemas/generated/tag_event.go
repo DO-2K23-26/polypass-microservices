@@ -18,19 +18,28 @@ import (
 var _ = fmt.Printf
 
 type TagEvent struct {
-	Event_type string `json:"event_type"`
-
 	Id string `json:"id"`
 
 	Name string `json:"name"`
+
+	Color string `json:"color"`
+
+	Created_at string `json:"created_at"`
+
+	Updated_at string `json:"updated_at"`
+
+	Folder_id string `json:"folder_id"`
+
+	Created_by string `json:"created_by"`
 }
 
-const TagEventAvroCRC64Fingerprint = "a\x02M\xf4\x7f\xd1Y\x1b"
+const TagEventAvroCRC64Fingerprint = "\x1dz{\x8ef=\x1c-"
 
 func NewTagEvent() TagEvent {
 	r := TagEvent{}
 	r.Id = "default-id"
 	r.Name = "default-name"
+	r.Color = "#000000"
 	return r
 }
 
@@ -59,15 +68,31 @@ func DeserializeTagEventFromSchema(r io.Reader, schema string) (TagEvent, error)
 
 func writeTagEvent(r TagEvent, w io.Writer) error {
 	var err error
-	err = vm.WriteString(r.Event_type, w)
-	if err != nil {
-		return err
-	}
 	err = vm.WriteString(r.Id, w)
 	if err != nil {
 		return err
 	}
 	err = vm.WriteString(r.Name, w)
+	if err != nil {
+		return err
+	}
+	err = vm.WriteString(r.Color, w)
+	if err != nil {
+		return err
+	}
+	err = vm.WriteString(r.Created_at, w)
+	if err != nil {
+		return err
+	}
+	err = vm.WriteString(r.Updated_at, w)
+	if err != nil {
+		return err
+	}
+	err = vm.WriteString(r.Folder_id, w)
+	if err != nil {
+		return err
+	}
+	err = vm.WriteString(r.Created_by, w)
 	if err != nil {
 		return err
 	}
@@ -79,7 +104,7 @@ func (r TagEvent) Serialize(w io.Writer) error {
 }
 
 func (r TagEvent) Schema() string {
-	return "{\"fields\":[{\"name\":\"event_type\",\"type\":\"string\"},{\"default\":\"default-id\",\"name\":\"id\",\"type\":\"string\"},{\"default\":\"default-name\",\"name\":\"name\",\"type\":\"string\"}],\"name\":\"com.example.TagEvent\",\"type\":\"record\"}"
+	return "{\"fields\":[{\"default\":\"default-id\",\"name\":\"id\",\"type\":\"string\"},{\"default\":\"default-name\",\"name\":\"name\",\"type\":\"string\"},{\"default\":\"#000000\",\"name\":\"color\",\"type\":\"string\"},{\"name\":\"created_at\",\"type\":\"string\"},{\"name\":\"updated_at\",\"type\":\"string\"},{\"name\":\"folder_id\",\"type\":\"string\"},{\"name\":\"created_by\",\"type\":\"string\"}],\"name\":\"com.example.TagEvent\",\"type\":\"record\"}"
 }
 
 func (r TagEvent) SchemaName() string {
@@ -98,17 +123,37 @@ func (_ TagEvent) SetUnionElem(v int64) { panic("Unsupported operation") }
 func (r *TagEvent) Get(i int) types.Field {
 	switch i {
 	case 0:
-		w := types.String{Target: &r.Event_type}
-
-		return w
-
-	case 1:
 		w := types.String{Target: &r.Id}
 
 		return w
 
-	case 2:
+	case 1:
 		w := types.String{Target: &r.Name}
+
+		return w
+
+	case 2:
+		w := types.String{Target: &r.Color}
+
+		return w
+
+	case 3:
+		w := types.String{Target: &r.Created_at}
+
+		return w
+
+	case 4:
+		w := types.String{Target: &r.Updated_at}
+
+		return w
+
+	case 5:
+		w := types.String{Target: &r.Folder_id}
+
+		return w
+
+	case 6:
+		w := types.String{Target: &r.Created_by}
 
 		return w
 
@@ -118,11 +163,14 @@ func (r *TagEvent) Get(i int) types.Field {
 
 func (r *TagEvent) SetDefault(i int) {
 	switch i {
-	case 1:
+	case 0:
 		r.Id = "default-id"
 		return
-	case 2:
+	case 1:
 		r.Name = "default-name"
+		return
+	case 2:
+		r.Color = "#000000"
 		return
 	}
 	panic("Unknown field index")
@@ -146,15 +194,31 @@ func (_ TagEvent) AvroCRC64Fingerprint() []byte {
 func (r TagEvent) MarshalJSON() ([]byte, error) {
 	var err error
 	output := make(map[string]json.RawMessage)
-	output["event_type"], err = json.Marshal(r.Event_type)
-	if err != nil {
-		return nil, err
-	}
 	output["id"], err = json.Marshal(r.Id)
 	if err != nil {
 		return nil, err
 	}
 	output["name"], err = json.Marshal(r.Name)
+	if err != nil {
+		return nil, err
+	}
+	output["color"], err = json.Marshal(r.Color)
+	if err != nil {
+		return nil, err
+	}
+	output["created_at"], err = json.Marshal(r.Created_at)
+	if err != nil {
+		return nil, err
+	}
+	output["updated_at"], err = json.Marshal(r.Updated_at)
+	if err != nil {
+		return nil, err
+	}
+	output["folder_id"], err = json.Marshal(r.Folder_id)
+	if err != nil {
+		return nil, err
+	}
+	output["created_by"], err = json.Marshal(r.Created_by)
 	if err != nil {
 		return nil, err
 	}
@@ -168,20 +232,6 @@ func (r *TagEvent) UnmarshalJSON(data []byte) error {
 	}
 
 	var val json.RawMessage
-	val = func() json.RawMessage {
-		if v, ok := fields["event_type"]; ok {
-			return v
-		}
-		return nil
-	}()
-
-	if val != nil {
-		if err := json.Unmarshal([]byte(val), &r.Event_type); err != nil {
-			return err
-		}
-	} else {
-		return fmt.Errorf("no value specified for event_type")
-	}
 	val = func() json.RawMessage {
 		if v, ok := fields["id"]; ok {
 			return v
@@ -209,6 +259,76 @@ func (r *TagEvent) UnmarshalJSON(data []byte) error {
 		}
 	} else {
 		r.Name = "default-name"
+	}
+	val = func() json.RawMessage {
+		if v, ok := fields["color"]; ok {
+			return v
+		}
+		return nil
+	}()
+
+	if val != nil {
+		if err := json.Unmarshal([]byte(val), &r.Color); err != nil {
+			return err
+		}
+	} else {
+		r.Color = "#000000"
+	}
+	val = func() json.RawMessage {
+		if v, ok := fields["created_at"]; ok {
+			return v
+		}
+		return nil
+	}()
+
+	if val != nil {
+		if err := json.Unmarshal([]byte(val), &r.Created_at); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("no value specified for created_at")
+	}
+	val = func() json.RawMessage {
+		if v, ok := fields["updated_at"]; ok {
+			return v
+		}
+		return nil
+	}()
+
+	if val != nil {
+		if err := json.Unmarshal([]byte(val), &r.Updated_at); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("no value specified for updated_at")
+	}
+	val = func() json.RawMessage {
+		if v, ok := fields["folder_id"]; ok {
+			return v
+		}
+		return nil
+	}()
+
+	if val != nil {
+		if err := json.Unmarshal([]byte(val), &r.Folder_id); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("no value specified for folder_id")
+	}
+	val = func() json.RawMessage {
+		if v, ok := fields["created_by"]; ok {
+			return v
+		}
+		return nil
+	}()
+
+	if val != nil {
+		if err := json.Unmarshal([]byte(val), &r.Created_by); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("no value specified for created_by")
 	}
 	return nil
 }
