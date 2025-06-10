@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/DO-2K23-26/polypass-microservices/libs/interfaces/organization"
 	"github.com/DO-2K23-26/polypass-microservices/organization/internal/app"
@@ -18,7 +19,7 @@ func NewTagHandler(service *app.TagService) *TagHandler {
 }
 
 func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
-	var tag organization.Tag
+	var tag organization.CreateTagRequest
 	if err := json.NewDecoder(r.Body).Decode(&tag); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -35,7 +36,7 @@ func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-	var tag organization.Tag
+	var tag organization.UpdateTagRequest
 	if err := json.NewDecoder(r.Body).Decode(&tag); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -59,7 +60,35 @@ func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TagHandler) ListTags(w http.ResponseWriter, r *http.Request) {
-	tags, err := h.service.ListTags()
+	page := r.URL.Query().Get("page")
+	if page == "" {
+		page = "1" // Default to page 1 if not provided
+	}
+	limit := r.URL.Query().Get("limit")
+	if limit == "" {
+		limit = "10" // Default to 10 items per page if not provided
+	}
+	// Convert page and limit to integers
+	pageInt, err := strconv.Atoi(page)
+
+	if err != nil {
+		http.Error(w, "Invalid page number", http.StatusBadRequest)
+		return
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		http.Error(w, "Invalid limit number", http.StatusBadRequest)
+		return
+	}
+
+	req := organization.GetTagRequest{
+		Page:  pageInt,
+		Limit: limitInt,
+	}
+
+	tags, err := h.service.ListTags(req)
+
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

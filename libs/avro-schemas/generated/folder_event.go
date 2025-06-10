@@ -18,19 +18,38 @@ import (
 var _ = fmt.Printf
 
 type FolderEvent struct {
-	Event_type string `json:"event_type"`
-
 	Id string `json:"id"`
 
 	Name string `json:"name"`
+
+	Description string `json:"description"`
+
+	Icon string `json:"icon"`
+
+	Created_at string `json:"created_at"`
+
+	Updated_at string `json:"updated_at"`
+
+	Parent_id string `json:"parent_id"`
+
+	Members []string `json:"members"`
+
+	Created_by string `json:"created_by"`
 }
 
-const FolderEventAvroCRC64Fingerprint = "\xa5\x00^G_\xf5(m"
+const FolderEventAvroCRC64Fingerprint = "K\xf4&۷\ru\x18"
 
 func NewFolderEvent() FolderEvent {
 	r := FolderEvent{}
 	r.Id = "default-id"
 	r.Name = "default-name"
+	r.Description = ""
+	r.Icon = ""
+	r.Parent_id = ""
+	r.Members = make([]string, 0)
+
+	r.Members = make([]string, 0)
+
 	return r
 }
 
@@ -59,15 +78,39 @@ func DeserializeFolderEventFromSchema(r io.Reader, schema string) (FolderEvent, 
 
 func writeFolderEvent(r FolderEvent, w io.Writer) error {
 	var err error
-	err = vm.WriteString(r.Event_type, w)
-	if err != nil {
-		return err
-	}
 	err = vm.WriteString(r.Id, w)
 	if err != nil {
 		return err
 	}
 	err = vm.WriteString(r.Name, w)
+	if err != nil {
+		return err
+	}
+	err = vm.WriteString(r.Description, w)
+	if err != nil {
+		return err
+	}
+	err = vm.WriteString(r.Icon, w)
+	if err != nil {
+		return err
+	}
+	err = vm.WriteString(r.Created_at, w)
+	if err != nil {
+		return err
+	}
+	err = vm.WriteString(r.Updated_at, w)
+	if err != nil {
+		return err
+	}
+	err = vm.WriteString(r.Parent_id, w)
+	if err != nil {
+		return err
+	}
+	err = writeArrayString(r.Members, w)
+	if err != nil {
+		return err
+	}
+	err = vm.WriteString(r.Created_by, w)
 	if err != nil {
 		return err
 	}
@@ -79,7 +122,7 @@ func (r FolderEvent) Serialize(w io.Writer) error {
 }
 
 func (r FolderEvent) Schema() string {
-	return "{\"fields\":[{\"name\":\"event_type\",\"type\":\"string\"},{\"default\":\"default-id\",\"name\":\"id\",\"type\":\"string\"},{\"default\":\"default-name\",\"name\":\"name\",\"type\":\"string\"}],\"name\":\"com.example.FolderEvent\",\"type\":\"record\"}"
+	return "{\"fields\":[{\"default\":\"default-id\",\"name\":\"id\",\"type\":\"string\"},{\"default\":\"default-name\",\"name\":\"name\",\"type\":\"string\"},{\"default\":\"\",\"name\":\"description\",\"type\":\"string\"},{\"default\":\"\",\"name\":\"icon\",\"type\":\"string\"},{\"name\":\"created_at\",\"type\":\"string\"},{\"name\":\"updated_at\",\"type\":\"string\"},{\"default\":\"\",\"name\":\"parent_id\",\"type\":\"string\"},{\"default\":[],\"name\":\"members\",\"type\":{\"items\":\"string\",\"type\":\"array\"}},{\"name\":\"created_by\",\"type\":\"string\"}],\"name\":\"com.example.FolderEvent\",\"type\":\"record\"}"
 }
 
 func (r FolderEvent) SchemaName() string {
@@ -98,17 +141,49 @@ func (_ FolderEvent) SetUnionElem(v int64) { panic("Unsupported operation") }
 func (r *FolderEvent) Get(i int) types.Field {
 	switch i {
 	case 0:
-		w := types.String{Target: &r.Event_type}
-
-		return w
-
-	case 1:
 		w := types.String{Target: &r.Id}
 
 		return w
 
-	case 2:
+	case 1:
 		w := types.String{Target: &r.Name}
+
+		return w
+
+	case 2:
+		w := types.String{Target: &r.Description}
+
+		return w
+
+	case 3:
+		w := types.String{Target: &r.Icon}
+
+		return w
+
+	case 4:
+		w := types.String{Target: &r.Created_at}
+
+		return w
+
+	case 5:
+		w := types.String{Target: &r.Updated_at}
+
+		return w
+
+	case 6:
+		w := types.String{Target: &r.Parent_id}
+
+		return w
+
+	case 7:
+		r.Members = make([]string, 0)
+
+		w := ArrayStringWrapper{Target: &r.Members}
+
+		return w
+
+	case 8:
+		w := types.String{Target: &r.Created_by}
 
 		return w
 
@@ -118,11 +193,24 @@ func (r *FolderEvent) Get(i int) types.Field {
 
 func (r *FolderEvent) SetDefault(i int) {
 	switch i {
-	case 1:
+	case 0:
 		r.Id = "default-id"
 		return
-	case 2:
+	case 1:
 		r.Name = "default-name"
+		return
+	case 2:
+		r.Description = ""
+		return
+	case 3:
+		r.Icon = ""
+		return
+	case 6:
+		r.Parent_id = ""
+		return
+	case 7:
+		r.Members = make([]string, 0)
+
 		return
 	}
 	panic("Unknown field index")
@@ -146,15 +234,39 @@ func (_ FolderEvent) AvroCRC64Fingerprint() []byte {
 func (r FolderEvent) MarshalJSON() ([]byte, error) {
 	var err error
 	output := make(map[string]json.RawMessage)
-	output["event_type"], err = json.Marshal(r.Event_type)
-	if err != nil {
-		return nil, err
-	}
 	output["id"], err = json.Marshal(r.Id)
 	if err != nil {
 		return nil, err
 	}
 	output["name"], err = json.Marshal(r.Name)
+	if err != nil {
+		return nil, err
+	}
+	output["description"], err = json.Marshal(r.Description)
+	if err != nil {
+		return nil, err
+	}
+	output["icon"], err = json.Marshal(r.Icon)
+	if err != nil {
+		return nil, err
+	}
+	output["created_at"], err = json.Marshal(r.Created_at)
+	if err != nil {
+		return nil, err
+	}
+	output["updated_at"], err = json.Marshal(r.Updated_at)
+	if err != nil {
+		return nil, err
+	}
+	output["parent_id"], err = json.Marshal(r.Parent_id)
+	if err != nil {
+		return nil, err
+	}
+	output["members"], err = json.Marshal(r.Members)
+	if err != nil {
+		return nil, err
+	}
+	output["created_by"], err = json.Marshal(r.Created_by)
 	if err != nil {
 		return nil, err
 	}
@@ -168,20 +280,6 @@ func (r *FolderEvent) UnmarshalJSON(data []byte) error {
 	}
 
 	var val json.RawMessage
-	val = func() json.RawMessage {
-		if v, ok := fields["event_type"]; ok {
-			return v
-		}
-		return nil
-	}()
-
-	if val != nil {
-		if err := json.Unmarshal([]byte(val), &r.Event_type); err != nil {
-			return err
-		}
-	} else {
-		return fmt.Errorf("no value specified for event_type")
-	}
 	val = func() json.RawMessage {
 		if v, ok := fields["id"]; ok {
 			return v
@@ -209,6 +307,107 @@ func (r *FolderEvent) UnmarshalJSON(data []byte) error {
 		}
 	} else {
 		r.Name = "default-name"
+	}
+	val = func() json.RawMessage {
+		if v, ok := fields["description"]; ok {
+			return v
+		}
+		return nil
+	}()
+
+	if val != nil {
+		if err := json.Unmarshal([]byte(val), &r.Description); err != nil {
+			return err
+		}
+	} else {
+		r.Description = ""
+	}
+	val = func() json.RawMessage {
+		if v, ok := fields["icon"]; ok {
+			return v
+		}
+		return nil
+	}()
+
+	if val != nil {
+		if err := json.Unmarshal([]byte(val), &r.Icon); err != nil {
+			return err
+		}
+	} else {
+		r.Icon = ""
+	}
+	val = func() json.RawMessage {
+		if v, ok := fields["created_at"]; ok {
+			return v
+		}
+		return nil
+	}()
+
+	if val != nil {
+		if err := json.Unmarshal([]byte(val), &r.Created_at); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("no value specified for created_at")
+	}
+	val = func() json.RawMessage {
+		if v, ok := fields["updated_at"]; ok {
+			return v
+		}
+		return nil
+	}()
+
+	if val != nil {
+		if err := json.Unmarshal([]byte(val), &r.Updated_at); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("no value specified for updated_at")
+	}
+	val = func() json.RawMessage {
+		if v, ok := fields["parent_id"]; ok {
+			return v
+		}
+		return nil
+	}()
+
+	if val != nil {
+		if err := json.Unmarshal([]byte(val), &r.Parent_id); err != nil {
+			return err
+		}
+	} else {
+		r.Parent_id = ""
+	}
+	val = func() json.RawMessage {
+		if v, ok := fields["members"]; ok {
+			return v
+		}
+		return nil
+	}()
+
+	if val != nil {
+		if err := json.Unmarshal([]byte(val), &r.Members); err != nil {
+			return err
+		}
+	} else {
+		r.Members = make([]string, 0)
+
+		r.Members = make([]string, 0)
+
+	}
+	val = func() json.RawMessage {
+		if v, ok := fields["created_by"]; ok {
+			return v
+		}
+		return nil
+	}()
+
+	if val != nil {
+		if err := json.Unmarshal([]byte(val), &r.Created_by); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("no value specified for created_by")
 	}
 	return nil
 }
