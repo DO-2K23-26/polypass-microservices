@@ -51,11 +51,13 @@ func NewApp() (*App, error) {
 
 	folderService := app.NewFolderService(producer, folderEncoder, db)
 	tagService := app.NewTagService(producer, tagEncoder, db)
+	folderCredentialService := app.NewFolderCredentialService(db)
 
 	folderHandler := httpPorts.NewFolderHandler(folderService)
 	tagHandler := httpPorts.NewTagHandler(tagService)
+	folderCredentialHandler := httpPorts.NewFolderCredentialHandler(folderCredentialService)
 
-	httpServer := server.NewHttpServer(cfg.HttpPort, folderHandler, tagHandler)
+	httpServer := server.NewHttpServer(cfg.HttpPort, folderHandler, tagHandler, folderCredentialHandler)
 
 	return &App{
 		HttpServer: httpServer,
