@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"time"
+
 	"github.com/google/uuid"
 
 	avroGeneratedSchema "github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/generated"
@@ -23,23 +24,23 @@ func NewTagService(publisher EventPublisher, encoder *schemautils.AvroEncoder, d
 
 func (s *TagService) CreateTag(tag organization.CreateTagRequest) error {
 	newTag := organization.Tag{
-		Id:         uuid.New().String(),
-		Name:       tag.Name,
-		Color:      tag.Color,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
-		FolderID:   tag.FolderID,
-		CreatedBy:  tag.CreatedBy,
+		Id:        uuid.New().String(),
+		Name:      tag.Name,
+		Color:     tag.Color,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		FolderID:  tag.FolderID,
+		CreatedBy: tag.CreatedBy,
 	}
 
 	data := avroGeneratedSchema.TagEvent{
 		Id:         newTag.Id,
 		Name:       newTag.Name,
 		Color:      newTag.Color,
-		Created_at:  newTag.CreatedAt.String(),
-		Updated_at:  newTag.UpdatedAt.String(),
-		Folder_id:   newTag.FolderID,
-		Created_by:  newTag.CreatedBy,
+		Created_at: newTag.CreatedAt.String(),
+		Updated_at: newTag.UpdatedAt.String(),
+		Folder_id:  newTag.FolderID,
+		Created_by: newTag.CreatedBy,
 	}
 
 	var buf bytes.Buffer
@@ -66,8 +67,10 @@ func (s *TagService) UpdateTag(tag organization.UpdateTagRequest) error {
 		Id:         tag.Id,
 		Name:       tag.Name,
 		Color:      tag.Color,
-		Updated_at: time.Now().String(),
+		Created_at: tag.CreatedAt.String(),
+		Updated_at: tag.UpdatedAt.String(),
 		Folder_id:  tag.FolderID,
+		Created_by: tag.CreatedBy,
 	}
 
 	var buf bytes.Buffer
@@ -79,10 +82,10 @@ func (s *TagService) UpdateTag(tag organization.UpdateTagRequest) error {
 	res := s.database.Model(&organization.Tag{}).
 		Where("id = ?", tag.Id).
 		Updates(organization.Tag{
-			Name:       tag.Name,
-			Color:      tag.Color,
-			UpdatedAt:  time.Now(),
-			FolderID:   tag.FolderID,
+			Name:      tag.Name,
+			Color:     tag.Color,
+			UpdatedAt: time.Now(),
+			FolderID:  tag.FolderID,
 		})
 
 	if res.Error != nil {
