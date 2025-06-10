@@ -65,13 +65,19 @@ func (k *KafkaAdapter) Produce(topic string, message []byte) error {
 }
 
 func (k *KafkaAdapter) Consume(topic string, handleMessage func(*kafka.Message) error, handleError func(error)) error {
-	err := k.consumer.Subscribe(topic, nil)
+	println("Consuming topic:", topic)
+	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": k.host,
+		"group.id":          k.clientId,
+		"auto.offset.reset": "earliest",
+	})
 	if err != nil {
+		println("Error creating consumer:", err)
 		return err
 	}
 
 	for {
-		msg, err := k.consumer.ReadMessage(-1)
+		msg, err := consumer.ReadMessage(-1)
 		if err != nil {
 			if handleError != nil {
 				handleError(err)

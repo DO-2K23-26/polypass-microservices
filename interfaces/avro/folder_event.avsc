@@ -1,0 +1,17 @@
+
+{
+	"type": "record",
+	"name": "FolderEvent",
+	"namespace": "com.example",
+	"fields": [
+		{ "name": "id", "type": "string", "default": "default-id" },
+		{ "name": "name", "type": "string", "default": "default-name" },
+		{ "name": "description", "type": "string", "default": "" },
+		{ "name": "icon", "type": "string", "default": "" },
+		{ "name": "created_at", "type": "string" },
+		{ "name": "updated_at", "type": "string" },
+		{ "name": "parent_id", "type": "string", "default": "" },
+		{ "name": "members", "type": {"type": "array", "items": "string"}, "default": [] },
+		{ "name": "created_by", "type": "string" }
+	]
+}

@@ -78,18 +78,18 @@ func LoadAvroSchema(schemaPath string) (avro.Schema, error) {
 
 // Load schemas from the `interfaces/avro` folder (Join is used to ensure the path is correct regardless of OS)
 var (
-	tagCreationSchema, tagCreationErr         = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "tag_event_created.avsc"))
-	tagDeletionSchema, tagDeletionErr         = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "tag_event_deleted.avsc"))
-	tagUpdateSchema, tagUpdateErr             = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "tag_event_updated.avsc"))
-	folderCreationSchema, folderCreationErr   = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "folder_event_created.avsc"))
-	folderDeletionSchema, folderDeletionErr   = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "folder_event_deleted.avsc"))
-	folderUpdateSchema, folderUpdateErr       = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "folder_event_updated.avsc"))
+	tagCreationSchema, tagCreationErr         = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "tag_event.avsc"))
+	tagDeletionSchema, tagDeletionErr         = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "tag_event.avsc"))
+	tagUpdateSchema, tagUpdateErr             = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "tag_event.avsc"))
+	folderCreationSchema, folderCreationErr   = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "folder_event.avsc"))
+	folderDeletionSchema, folderDeletionErr   = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "folder_event.avsc"))
+	folderUpdateSchema, folderUpdateErr       = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "folder_event.avsc"))
 	credentialCreationSchema, credCreationErr = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "credential_event_created.avsc"))
 	credentialDeletionSchema, credDeletionErr = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "credential_event_deleted.avsc"))
 	credentialUpdateSchema, credUpdateErr     = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "credential_event_updated.avsc"))
-	userCreationSchema, userCreationErr       = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "user_event_created.avsc"))
-	userDeletionSchema, userDeletionErr       = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "user_event_deleted.avsc"))
-	userUpdateSchema, userUpdateErr           = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "user_event_updated.avsc"))
+	userCreationSchema, userCreationErr       = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "user_folder_event.avsc"))
+	userDeletionSchema, userDeletionErr       = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "user_folder_event.avsc"))
+	userUpdateSchema, userUpdateErr           = LoadAvroSchema(filepath.Join("..", "interfaces", "avro", "user_folder_event.avsc"))
 )
 
 func init() {
@@ -150,6 +150,11 @@ func (c Consumers) HandleTagCreation(msg *kafka.Message) error {
 	}
 
 	_, err := c.tagService.Create(req)
+	if err != nil {
+		log.Println("Error creating tag:", err)
+		return err
+	}
+	log.Println("Tag created successfully")
 	return err
 }
 

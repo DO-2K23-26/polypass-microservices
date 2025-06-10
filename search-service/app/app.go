@@ -79,18 +79,18 @@ func NewApp(Config config.Config) (*App, error) {
 
 	// Define Kafka consumers
 	kafkaConsumers := []kafka.KafkaConsumerConfig{
-		{Topic: "tag_creation", HandleMessage: consumers.HandleTagCreation, HandleError: kafka.HandleError},
-		{Topic: "tag_deletion", HandleMessage: consumers.HandleTagDeletion, HandleError: kafka.HandleError},
-		{Topic: "tag_update", HandleMessage: consumers.HandleTagUpdate, HandleError: kafka.HandleError},
-		{Topic: "folder_creation", HandleMessage: consumers.HandleFolderCreation, HandleError: kafka.HandleError},
-		{Topic: "folder_deletion", HandleMessage: consumers.HandleFolderDeletion, HandleError: kafka.HandleError},
-		{Topic: "folder_update", HandleMessage: consumers.HandleFolderUpdate, HandleError: kafka.HandleError},
-		{Topic: "credential_creation", HandleMessage: consumers.HandleCredentialCreation, HandleError: kafka.HandleError},
-		{Topic: "credential_deletion", HandleMessage: consumers.HandleCredentialDeletion, HandleError: kafka.HandleError},
-		{Topic: "credential_update", HandleMessage: consumers.HandleCredentialUpdate, HandleError: kafka.HandleError},
-		{Topic: "user_creation", HandleMessage: consumers.HandleUserCreation, HandleError: kafka.HandleError},
-		{Topic: "user_deletion", HandleMessage: consumers.HandleUserDeletion, HandleError: kafka.HandleError},
-		{Topic: "user_update", HandleMessage: consumers.HandleUserUpdate, HandleError: kafka.HandleError},
+		{Topic: "tag-creation", HandleMessage: consumers.HandleTagCreation, HandleError: kafka.HandleError},
+		{Topic: "tag-deletion", HandleMessage: consumers.HandleTagDeletion, HandleError: kafka.HandleError},
+		{Topic: "tag-update", HandleMessage: consumers.HandleTagUpdate, HandleError: kafka.HandleError},
+		{Topic: "folder-creation", HandleMessage: consumers.HandleFolderCreation, HandleError: kafka.HandleError},
+		{Topic: "folder-deletion", HandleMessage: consumers.HandleFolderDeletion, HandleError: kafka.HandleError},
+		{Topic: "folder-update", HandleMessage: consumers.HandleFolderUpdate, HandleError: kafka.HandleError},
+		{Topic: "credential-creation", HandleMessage: consumers.HandleCredentialCreation, HandleError: kafka.HandleError},
+		{Topic: "credential-deletion", HandleMessage: consumers.HandleCredentialDeletion, HandleError: kafka.HandleError},
+		{Topic: "credential-update", HandleMessage: consumers.HandleCredentialUpdate, HandleError: kafka.HandleError},
+		{Topic: "user-creation", HandleMessage: consumers.HandleUserCreation, HandleError: kafka.HandleError},
+		{Topic: "user-deletion", HandleMessage: consumers.HandleUserDeletion, HandleError: kafka.HandleError},
+		{Topic: "user-update", HandleMessage: consumers.HandleUserUpdate, HandleError: kafka.HandleError},
 	}
 
 	return &App{

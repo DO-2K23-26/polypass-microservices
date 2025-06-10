@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
-import json
 import time
 import uuid
 from datetime import datetime
 from confluent_kafka import Producer
 import random
+import avro.schema
+from avro.io import DatumWriter, BinaryEncoder
+import io
 
 # Configuration du producer
 producer_config = {
@@ -16,36 +18,113 @@ producer_config = {
 # Création d'un producer
 producer = Producer(producer_config)
 
+# Schémas Avro
+tag_schema = avro.schema.parse('''
+{
+	"type": "record",
+	"name": "TagEvent",
+	"namespace": "com.example",
+	"fields": [
+		{ "name": "id", "type": "string", "default": "default-id" },
+		{ "name": "name", "type": "string", "default": "default-name" },
+		{ "name": "color", "type": "string", "default": "#000000" },
+		{ "name": "created_at", "type": "string" },
+		{ "name": "updated_at", "type": "string" },
+		{ "name": "folder_id", "type": "string" },
+		{ "name": "created_by", "type": "string" }
+	]
+}
+''')
+
+folder_schema = avro.schema.parse('''
+{
+	"type": "record",
+	"name": "FolderEvent",
+	"namespace": "com.example",
+	"fields": [
+		{ "name": "id", "type": "string", "default": "default-id" },
+		{ "name": "name", "type": "string", "default": "default-name" },
+		{ "name": "description", "type": "string", "default": "" },
+		{ "name": "icon", "type": "string", "default": "" },
+		{ "name": "created_at", "type": "string" },
+		{ "name": "updated_at", "type": "string" },
+		{ "name": "parent_id", "type": "string", "default": "" },
+		{ "name": "members", "type": {"type": "array", "items": "string"}, "default": [] },
+		{ "name": "created_by", "type": "string" }
+	]
+}
+''')
+
+user_schema = avro.schema.parse('''
+{
+    "type": "record",
+    "name": "UserEvent",
+    "fields": [
+        {"name": "userId", "type": "string"},
+        {"name": "email", "type": "string"},
+        {"name": "timestamp", "type": "long"}
+    ]
+}
+''')
+
+credential_schema = avro.schema.parse('''
+{
+    "type": "record",
+    "name": "CredentialEvent",
+    "fields": [
+        {"name": "credentialId", "type": "string"},
+        {"name": "name", "type": "string"},
+        {"name": "username", "type": "string"},
+        {"name": "password", "type": "string"},
+        {"name": "url", "type": "string"},
+        {"name": "folderId", "type": "string"},
+        {"name": "timestamp", "type": "long"}
+    ]
+}
+''')
+
+def serialize_avro(schema, data):
+    writer = DatumWriter(schema)
+    bytes_writer = io.BytesIO()
+    encoder = BinaryEncoder(bytes_writer)
+    writer.write(data, encoder)
+    return bytes_writer.getvalue()
+
 # Fonction pour générer un événement de tag
 def generate_tag_event():
     return {
-        'tagId': str(uuid.uuid4()),
+        'id': str(uuid.uuid4()),
         'name': f'Tag-{uuid.uuid4().hex[:8]}',
-        'color': '#FF0000',
-        'organizationId': str(uuid.uuid4()),
-        'timestamp': int(time.time() * 1000)
+        'color': f'Color-{uuid.uuid4().hex[:8]}',
+        'created_at': datetime.now().isoformat(),
+        'updated_at': datetime.now().isoformat(),
+        'folder_id': str(uuid.uuid4()),
+        'created_by': str(uuid.uuid4()),
     }
 
 # Fonction pour générer un événement de dossier
 def generate_folder_event():
     return {
-        'folderId': str(uuid.uuid4()),
+        'id': str(uuid.uuid4()),
         'name': f'Folder-{uuid.uuid4().hex[:8]}',
-        'organizationId': str(uuid.uuid4()),
-        'parentId': str(uuid.uuid4()) if random.random() > 0.5 else None,
-        'timestamp': int(time.time() * 1000)
+        'description': f'Description-{uuid.uuid4().hex[:8]}',
+        'icon': f'Icon-{uuid.uuid4().hex[:8]}',
+        'created_at': datetime.now().isoformat(),
+        'updated_at': datetime.now().isoformat(),
+        'parent_id': str(uuid.uuid4()),
+        'members': [str(uuid.uuid4()) for _ in range(2)],  # Génère 2 membres aléatoires
+        'created_by': str(uuid.uuid4())
     }
 
-# Fonction pour générer un événement d'utilisateur
+# Fonction pour générer un événement utilisateur
 def generate_user_event():
     return {
         'userId': str(uuid.uuid4()),
         'email': f'user_{uuid.uuid4().hex[:8]}@example.com',
-        'organizationId': str(uuid.uuid4()),
         'timestamp': int(time.time() * 1000)
     }
 
-# Fonction pour générer un événement de credential
+# Fonction pour générer un événement credential
 def generate_credential_event():
     return {
         'credentialId': str(uuid.uuid4()),
@@ -54,7 +133,6 @@ def generate_credential_event():
         'password': f'pass_{uuid.uuid4().hex[:8]}',
         'url': f'https://example.com/{uuid.uuid4().hex[:8]}',
         'folderId': str(uuid.uuid4()),
-        'organizationId': str(uuid.uuid4()),
         'timestamp': int(time.time() * 1000)
     }
 
@@ -67,28 +145,30 @@ def delivery_report(err, msg):
 def main():
     # Liste des topics et leurs fonctions de génération d'événements
     topics = {
-        'tag_creation': generate_tag_event,
-        'tag_deletion': generate_tag_event,
-        'tag_update': generate_tag_event,
-        'folder_creation': generate_folder_event,
-        'folder_deletion': generate_folder_event,
-        'folder_update': generate_folder_event,
-        'user_creation': generate_user_event,
-        'user_deletion': generate_user_event,
-        'user_update': generate_user_event,
-        'credential_creation': generate_credential_event,
-        'credential_deletion': generate_credential_event,
-        'credential_update': generate_credential_event
+        'tag-creation': (generate_tag_event, tag_schema),
+        'tag-deletion': (generate_tag_event, tag_schema),
+        'tag-update': (generate_tag_event, tag_schema),
+        'folder-creation': (generate_folder_event, folder_schema),
+        'folder-deletion': (generate_folder_event, folder_schema),
+        'folder-update': (generate_folder_event, folder_schema),
+        # 'user-creation': (generate_user_event, user_schema),
+        # 'user-deletion': (generate_user_event, user_schema),
+        # 'user-update': (generate_user_event, user_schema),
+        # 'credential-creation': (generate_credential_event, credential_schema),
+        # 'credential-deletion': (generate_credential_event, credential_schema),
+        # 'credential-update': (generate_credential_event, credential_schema)
     }
 
     try:
         while True:
-            for topic, generator in topics.items():
+            for topic, (generator, schema) in topics.items():
                 event = generator()
                 print(f"Sending event to {topic}: {event}")
+                # Sérialiser l'événement en Avro
+                avro_data = serialize_avro(schema, event)
                 producer.produce(
                     topic=topic,
-                    value=json.dumps(event).encode('utf-8'),
+                    value=avro_data,
                     callback=delivery_report
                 )
                 producer.poll(0)

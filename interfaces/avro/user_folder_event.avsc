@@ -1,22 +1,22 @@
 {
-    "namespace": "com.polypass.events.tag",
+    "namespace": "com.polypass.events.user",
     "type": "record",
-    "name": "EventTagCreated",
+    "name": "EventUserFolderCreated",
     "fields": [
       {
-        "name": "tagId",
+        "name": "userId",
         "type": "string"
       },
       {
-        "name": "name",
+        "name": "email",
         "type": "string"
       },
       {
-        "name": "color",
+        "name": "firstName",
         "type": "string"
       },
       {
-        "name": "organizationId",
+        "name": "lastName",
         "type": "string"
       },
       {
