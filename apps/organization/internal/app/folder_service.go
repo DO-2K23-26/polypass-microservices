@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"fmt"
 	"time"
 
 	avroGeneratedSchema "github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/generated"
@@ -170,13 +171,18 @@ func (s *FolderService) ListFolders(req organization.GetFolderRequest) ([]organi
 	return folders, nil
 }
 
-func (s *FolderService) GetFolder(id string) (organization.Folder, error) {
+func (s *FolderService) GetFolder(id string) (*organization.Folder, error) {
 	var folder organization.Folder
 	if err := s.database.Find(&folder, "id = ?", id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return organization.Folder{}, gorm.ErrRecordNotFound
+			return nil, gorm.ErrRecordNotFound
 		}
-		return organization.Folder{}, err
+		return nil, err
 	}
-	return folder, nil
+
+	if folder.Id == "" {
+		return nil, fmt.Errorf("folder with id %s not found", id)
+	}
+
+	return &folder, nil
 }
