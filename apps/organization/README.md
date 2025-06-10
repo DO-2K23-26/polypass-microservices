@@ -17,3 +17,11 @@ docker compose up -d
 ```bash
 go run apps/organization/cmd/organization/main.go
 ```
+
+## Folder credentials
+The service exposes endpoints to manage the link between folders and credentials. Every operation forwards the request to the credential service defined by the `CREDENTIAL_SERVICE_HOST` environment variable.
+
+- `GET /folders/{folderId}/credentials/{type}`
+- `POST /folders/{folderId}/credentials/{type}`
+- `PUT /folders/{folderId}/credentials/{type}/{credentialId}`
+- `DELETE /folders/{folderId}/credentials/{type}`
