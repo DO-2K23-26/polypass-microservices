@@ -234,18 +234,18 @@ services:
           /opt/kafka/bin/kafka-topics.sh --bootstrap-server broker-1:19092 --list && break || sleep 2;
         done;
         echo "Creating topics...";
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic tag_creation --partitions 1 --replication-factor 1 &&
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic tag_deletion --partitions 1 --replication-factor 1 &&
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic tag_update --partitions 1 --replication-factor 1 &&
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic folder_creation --partitions 1 --replication-factor 1 &&
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic folder_deletion --partitions 1 --replication-factor 1 &&
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic folder_update --partitions 1 --replication-factor 1 &&
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic credential_creation --partitions 1 --replication-factor 1 &&
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic credential_deletion --partitions 1 --replication-factor 1 &&
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic credential_update --partitions 1 --replication-factor 1 &&
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic user_creation --partitions 1 --replication-factor 1 &&
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic user_deletion --partitions 1 --replication-factor 1 &&
-        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic user_update --partitions 1 --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic tag-creation --partitions 1 --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic tag-deletion --partitions 1 --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic tag-update --partitions 1 --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic folder-creation --partitions 1 --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic folder-deletion --partitions 1 --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic folder-update --partitions 1 --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic credential-creation --partitions 1 --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic credential-deletion --partitions 1 --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic credential-update --partitions 1 --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic user-creation --partitions 1 --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic user-eletion --partitions 1 --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:19092 --topic user-update --partitions 1 --replication-factor 1 &&
         echo "Kafka initialization complete.";'
     networks:
       - elk
