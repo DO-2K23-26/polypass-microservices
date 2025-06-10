@@ -2,7 +2,6 @@ package app
 
 import (
 	"bytes"
-	"fmt"
 	"time"
 
 	avroGeneratedSchema "github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/generated"
@@ -34,15 +33,17 @@ func StringPtrToValue(val *string) string {
 }
 
 func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) error {
+	currentTime := time.Now()
+
 	data := avroGeneratedSchema.FolderEvent{
 		Id:          uuid.New().String(),
 		Name:        folder.Name,
 		Description: StringPtrToValue(folder.Description),
 		Icon:        StringPtrToValue(folder.Icon),
-		Created_at:  time.Now().String(),
-		Updated_at:  time.Now().String(),
+		Created_at:  currentTime.String(),
+		Updated_at:  currentTime.String(),
 		Parent_id:   StringPtrToValue(folder.ParentID),
-		Members:     []string{},
+		Members:     []string{folder.CreatedBy},
 		Created_by:  folder.CreatedBy,
 	}
 
@@ -51,8 +52,8 @@ func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) er
 		Name:        folder.Name,
 		Description: folder.Description,
 		Icon:        folder.Icon,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		CreatedAt:   currentTime,
+		UpdatedAt:   currentTime,
 		ParentID:    folder.ParentID,
 		Members:     data.Members,
 		CreatedBy:   folder.CreatedBy,
@@ -64,8 +65,6 @@ func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) er
 	if res.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
-
-	fmt.Println("Folder created with ID:", data.Id)
 
 	var buf bytes.Buffer
 	kafkaErr := data.Serialize(&buf)
