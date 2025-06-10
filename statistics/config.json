@@ -1,0 +1,29 @@
+{
+  "mongo": {
+    "uri": "mongodb://localhost:27017",
+    "database": "polypass_statistics"
+  },
+  "eventstoredb": {
+    "connection_string": "esdb://localhost:2113?tls=false"
+  },
+  "kafka": {
+    "bootstrap_servers": "localhost:9092",
+    "group_id": "statistics-service",
+    "topics": [
+      "user-events",
+      "password-events",
+      "security-events"
+    ]
+  },
+  "http": {
+    "listen_address": ":8080"
+  },
+  "logging": {
+    "level": "info",
+    "format": "json"
+  },
+  "metrics": {
+    "calculation_interval": "1h",
+    "retention_period": "90d"
+  }
+}

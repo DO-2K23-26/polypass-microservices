@@ -1,0 +1,189 @@
+openapi: "3.1.0"
+info:
+  title: "Polypass Sharing Microservice API"
+  description: "API for securely sharing secrets with time-based expiration and one-time use capabilities"
+  version: "1.0.0"
+
+paths:
+  /sharing:
+    post:
+      summary: "Create a new secret"
+      description: "Create a new secret with content, expiration time, and options"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostSecretRequest"
+      responses:
+        '200':
+          description: "Secret created successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostSecretResponse"
+        '400':
+          description: "Invalid request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sharing/{id}:
+    get:
+      summary: "Get a secret by ID"
+      description: "Retrieve a secret by its ID. If the secret is set for one-time use, it will be deleted after retrieval."
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        description: "The ID of the secret"
+        schema:
+          type: "string"
+      responses:
+        '200':
+          description: "Secret retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetSecretResponse"
+        '404':
+          description: "Secret not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sharing/history:
+    get:
+      summary: "Get user's secret sharing history"
+      description: "Retrieve the history of secrets shared by the authenticated user"
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: "History retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetHistoryResponse"
+        '401':
+          description: "Unauthorized - missing or invalid authorization header"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: "http"
+      scheme: "bearer"
+      description: "JWT Authorization header using the Bearer scheme"
+
+  schemas:
+    PostSecretRequest:
+      type: "object"
+      required:
+      - "content"
+      - "expiration"
+      - "isEncrypted"
+      - "isOneTimeUse"
+      properties:
+        name:
+          type: "string"
+          description: "Optional name for the secret"
+        content:
+          type: "object"
+          additionalProperties:
+            type: "string"
+          description: "The content of the secret as key-value pairs"
+        expiration:
+          type: "integer"
+          format: "int64"
+          description: "Unix timestamp for when the secret should expire"
+          minimum: 0
+        isEncrypted:
+          type: "boolean"
+          description: "Whether the content is already encrypted"
+        isOneTimeUse:
+          type: "boolean"
+          description: "Whether the secret should be deleted after one retrieval"
+
+    PostSecretResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          description: "The ID of the created secret"
+        created_at:
+          type: "integer"
+          format: "int64"
+          description: "Unix timestamp of when the secret was created"
+
+    GetSecretResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          description: "The ID of the secret"
+        isEncrypted:
+          type: "boolean"
+          description: "Whether the content is encrypted"
+        content:
+          type: "object"
+          additionalProperties:
+            type: "string"
+          description: "The content of the secret as key-value pairs"
+
+    HistorySecret:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          description: "The ID of the secret"
+        name:
+          type: "string"
+          description: "Name of the secret"
+        created_at:
+          type: "integer"
+          format: "int64"
+          description: "Unix timestamp of when the secret was created"
+        expiration:
+          type: "integer"
+          format: "int64"
+          description: "Unix timestamp for when the secret expires"
+        content_size:
+          type: "integer"
+          description: "Size of the content (number of key-value pairs)"
+        is_one_time_use:
+          type: "boolean"
+          description: "Whether the secret is set for one-time use"
+
+    GetHistoryResponse:
+      type: "object"
+      properties:
+        secrets:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/HistorySecret"
+          description: "List of secret history entries"
+
+    ErrorResponse:
+      type: "object"
+      properties:
+        error:
+          type: "string"
+          description: "Error message"

@@ -1,0 +1,93 @@
+@namespace("com.polypass.statistics")
+
+protocol StatisticsMetrics {
+  // Base metric record
+  record Metric {
+    string id;
+    string name;
+    string description;
+    union { int, long, float, double, string, array<string> } value;
+    string unit;
+    timestamp_ms timestamp;
+    array<string> tags;
+  }
+
+  // Metric query parameters
+  record MetricQuery {
+    union { null, string } name = null;
+    union { null, string } category = null;
+    union { null, timestamp_ms } startTime = null;
+    union { null, timestamp_ms } endTime = null;
+    union { null, int } limit = null;
+  }
+
+  // Metric calculation request
+  record MetricCalculationRequest {
+    string timeRange;  // e.g., "24h", "7d", "30d"
+    union { null, array<string> } metricNames = null;
+    union { null, array<string> } categories = null;
+  }
+
+  // Metric calculation response
+  record MetricCalculationResponse {
+    array<Metric> metrics;
+    timestamp_ms calculationTime;
+    string timeRange;
+  }
+
+  // User metrics
+  record UserActivityMetrics {
+    long activeUsers;
+    long newUsers;
+    double averageSessionDuration;
+    long totalLogins;
+    timestamp_ms timestamp;
+  }
+
+  // Password metrics
+  record PasswordMetrics {
+    long totalPasswords;
+    long newPasswords;
+    long updatedPasswords;
+    long deletedPasswords;
+    double averageStrengthScore;
+    array<CategoryCount> categoryCounts;
+    timestamp_ms timestamp;
+  }
+
+  // Category count record
+  record CategoryCount {
+    string category;
+    long count;
+  }
+
+  // Security metrics
+  record SecurityMetrics {
+    long totalAlerts;
+    long criticalAlerts;
+    long highAlerts;
+    long mediumAlerts;
+    long lowAlerts;
+    long failedLoginAttempts;
+    timestamp_ms timestamp;
+  }
+
+  // API methods
+  // Get metrics based on query parameters
+  array<Metric> getMetrics(MetricQuery query);
+
+  // Get a metric by ID
+  Metric getMetricById(string id);
+
+  // Calculate metrics for a specific time range
+  MetricCalculationResponse calculateMetrics(MetricCalculationRequest request);
+
+  // Get user activity metrics
+  UserActivityMetrics getUserActivityMetrics(MetricQuery query);
+
+  // Get password metrics
+  PasswordMetrics getPasswordMetrics(MetricQuery query);
+
+  // Get security metrics
+  SecurityMetrics getSecurityMetrics(MetricQuery query);
+}
