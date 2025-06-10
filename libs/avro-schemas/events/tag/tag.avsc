@@ -3,8 +3,12 @@
 	"name": "TagEvent",
 	"namespace": "com.example",
 	"fields": [
-		{ "name": "event_type", "type": "string" },
 		{ "name": "id", "type": "string", "default": "default-id" },
-		{ "name": "name", "type": "string", "default": "default-name" }
+		{ "name": "name", "type": "string", "default": "default-name" },
+		{ "name": "color", "type": "string", "default": "#000000" },
+		{ "name": "created_at", "type": "string" },
+		{ "name": "updated_at", "type": "string" },
+		{ "name": "folder_id", "type": "string" },
+		{ "name": "created_by", "type": "string" }
 	]
 }

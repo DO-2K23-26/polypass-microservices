@@ -13,3 +13,21 @@ type Tag struct {
 
 }
 
+type CreateTagRequest struct {
+	Name      string `json:"name" validate:"required"`
+	Color     string `json:"color" validate:"required,hexadecimal"`
+	FolderID  string `json:"folder_id" validate:"required,uuid"`
+	CreatedBy string `json:"created_by" validate:"required,uuid"`
+}
+
+type UpdateTagRequest struct {
+	Id       string `json:"id" validate:"required,uuid"`
+	Name     string `json:"name" validate:"required"`
+	Color    string `json:"color" validate:"required,hexadecimal"`
+	FolderID string `json:"folder_id" validate:"required,uuid"`
+}
+
+type GetTagRequest struct {
+	Page    int    `json:"page" validate:"required,min=1"`
+	Limit  int    `json:"limit" validate:"required,min=10,max=100"`
+}
