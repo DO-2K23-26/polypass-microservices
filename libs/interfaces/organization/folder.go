@@ -25,3 +25,22 @@ type CreateFolderRequest struct {
 	ParentID    *string `json:"parent_id"`
 	CreatedBy   string  `json:"created_by" binding:"required"`
 }
+
+type UpdateFolderRequest struct {
+	Name        string  `json:"name" binding:"required"`
+	Description *string `json:"description"`
+	Icon        *string `json:"icon"`
+	ParentID    *string `json:"parent_id"`
+}
+
+type GetFolderRequest struct {
+	Page  int `json:"page" form:"page"`
+	Limit int `json:"limit" form:"limit"`
+}
+
+type GetFolderResponse struct {
+	Folders []Folder `json:"folders"`
+	Total   int      `json:"total"`
+	Page    int      `json:"page"`
+	Limit   int      `json:"limit"`
+}
