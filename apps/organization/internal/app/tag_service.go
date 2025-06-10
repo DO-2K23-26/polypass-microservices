@@ -6,15 +6,17 @@ import (
 	avroGeneratedSchema "github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/generated"
 	"github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/schemautils"
 	"github.com/DO-2K23-26/polypass-microservices/libs/interfaces/organization"
+	"gorm.io/gorm"
 )
 
 type TagService struct {
 	publisher EventPublisher
 	encoder   *schemautils.AvroEncoder
+	database  *gorm.DB
 }
 
-func NewTagService(publisher EventPublisher, encoder *schemautils.AvroEncoder) *TagService {
-	return &TagService{publisher: publisher, encoder: encoder}
+func NewTagService(publisher EventPublisher, encoder *schemautils.AvroEncoder, database *gorm.DB) *TagService {
+	return &TagService{publisher: publisher, encoder: encoder, database: database}
 }
 
 func (s *TagService) CreateTag(tag organization.Tag) error {
