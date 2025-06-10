@@ -80,26 +80,56 @@ func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) (*
 	return &newFolder, nil
 }
 
-func (s *FolderService) UpdateFolder(folder organization.Folder) error {
+func (s *FolderService) UpdateFolder(folderId string, folder organization.UpdateFolderRequest) (*organization.Folder, error) {
+	previousFolder, getDatabaseErr := s.GetFolder(folderId)
+	if getDatabaseErr != nil {
+		if getDatabaseErr == gorm.ErrRecordNotFound {
+			return nil, gorm.ErrRecordNotFound
+		}
+		return nil, getDatabaseErr
+	}
+
+	updatedFolder := organization.Folder{
+		Id:          previousFolder.Id,
+		Name:        folder.Name,
+		Description: folder.Description,
+		Icon:        folder.Icon,
+		CreatedAt:   previousFolder.CreatedAt,
+		UpdatedAt:   time.Now(),
+		ParentID:    folder.ParentID,
+		Members:     []string{previousFolder.CreatedBy},
+		CreatedBy:   previousFolder.CreatedBy,
+	}
 
 	data := avroGeneratedSchema.FolderEvent{
-		Id:          folder.Id,
-		Name:        folder.Name,
-		Description: StringPtrToValue(folder.Description),
-		Icon:        StringPtrToValue(folder.Icon),
-		Created_at:  folder.CreatedAt.String(),
-		Updated_at:  folder.UpdatedAt.String(),
-		Parent_id:   StringPtrToValue(folder.ParentID),
-		Members:     folder.Members,
-		Created_by:  folder.CreatedBy,
+		Id:          updatedFolder.Id,
+		Name:        updatedFolder.Name,
+		Description: StringPtrToValue(updatedFolder.Description),
+		Icon:        StringPtrToValue(updatedFolder.Icon),
+		Created_at:  updatedFolder.CreatedAt.String(),
+		Updated_at:  updatedFolder.UpdatedAt.String(),
+		Parent_id:   StringPtrToValue(updatedFolder.ParentID),
+		Members:     updatedFolder.Members,
+		Created_by:  updatedFolder.CreatedBy,
+	}
+
+	updateDatabase := s.database.Model(&organization.Folder{}).Where("id = ?", folderId).Updates(updatedFolder)
+	if updateDatabase.Error != nil {
+		return nil, updateDatabase.Error
 	}
 
 	var buf bytes.Buffer
-	err := data.Serialize(&buf)
-	if err != nil {
-		return err
+	serializeErr := data.Serialize(&buf)
+	if serializeErr != nil {
+		return nil, serializeErr
 	}
-	return s.publisher.Publish("Folder-Update", buf.Bytes())
+
+	kafkaErr := s.publisher.Publish("Folder-Update", buf.Bytes())
+	if kafkaErr != nil {
+		return nil, kafkaErr
+	}
+
+	return &updatedFolder, nil
 }
 
 func (s *FolderService) DeleteFolder(id string) error {

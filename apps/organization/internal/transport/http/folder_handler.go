@@ -39,18 +39,24 @@ func (h *FolderHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 
 func (h *FolderHandler) UpdateFolder(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["id"]
-	var folder organization.Folder
+	folderId := vars["id"]
+
+	var folder organization.UpdateFolderRequest
 	if err := json.NewDecoder(r.Body).Decode(&folder); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	folder.Id = id
-	if err := h.service.UpdateFolder(folder); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	result, serviceErr := h.service.UpdateFolder(folderId, folder)
+
+	if serviceErr != nil {
+		http.Error(w, serviceErr.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
 }
 
 func (h *FolderHandler) DeleteFolder(w http.ResponseWriter, r *http.Request) {
