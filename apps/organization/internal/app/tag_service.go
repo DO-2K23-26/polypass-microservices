@@ -9,14 +9,18 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/schemautils"
 	"github.com/DO-2K23-26/polypass-microservices/libs/interfaces/organization"
 	"gorm.io/gorm"
+	"gorm.io/gorm"
 )
 
 type TagService struct {
 	publisher EventPublisher
 	encoder   *schemautils.AvroEncoder
 	database  *gorm.DB
+	database  *gorm.DB
 }
 
+func NewTagService(publisher EventPublisher, encoder *schemautils.AvroEncoder, database *gorm.DB) *TagService {
+	return &TagService{publisher: publisher, encoder: encoder, database: database}
 func NewTagService(publisher EventPublisher, encoder *schemautils.AvroEncoder, database *gorm.DB) *TagService {
 	return &TagService{publisher: publisher, encoder: encoder, database: database}
 }
