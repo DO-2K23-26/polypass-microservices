@@ -1,0 +1,42 @@
+replicaCount: 1
+
+production: true
+
+postgresql:
+  enabled: true
+  architecture: standalone
+  auth:
+    postgresPassword: "yourPostgresRootPassword" # set a strong password
+    username: bn_keycloak
+    password: "yourKeycloakDbPassword" # set a strong password
+    database: bitnami_keycloak
+
+cache:
+  enabled: false # Use local cache for mono-node
+
+ingress:
+  enabled: true
+  hostname: auth.umontpelier.fr # <-- set your domain
+  selfSigned: false # or use cert-manager for real certs
+  tls: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: polypass-prod
+
+tls:
+  enabled: true
+  existingSecret: auth.umontpelier.fr-tls # Use the secret created by cert-manager
+  usePem: true
+
+resourcesPreset: "large"
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 4
+    memory: 8Gi
+
+auth:
+  adminUser: admin
+  adminPassword: "admin" # set a strong password
