@@ -49,6 +49,10 @@ func main() {
 		return c.JSON(response)
 	})
 
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
+
 	app.Get("/sharing/:id", func(c *fiber.Ctx) error {
 		id := c.Params("id")
 		response, err := service.GetSecret(id)
