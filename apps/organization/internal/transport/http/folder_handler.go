@@ -24,12 +24,16 @@ func (h *FolderHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.service.CreateFolder(folderRequest); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	folder, serviceError := h.service.CreateFolder(folderRequest)
+
+	if serviceError != nil {
+		http.Error(w, serviceError.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(folder)
 }
 
 func (h *FolderHandler) UpdateFolder(w http.ResponseWriter, r *http.Request) {

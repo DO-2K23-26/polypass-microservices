@@ -32,47 +32,52 @@ func StringPtrToValue(val *string) string {
 	return *val
 }
 
-func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) error {
-	currentTime := time.Now()
-
-	data := avroGeneratedSchema.FolderEvent{
+func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) (*organization.Folder, error) {
+	newFolder := organization.Folder{
 		Id:          uuid.New().String(),
-		Name:        folder.Name,
-		Description: StringPtrToValue(folder.Description),
-		Icon:        StringPtrToValue(folder.Icon),
-		Created_at:  currentTime.String(),
-		Updated_at:  currentTime.String(),
-		Parent_id:   StringPtrToValue(folder.ParentID),
-		Members:     []string{folder.CreatedBy},
-		Created_by:  folder.CreatedBy,
-	}
-
-	res := s.database.Create(&organization.Folder{
-		Id:          data.Id,
 		Name:        folder.Name,
 		Description: folder.Description,
 		Icon:        folder.Icon,
-		CreatedAt:   currentTime,
-		UpdatedAt:   currentTime,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 		ParentID:    folder.ParentID,
-		Members:     data.Members,
+		Members:     []string{folder.CreatedBy},
 		CreatedBy:   folder.CreatedBy,
-	})
+	}
+
+	data := avroGeneratedSchema.FolderEvent{
+		Id:          newFolder.Id,
+		Name:        newFolder.Name,
+		Description: StringPtrToValue(newFolder.Description),
+		Icon:        StringPtrToValue(newFolder.Icon),
+		Created_at:  newFolder.CreatedAt.String(),
+		Updated_at:  newFolder.UpdatedAt.String(),
+		Parent_id:   StringPtrToValue(newFolder.ParentID),
+		Members:     newFolder.Members,
+		Created_by:  newFolder.CreatedBy,
+	}
+
+	res := s.database.Create(&newFolder)
 
 	if res.Error != nil {
-		return res.Error
+		return nil, res.Error
 	}
 	if res.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+		return nil, gorm.ErrRecordNotFound
 	}
 
 	var buf bytes.Buffer
 	kafkaErr := data.Serialize(&buf)
 	if kafkaErr != nil {
-		return kafkaErr
+		return nil, kafkaErr
 	}
 
-	return s.publisher.Publish("Folder-Create", buf.Bytes())
+	err := s.publisher.Publish("Folder-Create", buf.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	return &newFolder, nil
 }
 
 func (s *FolderService) UpdateFolder(folder organization.Folder) error {
