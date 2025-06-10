@@ -132,15 +132,34 @@ func (s *FolderService) UpdateFolder(folderId string, folder organization.Update
 	return &updatedFolder, nil
 }
 
-func (s *FolderService) DeleteFolder(id string) error {
-	data := map[string]interface{}{
-		"id": id,
+func (s *FolderService) DeleteFolder(folderId string) error {
+	deletedFolder, getDatabaseErr := s.GetFolder(folderId)
+	if getDatabaseErr != nil {
+		if getDatabaseErr == gorm.ErrRecordNotFound {
+			return gorm.ErrRecordNotFound
+		}
+		return getDatabaseErr
 	}
-	encoded, err := s.encoder.Encode(data)
-	if err != nil {
-		return err
+
+	s.database.Delete(&organization.Folder{}, "id = ?", folderId)
+	data := avroGeneratedSchema.FolderEvent{
+		Id:          deletedFolder.Id,
+		Name:        deletedFolder.Name,
+		Description: StringPtrToValue(deletedFolder.Description),
+		Icon:        StringPtrToValue(deletedFolder.Icon),
+		Created_at:  deletedFolder.CreatedAt.String(),
+		Updated_at:  deletedFolder.UpdatedAt.String(),
+		Parent_id:   StringPtrToValue(deletedFolder.ParentID),
+		Members:     deletedFolder.Members,
+		Created_by:  deletedFolder.CreatedBy,
 	}
-	return s.publisher.Publish("Folder-Delete", encoded)
+	var buf bytes.Buffer
+	encodeErr := data.Serialize(&buf)
+	if encodeErr != nil {
+		return encodeErr
+	}
+
+	return s.publisher.Publish("Folder-Delete", buf.Bytes())
 }
 
 func (s *FolderService) ListFolders(req organization.GetFolderRequest) ([]organization.Folder, error) {
