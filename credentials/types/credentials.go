@@ -23,7 +23,7 @@ type CardAttributes struct {
 	OwnerName      string `json:"owner_name" db:"owner_name"`
 	CVC            int    `json:"cvc" db:"cvc"`
 	ExpirationDate string `json:"expiration_date" db:"expiration_date"`
-	CardNumber     int    `json:"card_number" db:"card_number"`
+	CardNumber     int64    `json:"card_number" db:"card_number"`
 }
 
 type PasswordCredential struct {

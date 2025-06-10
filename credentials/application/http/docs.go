@@ -13,7 +13,7 @@ func (d DocsController) Register(app *fiber.App) {
 			SpecURL: "./docs/swagger.json",
 			Theme:   scalar.ThemeKepler,
 			CustomOptions: scalar.CustomOptions{
-				PageTitle: "Courses API",
+				PageTitle: "Credentials API",
 			},
 			DarkMode: true,
 		})

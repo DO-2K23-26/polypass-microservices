@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS card_credentials (
   owner_name VARCHAR(25) NOT NULL,
   CVC INTEGER NOT NULL,
   expiration_date VARCHAR(25) NOT NULL,
-  card_number INTEGER NOT NULL
+  card_number NUMERIC(16,0) NOT NULL
 ) INHERITS (credentials);
 
 CREATE TABLE IF NOT EXISTS password_credentials (
