@@ -25,13 +25,40 @@ func main() {
 	}
 	cycle := NewCycle()
 
-	database, err := sql.NewSql(conf.Database)
-
+	producer, err := kafka.NewProducer(&kafka.ConfigMap{
+		"bootstrap.servers": "localhost:9092",
+		"security.protocol": "PLAINTEXT", 
+	})
+	
+	
 	if err != nil {
 		optique.Error(err.Error())
 		cycle.Stop()
 		os.Exit(1)
 	}
+	
+	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": "localhost:9092",
+		"group.id":          "my-group",
+		"auto.offset.reset": "earliest",
+	})
+
+	
+
+	
+	if err != nil {
+		optique.Error(err.Error())
+		cycle.Stop()
+		os.Exit(1)
+	}
+
+	database, err := sql.NewSql(conf.Database, producer, consumer)
+	if err != nil {
+		optique.Error(err.Error())
+		cycle.Stop()
+		os.Exit(1)
+	}
+	cycle.AddRepository(database)
 
 
 	// service
@@ -66,40 +93,7 @@ func main() {
 		}
 	}
 
-	producer, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": "pkc-12345.confluent.cloud:9092",
-		"security.protocol": "SASL_SSL",
-		"sasl.mechanism":   "PLAIN",
-		"sasl.username":    "API_KEY",
-		"sasl.password":    "API_SECRET",
-	})
 	
-	if err != nil {
-		core.Error("Failed to create producer: " + err.Error())
-		cycle.Stop()
-		os.Exit(1)
-	}
-	
-	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092",
-		"group.id":          "my-group",
-		"auto.offset.reset": "earliest",
-	})
-
-	database, err := sql.NewSql(conf.Database, producer, consumer)
-	if err != nil {
-		core.Error(err.Error())
-		cycle.Stop()
-		os.Exit(1)
-	}
-	cycle.AddRepository(database)
-
-	
-	if err != nil {
-		core.Error("Failed to create consumer: " + err.Error())
-		cycle.Stop()
-		os.Exit(1)
-	}
 	
 
 
