@@ -17,7 +17,7 @@ func NewBreachedPasswordCountCalculator() *BreachedPasswordCountCalculator {
 // Calculate computes the metric based on events
 func (c *BreachedPasswordCountCalculator) Calculate(events []Event) (Metric, error) {
 	// Map to track breached passwords by ID
-	breachedPasswords := make(map[string]bool)
+	breachedPasswords := make(map[string]int)
 
 	// Process events to count breached passwords
 	for _, event := range events {
@@ -29,7 +29,7 @@ func (c *BreachedPasswordCountCalculator) Calculate(events []Event) (Metric, err
 					passwordId := id.(string)
 					// Mark this password as breached
 					// TODO: Implement logic to check if the password is actually breached
-					breachedPasswords[passwordId] = true
+					breachedPasswords[passwordId]++
 				}
 			}
 		}
