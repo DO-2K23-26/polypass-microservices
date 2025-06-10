@@ -81,6 +81,7 @@ func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) (*
 }
 
 func (s *FolderService) UpdateFolder(folder organization.Folder) error {
+
 	data := avroGeneratedSchema.FolderEvent{
 		Id:          folder.Id,
 		Name:        folder.Name,
@@ -112,9 +113,12 @@ func (s *FolderService) DeleteFolder(id string) error {
 	return s.publisher.Publish("Folder-Delete", encoded)
 }
 
-func (s *FolderService) ListFolders() ([]organization.Folder, error) {
-	// TODO: Replace with real implementation
-	return []organization.Folder{}, nil
+func (s *FolderService) ListFolders(req organization.GetFolderRequest) ([]organization.Folder, error) {
+	var folders []organization.Folder
+	if err := s.database.Model(&organization.Folder{}).Limit(req.Limit).Offset((req.Page - 1) * req.Limit).Order("created_at asc").Find(&folders).Error; err != nil {
+		return nil, err
+	}
+	return folders, nil
 }
 
 func (s *FolderService) GetFolder(id string) (organization.Folder, error) {

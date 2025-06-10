@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/DO-2K23-26/polypass-microservices/libs/interfaces/organization"
 	"github.com/DO-2K23-26/polypass-microservices/organization/internal/app"
@@ -63,13 +64,45 @@ func (h *FolderHandler) DeleteFolder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FolderHandler) ListFolders(w http.ResponseWriter, r *http.Request) {
-	folders, err := h.service.ListFolders()
+	// Pagination parameters
+	page := r.URL.Query().Get("page")
+	if page == "" {
+		page = "1" // Default to page 1 if not provided
+	}
+	limit := r.URL.Query().Get("limit")
+	if limit == "" {
+		limit = "10" // Default to 10 items per page if not provided
+	}
+	// Convert page and limit to integers
+	pageInt, err := strconv.Atoi(page)
+	if err != nil {
+		http.Error(w, "Invalid page number", http.StatusBadRequest)
+		return
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		http.Error(w, "Invalid limit number", http.StatusBadRequest)
+		return
+	}
+	req := organization.GetFolderRequest{
+		Page:  pageInt,
+		Limit: limitInt,
+	}
+
+	folders, err := h.service.ListFolders(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	result := organization.GetFolderResponse{
+		Folders: folders,
+		Total:   len(folders), // Assuming total is the length of the returned folders
+		Page:    pageInt,
+		Limit:   limitInt,
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(folders)
+	json.NewEncoder(w).Encode(result)
 }
 
 func (h *FolderHandler) GetFolder(w http.ResponseWriter, r *http.Request) {
