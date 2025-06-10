@@ -122,6 +122,12 @@ func (s *FolderService) ListFolders(req organization.GetFolderRequest) ([]organi
 }
 
 func (s *FolderService) GetFolder(id string) (organization.Folder, error) {
-	// TODO: Replace with real implementation
-	return organization.Folder{Id: id}, nil
+	var folder organization.Folder
+	if err := s.database.Find(&folder, "id = ?", id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return organization.Folder{}, gorm.ErrRecordNotFound
+		}
+		return organization.Folder{}, err
+	}
+	return folder, nil
 }
