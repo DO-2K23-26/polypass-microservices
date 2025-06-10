@@ -16,7 +16,37 @@ func NewBreachedPasswordCountCalculator() *BreachedPasswordCountCalculator {
 
 // Calculate computes the metric based on events
 func (c *BreachedPasswordCountCalculator) Calculate(events []Event) (Metric, error) {
-// TODO
+	// Map to track breached passwords by ID
+	breachedPasswords := make(map[string]bool)
+
+	// Process events to count breached passwords
+	for _, event := range events {
+		// Handle password breach events
+		if event.Type == string(PasswordBreachEvent) {
+			// Extract passwordId from event data
+			if data, ok := event.Data.(map[string]interface{}); ok {
+				if id, exists := data["passwordId"]; exists {
+					passwordId := id.(string)
+					// Mark this password as breached
+					// TODO: Implement logic to check if the password is actually breached
+					breachedPasswords[passwordId] = true
+				}
+			}
+		}
+	}
+
+	// Count the number of breached passwords
+	count := len(breachedPasswords)
+
+	return Metric{
+		ID:          uuid.New().String(),
+		Name:        "breached_password_count",
+		Description: "Number of breached passwords",
+		Value:       count,
+		Unit:        "count",
+		Timestamp:   time.Now(),
+		Tags:        []string{string(PasswordMetric)},
+	}, nil
 }
 
 // GetMetricType returns the type of metric
@@ -27,8 +57,4 @@ func (c *BreachedPasswordCountCalculator) GetMetricType() MetricType {
 // GetMetricName returns the name of the metric
 func (c *BreachedPasswordCountCalculator) GetMetricName() string {
 	return "breached_password_count"
-}
-// GetMetricDescription returns the description of the metric
-func (c *BreachedPasswordCountCalculator) GetMetricDescription() string {
-	return "Number of breached passwords"
 }

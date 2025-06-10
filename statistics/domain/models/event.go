@@ -24,6 +24,7 @@ const (
 	PasswordUpdatedEvent  EventType = "PASSWORD_UPDATED"
 	PasswordDeletedEvent  EventType = "PASSWORD_DELETED"
 	PasswordAccessedEvent EventType = "PASSWORD_ACCESSED"
+	PasswordBreachEvent  EventType = "PASSWORD_BREACH"
 	// Add more event types as needed
 )
 
