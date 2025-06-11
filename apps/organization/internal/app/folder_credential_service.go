@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 
@@ -28,6 +29,7 @@ func NewFolderCredentialService(db *gorm.DB, publisher EventPublisher, encoder *
 	host := os.Getenv("CREDENTIAL_SERVICE_HOST")
 	if host == "" {
 		host = "http://localhost:8080"
+		log.Println("CREDENTIAL_SERVICE_HOST is not set, using default value (http://localhost:8080)")
 	}
 	return &FolderCredentialService{db: db, host: host, client: &http.Client{}, publisher: publisher, encoder: encoder}
 }
