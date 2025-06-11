@@ -36,7 +36,7 @@ func (s *TagService) CreateTag(tag organization.Tag) error {
 		return err
 	}
 
-	return s.publisher.Publish("Tag-Create", buf.Bytes())
+	return s.publisher.Publish("tag-creation", buf.Bytes())
 }
 
 func (s *TagService) UpdateTag(tag organization.Tag) error {
@@ -56,7 +56,7 @@ func (s *TagService) UpdateTag(tag organization.Tag) error {
 		return err
 	}
 
-	return s.publisher.Publish("Tag-Update", buf.Bytes())
+	return s.publisher.Publish("tag-update", buf.Bytes())
 }
 
 func (s *TagService) DeleteTag(id string) error {
@@ -67,7 +67,7 @@ func (s *TagService) DeleteTag(id string) error {
 	if err != nil {
 		return err
 	}
-	return s.publisher.Publish("Tag-Delete", encoded)
+	return s.publisher.Publish("tag-delete", encoded)
 }
 
 func (s *TagService) ListTags() ([]organization.Tag, error) {

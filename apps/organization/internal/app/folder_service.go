@@ -73,7 +73,7 @@ func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) (*
 		return nil, kafkaErr
 	}
 
-	err := s.publisher.Publish("Folder-Create", buf.Bytes())
+	err := s.publisher.Publish("folder-creation", buf.Bytes())
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (s *FolderService) UpdateFolder(folderId string, folder organization.Update
 		return nil, serializeErr
 	}
 
-	kafkaErr := s.publisher.Publish("Folder-Update", buf.Bytes())
+	kafkaErr := s.publisher.Publish("folder-update", buf.Bytes())
 	if kafkaErr != nil {
 		return nil, kafkaErr
 	}
@@ -160,7 +160,7 @@ func (s *FolderService) DeleteFolder(folderId string) error {
 		return encodeErr
 	}
 
-	return s.publisher.Publish("Folder-Delete", buf.Bytes())
+	return s.publisher.Publish("folder-delete", buf.Bytes())
 }
 
 func (s *FolderService) ListFolders(req organization.GetFolderRequest) ([]organization.Folder, error) {
