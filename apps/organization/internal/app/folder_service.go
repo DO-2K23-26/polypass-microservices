@@ -153,11 +153,13 @@ func (s *FolderService) DeleteFolder(folderId string) error {
 		Parent_id:   StringPtrToValue(deletedFolder.ParentID),
 		Members:     deletedFolder.Members,
 		Created_by:  deletedFolder.CreatedBy,
+	}
 
 	var buf bytes.Buffer
 	encodeErr := data.Serialize(&buf)
 	if encodeErr != nil {
 		return encodeErr
+	}
 
 	return s.publisher.Publish("folder-delete", buf.Bytes())
 }
