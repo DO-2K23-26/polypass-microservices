@@ -9,18 +9,14 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/schemautils"
 	"github.com/DO-2K23-26/polypass-microservices/libs/interfaces/organization"
 	"gorm.io/gorm"
-	"gorm.io/gorm"
 )
 
 type TagService struct {
 	publisher EventPublisher
 	encoder   *schemautils.AvroEncoder
 	database  *gorm.DB
-	database  *gorm.DB
 }
 
-func NewTagService(publisher EventPublisher, encoder *schemautils.AvroEncoder, database *gorm.DB) *TagService {
-	return &TagService{publisher: publisher, encoder: encoder, database: database}
 func NewTagService(publisher EventPublisher, encoder *schemautils.AvroEncoder, database *gorm.DB) *TagService {
 	return &TagService{publisher: publisher, encoder: encoder, database: database}
 }
@@ -61,7 +57,7 @@ func (s *TagService) CreateTag(tag organization.CreateTagRequest) error {
 		return gorm.ErrRecordNotFound
 	}
 
-	return s.publisher.Publish("Tag-Create", buf.Bytes())
+	return s.publisher.Publish("tag-create", buf.Bytes())
 }
 
 func (s *TagService) UpdateTag(tag organization.UpdateTagRequest) error {
@@ -96,7 +92,7 @@ func (s *TagService) UpdateTag(tag organization.UpdateTagRequest) error {
 		return gorm.ErrRecordNotFound
 	}
 
-	return s.publisher.Publish("Tag-Update", buf.Bytes())
+	return s.publisher.Publish("tag-update", buf.Bytes())
 }
 
 func (s *TagService) DeleteTag(id string) error {
