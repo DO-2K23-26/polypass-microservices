@@ -10,6 +10,11 @@ type Config struct {
 	ClientId          string
 	HttpPort          string
 	GrpcPort          string
+	DBHost            string
+	DBUser            string
+	DBPassword        string
+	DBName            string
+	DBPort            string
 }
 
 func LoadConfig() (*Config, error) {
@@ -19,6 +24,11 @@ func LoadConfig() (*Config, error) {
 		ClientId:          getEnvOrDefault("CLIENT_ID", "organization-service"),
 		HttpPort:          getEnvOrDefault("HTTP_PORT", ":8000"),
 		GrpcPort:          getEnvOrDefault("GRPC_PORT", ":50051"),
+		DBHost:            getEnvOrDefault("DB_HOST", "localhost"),
+		DBUser:            getEnvOrDefault("DB_USER", "postgres"),
+		DBPassword:        getEnvOrDefault("DB_PASSWORD", "postgres"),
+		DBName:            getEnvOrDefault("DB_NAME", "postgres"),
+		DBPort:            getEnvOrDefault("DB_PORT", "5432"),
 	}, nil
 }
 
