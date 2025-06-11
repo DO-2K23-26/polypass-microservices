@@ -66,7 +66,6 @@ func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) (*
 	if res.RowsAffected == 0 {
 		return nil, gorm.ErrRecordNotFound
 	}
-
 	var buf bytes.Buffer
 	kafkaErr := data.Serialize(&buf)
 	if kafkaErr != nil {
