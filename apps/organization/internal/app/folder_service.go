@@ -42,7 +42,7 @@ func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) (*
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 		ParentID:    folder.ParentID,
-		Members:     []string{folder.CreatedBy},
+		User:        &[]organization.User{{ID: folder.CreatedBy}},
 		CreatedBy:   folder.CreatedBy,
 	}
 
@@ -54,7 +54,7 @@ func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) (*
 		Created_at:  newFolder.CreatedAt.String(),
 		Updated_at:  newFolder.UpdatedAt.String(),
 		Parent_id:   StringPtrToValue(newFolder.ParentID),
-		Members:     newFolder.Members,
+		Members:     []string{folder.CreatedBy},
 		Created_by:  newFolder.CreatedBy,
 	}
 
@@ -98,7 +98,7 @@ func (s *FolderService) UpdateFolder(folderId string, folder organization.Update
 		CreatedAt:   previousFolder.CreatedAt,
 		UpdatedAt:   time.Now(),
 		ParentID:    folder.ParentID,
-		Members:     []string{previousFolder.CreatedBy},
+		User:        &[]organization.User{{ID: previousFolder.CreatedBy}},
 		CreatedBy:   previousFolder.CreatedBy,
 	}
 
@@ -110,7 +110,7 @@ func (s *FolderService) UpdateFolder(folderId string, folder organization.Update
 		Created_at:  updatedFolder.CreatedAt.String(),
 		Updated_at:  updatedFolder.UpdatedAt.String(),
 		Parent_id:   StringPtrToValue(updatedFolder.ParentID),
-		Members:     updatedFolder.Members,
+		Members:     []string{previousFolder.CreatedBy},
 		Created_by:  updatedFolder.CreatedBy,
 	}
 
@@ -151,7 +151,7 @@ func (s *FolderService) DeleteFolder(folderId string) error {
 		Created_at:  deletedFolder.CreatedAt.String(),
 		Updated_at:  deletedFolder.UpdatedAt.String(),
 		Parent_id:   StringPtrToValue(deletedFolder.ParentID),
-		Members:     deletedFolder.Members,
+		Members:     []string{deletedFolder.CreatedBy},
 		Created_by:  deletedFolder.CreatedBy,
 	}
 

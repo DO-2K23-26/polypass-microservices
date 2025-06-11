@@ -1,10 +1,6 @@
 package organization
 
-import (
-	"time"
-
-	"github.com/lib/pq"
-)
+import "time"
 
 type Folder struct {
 	Id          string `gorm:"primaryKey;type:uuid"`
@@ -15,7 +11,7 @@ type Folder struct {
 	UpdatedAt   time.Time
 	ParentID    *string
 	CreatedBy   string
-	Members     pq.StringArray `gorm:"type:text[]" json:"members"`
+	User        *[]User `gorm:"many2many:user_folders;" json:"user"`
 }
 
 type CreateFolderRequest struct {
