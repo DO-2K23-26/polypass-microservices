@@ -155,7 +155,17 @@ func (s *FolderService) DeleteFolder(folderId string) error {
 		return getDatabaseErr
 	}
 
-	s.database.Delete(&organization.Folder{}, "id = ?", folderId)
+	// Delete all users associated with the folder
+	if err := s.database.Model(deletedFolder).
+		Association("User").Clear(); err != nil {
+		return fmt.Errorf("failed to clear users from folder: %w", err)
+	}
+
+	err := s.database.Delete(&organization.Folder{}, "id = ?", folderId).Error
+	if err != nil {
+		return err
+	}
+
 	data := avroGeneratedSchema.FolderEvent{
 		Id:          deletedFolder.Id,
 		Name:        deletedFolder.Name,
