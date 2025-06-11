@@ -65,36 +65,8 @@ func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) (*
 	}
 	if res.RowsAffected == 0 {
 		return nil, gorm.ErrRecordNotFound
-		Description: folder.Description,
-		Icon:        folder.Icon,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		ParentID:    folder.ParentID,
-		Members:     []string{folder.CreatedBy},
-		CreatedBy:   folder.CreatedBy,
 	}
-
-	data := avroGeneratedSchema.FolderEvent{
-		Id:          newFolder.Id,
-		Name:        newFolder.Name,
-		Description: StringPtrToValue(newFolder.Description),
-		Icon:        StringPtrToValue(newFolder.Icon),
-		Created_at:  newFolder.CreatedAt.String(),
-		Updated_at:  newFolder.UpdatedAt.String(),
-		Parent_id:   StringPtrToValue(newFolder.ParentID),
-		Members:     newFolder.Members,
-		Created_by:  newFolder.CreatedBy,
-	}
-
-	res := s.database.Create(&newFolder)
-
-	if res.Error != nil {
-		return nil, res.Error
-	}
-	if res.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
-	}
-
+	
 	var buf bytes.Buffer
 	kafkaErr := data.Serialize(&buf)
 	if kafkaErr != nil {
