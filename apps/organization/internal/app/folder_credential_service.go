@@ -36,40 +36,50 @@ func NewFolderCredentialService(db *gorm.DB, publisher EventPublisher, encoder *
 }
 
 // List returns paginated credentials for a folder.
-func (s *FolderCredentialService) List(folderID, credType string, page, limit int) (*organization.CredentialList, error) {
+func (s *FolderCredentialService) List(folderID, credType string, req organization.GetCredentialRequest) (*organization.GetCredentialResponse, error) {
 	var relations []organization.FolderCredential
-	if err := s.db.Where("id_folder = ?", folderID).Find(&relations).Error; err != nil {
+	if err := s.db.Where("id_folder = ? AND type = ?", folderID, credType).Limit(req.Limit).Offset((req.Page - 1) * req.Limit).Find(&relations).Error; err != nil {
 		return nil, err
 	}
 
-	start := (page - 1) * limit
-	if start > len(relations) {
-		return &organization.CredentialList{Credentials: []map[string]interface{}{}, Page: page, Limit: limit}, nil
-	}
-	end := start + limit
-	if end > len(relations) {
-		end = len(relations)
-	}
+	// start := (page - 1) * limit
+	// if start > len(relations) {
+	// 	return &organization.CredentialList{Credentials: []map[string]interface{}{}, Page: page, Limit: limit}, nil
+	// }
+	// end := start + limit
+	// if end > len(relations) {
+	// 	end = len(relations)
+	// }
 
-	creds := make([]map[string]interface{}, 0, end-start)
-	for _, rel := range relations[start:end] {
-		url := fmt.Sprintf("%s/credentials/%s/%s", s.host, credType, rel.IdCredential)
+	// creds := make([]map[string]interface{}, 0, end-start)
+	creds := make([]map[string]interface{}, 0, len(relations))
+	for _, rel := range relations {
+		url := fmt.Sprintf("%s/credentials/%s?ids=%s", s.host, credType, rel.IdCredential)
 		resp, err := s.client.Get(url)
 		if err != nil {
 			return nil, err
 		}
+
 		defer resp.Body.Close()
+
 		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("credential service returned %d", resp.StatusCode)
+			b, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("credential service returned %d: %s", resp.StatusCode, string(b))
 		}
-		var data map[string]interface{}
+
+		var data []map[string]interface{}
 		if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 			return nil, err
 		}
-		creds = append(creds, data)
+
+		if len(data) == 0 {
+			return nil, fmt.Errorf("credential service returned no data for %s", rel.IdCredential)
+		}
+
+		creds = append(creds, data[0])
 	}
 
-	return &organization.CredentialList{Credentials: creds, Page: page, Limit: limit}, nil
+	return &organization.GetCredentialResponse{Credentials: creds, Total: len(relations), Page: req.Page, Limit: req.Limit}, nil
 }
 
 // Create creates a credential via the credential service and stores the link.
@@ -92,7 +102,7 @@ func (s *FolderCredentialService) Create(folderID, credType string, body []byte)
 	if !ok {
 		return nil, fmt.Errorf("credential id not found in response")
 	}
-	rel := organization.FolderCredential{IdFolder: folderID, IdCredential: id}
+	rel := organization.FolderCredential{IdFolder: folderID, IdCredential: id, Type: organization.CredentialType(credType)}
 	if err := s.db.Create(&rel).Error; err != nil {
 		return nil, err
 	}
