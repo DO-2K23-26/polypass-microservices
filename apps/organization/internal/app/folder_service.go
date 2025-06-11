@@ -189,9 +189,85 @@ func (s *FolderService) DeleteFolder(folderId string) error {
 
 func (s *FolderService) ListFolders(req organization.GetFolderRequest) ([]organization.Folder, error) {
 	var folders []organization.Folder
-	if err := s.database.Model(&organization.Folder{}).Limit(req.Limit).Offset((req.Page - 1) * req.Limit).Order("created_at asc").Find(&folders).Error; err != nil {
-		return nil, err
+
+	if req.UserId != nil {
+		// Retrieve folders that the user is a direct member of
+		if err := s.database.
+			Joins("JOIN user_folders ON user_folders.folder_id = folders.id").
+			Where("user_folders.user_id = ?", *req.UserId).
+			Find(&folders).Error; err != nil {
+			return nil, err
+		}
+
+		// Use a queue to manage folders whose children need to be retrieved
+		var queue = folders
+		for len(queue) > 0 {
+			var nextQueue []organization.Folder
+			for _, folder := range queue {
+				// Retrieve children folders
+				var childFolders []organization.Folder
+				if err := s.database.
+					Where("parent_id = ?", folder.Id).
+					Find(&childFolders).Error; err != nil {
+					return nil, err
+				}
+
+				// Append child folders to the result
+				folders = append(folders, childFolders...)
+				nextQueue = append(nextQueue, childFolders...)
+			}
+			queue = nextQueue
+		}
+
+		// Remove duplicates from the folders slice
+		folderMap := make(map[string]organization.Folder)
+		for _, folder := range folders {
+			if _, exists := folderMap[folder.Id]; !exists {
+				folderMap[folder.Id] = folder
+			}
+		}
+		folders = make([]organization.Folder, 0, len(folderMap))
+		for _, folder := range folderMap {
+			folders = append(folders, folder)
+		}
+
+		// Limit and paginate the results
+		if len(folders) > req.Limit {
+			if req.Page < 1 {
+				req.Page = 1
+			}
+			if req.Page > (len(folders)+req.Limit-1)/req.Limit {
+				req.Page = (len(folders) + req.Limit - 1) / req.Limit
+			}
+			start := (req.Page - 1) * req.Limit
+			end := start + req.Limit
+			if end > len(folders) {
+				end = len(folders)
+			}
+			folders = folders[start:end]
+		}
+
+		// Sort folders by created_at in ascending order without using gorm
+		if len(folders) > 0 {
+			for i := 0; i < len(folders)-1; i++ {
+				for j := i + 1; j < len(folders); j++ {
+					if folders[i].CreatedAt.After(folders[j].CreatedAt) {
+						folders[i], folders[j] = folders[j], folders[i]
+					}
+				}
+			}
+		}
+	} else {
+		// Retrieve all folders without user filter
+		if err := s.database.
+			Limit(req.Limit).
+			Offset((req.Page - 1) * req.Limit).
+			Order("created_at asc").
+			Find(&folders).Error; err != nil {
+			return nil, err
+		}
 	}
+
 	return folders, nil
 }
 

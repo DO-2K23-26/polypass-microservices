@@ -94,6 +94,15 @@ func (h *FolderHandler) ListFolders(w http.ResponseWriter, r *http.Request) {
 	if limit == "" {
 		limit = "10" // Default to 10 items per page if not provided
 	}
+
+	userIdStr := r.URL.Query().Get("user_id")
+	var userId *string
+	if userIdStr != "" {
+		userId = &userIdStr
+	} else {
+		userId = nil
+	}
+
 	// Convert page and limit to integers
 	pageInt, err := strconv.Atoi(page)
 	if err != nil {
@@ -112,8 +121,9 @@ func (h *FolderHandler) ListFolders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req := organization.GetFolderRequest{
-		Page:  pageInt,
-		Limit: limitInt,
+		Page:   pageInt,
+		Limit:  limitInt,
+		UserId: userId,
 	}
 
 	folders, err := h.service.ListFolders(req)

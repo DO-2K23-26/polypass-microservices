@@ -30,8 +30,9 @@ type UpdateFolderRequest struct {
 }
 
 type GetFolderRequest struct {
-	Page  int `json:"page" form:"page"`
-	Limit int `json:"limit" form:"limit"`
+	Page   int     `json:"page" form:"page"`
+	Limit  int     `json:"limit" form:"limit"`
+	UserId *string `json:"user_id" form:"user_id"`
 }
 
 type GetFolderResponse struct {
