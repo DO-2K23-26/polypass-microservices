@@ -10,8 +10,9 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/DO-2K23-26/polypass-microservices/gateway/core"
+	"github.com/DO-2K23-26/polypass-microservices/gateway/graph"
 	"github.com/gofiber/fiber/v2"
-	"github.com/optique-dev/modules/graphql/graph"
 
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
@@ -22,7 +23,9 @@ type GraphQL interface {
 	Playground() (*fiber.Ctx, error)
 }
 
-type graphqlController struct{}
+type graphqlController struct {
+	organizationService core.OrganizationService
+}
 
 func wrapHandler(f func(nethttp.ResponseWriter, *nethttp.Request)) func(*fiber.Ctx) {
 	return func(ctx *fiber.Ctx) {
@@ -30,13 +33,17 @@ func wrapHandler(f func(nethttp.ResponseWriter, *nethttp.Request)) func(*fiber.C
 	}
 }
 
-func NewGraphQL() *graphqlController {
-	return &graphqlController{}
+func NewGraphQL(organizationService core.OrganizationService) *graphqlController {	
+	return &graphqlController{
+		organizationService,
+	}
 }
 
 func (g *graphqlController) Query() fiber.Handler {
 	h := handler.New(graph.NewExecutableSchema(graph.Config{
-		Resolvers: &graph.Resolver{},
+		Resolvers: &graph.Resolver{
+			OrganizationsService: g.organizationService,
+		},
 	}))
 	h.AddTransport(transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
@@ -70,6 +77,11 @@ func (g *graphqlController) Register(app *fiber.App) {
 	app.Post("/graphql", g.Query())
 	app.Get("/graphql", g.Query())
 	app.Options("/graphql", g.Query())
+
+
+	app.Post("/query", g.Query())
+	app.Get("/query", g.Query())
+	app.Options("/query", g.Query())
 
 	app.Get("/playground", g.Playground())
 	app.Get("/playground", g.Playground())

@@ -1,3 +1,9 @@
 {
-  "bootstrap": true
+  "bootstrap": true,
+  "organizations": {
+    "endpoint": "http://localhost:8000"
+  },
+  "graphql": {
+    "listen_addr": ":5000"
+  }
 }

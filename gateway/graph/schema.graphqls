@@ -45,7 +45,6 @@ type CardCredential {
   id: ID!
   lastReadAt: String
   note: String
-  createdAt: String!
   ownerName: String!
   title: String
   updatedAt: String
@@ -70,6 +69,12 @@ type Tag {
   color: String!
   folder: Folder!
   createdBy: User!
+}
+
+type User {
+  id: ID!
+  username: String!
+  email: String!
 }
 
 type Query {

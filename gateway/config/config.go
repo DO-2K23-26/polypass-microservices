@@ -3,6 +3,9 @@ package config
 import (
 	"fmt"
 
+	"github.com/DO-2K23-26/polypass-microservices/gateway/application/graphql"
+	"github.com/DO-2K23-26/polypass-microservices/gateway/infrastructure/organizations"
+	"github.com/DO-2K23-26/polypass-microservices/gateway/infrastructure/users"
 	"github.com/optique-dev/optique"
 
 	"github.com/spf13/viper"
@@ -10,7 +13,10 @@ import (
 
 type Config struct {
 	// Bootstrap is a flag to indicate if the application should start in bootstrap mode, meaning that the cycle should setup repositories e.g. for migrations or seeding
-	Bootstrap bool `json:"bootstrap"`
+	Bootstrap          bool                 `mapstructure:"bootstrap"`
+	OrganizationConfig organizations.Config `mapstructure:"organizations"`
+	GraphQL            graphql.Config       `mapstructure:"graphql"`
+	Users              users.UsersConfig    `mapstructure:"users"`
 }
 
 func LoadConfig() (*Config, error) {
