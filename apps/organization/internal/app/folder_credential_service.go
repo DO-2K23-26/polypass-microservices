@@ -8,24 +8,28 @@ import (
 	"net/http"
 	"os"
 
+	avroGeneratedSchema "github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/generated"
+	"github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/schemautils"
 	organization "github.com/DO-2K23-26/polypass-microservices/libs/interfaces/organization"
 	"gorm.io/gorm"
 )
 
 // FolderCredentialService links folders with credentials using the credential service.
 type FolderCredentialService struct {
-	db     *gorm.DB
-	host   string
-	client *http.Client
+	db        *gorm.DB
+	host      string
+	client    *http.Client
+	publisher EventPublisher
+	encoder   *schemautils.AvroEncoder
 }
 
 // NewFolderCredentialService creates a new FolderCredentialService.
-func NewFolderCredentialService(db *gorm.DB) *FolderCredentialService {
+func NewFolderCredentialService(db *gorm.DB, publisher EventPublisher, encoder *schemautils.AvroEncoder) *FolderCredentialService {
 	host := os.Getenv("CREDENTIAL_SERVICE_HOST")
 	if host == "" {
 		host = "http://localhost:8080"
 	}
-	return &FolderCredentialService{db: db, host: host, client: &http.Client{}}
+	return &FolderCredentialService{db: db, host: host, client: &http.Client{}, publisher: publisher, encoder: encoder}
 }
 
 // CredentialList represents the list response for credentials.
@@ -96,6 +100,21 @@ func (s *FolderCredentialService) Create(folderID, credType string, body []byte)
 	if err := s.db.Create(&rel).Error; err != nil {
 		return nil, err
 	}
+
+	name, _ := credential["name"].(string)
+	event := avroGeneratedSchema.CredentialEvent{
+		Credential_id:   id,
+		Credential_name: name,
+		Folder_id:       folderID,
+	}
+	var buf bytes.Buffer
+	if err := event.Serialize(&buf); err != nil {
+		return nil, err
+	}
+	if err := s.publisher.Publish("credential-creation", buf.Bytes()); err != nil {
+		return nil, err
+	}
+
 	return credential, nil
 }
 
@@ -120,11 +139,45 @@ func (s *FolderCredentialService) Update(folderID, credType, credentialID string
 	if err := json.NewDecoder(resp.Body).Decode(&credential); err != nil {
 		return nil, err
 	}
+
+	name, _ := credential["name"].(string)
+	event := avroGeneratedSchema.CredentialEvent{
+		Credential_id:   credentialID,
+		Credential_name: name,
+		Folder_id:       folderID,
+	}
+	var buf bytes.Buffer
+	if err := event.Serialize(&buf); err != nil {
+		return nil, err
+	}
+	if err := s.publisher.Publish("credential-update", buf.Bytes()); err != nil {
+		return nil, err
+	}
+
 	return credential, nil
 }
 
 // Delete removes credentials via the credential service and unlinks them from the folder.
 func (s *FolderCredentialService) Delete(folderID, credType string, ids []string) error {
+	names := make(map[string]string, len(ids))
+	for _, id := range ids {
+		url := fmt.Sprintf("%s/credentials/%s/%s", s.host, credType, id)
+		resp, err := s.client.Get(url)
+		if err == nil {
+			defer resp.Body.Close()
+			if resp.StatusCode == http.StatusOK {
+				var data map[string]interface{}
+				if json.NewDecoder(resp.Body).Decode(&data) == nil {
+					if n, ok := data["name"].(string); ok {
+						names[id] = n
+					}
+				}
+			} else {
+				io.ReadAll(resp.Body)
+			}
+		}
+	}
+
 	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/credentials/%s", s.host, credType), nil)
 	if err != nil {
 		return err
@@ -148,5 +201,21 @@ func (s *FolderCredentialService) Delete(folderID, credType string, ids []string
 	if err := s.db.Where("id_folder = ? AND id_credential IN ?", folderID, ids).Delete(&organization.FolderCredential{}).Error; err != nil {
 		return err
 	}
+
+	for _, id := range ids {
+		event := avroGeneratedSchema.CredentialEvent{
+			Credential_id:   id,
+			Credential_name: names[id],
+			Folder_id:       folderID,
+		}
+		var buf bytes.Buffer
+		if err := event.Serialize(&buf); err != nil {
+			return err
+		}
+		if err := s.publisher.Publish("credential-delete", buf.Bytes()); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
