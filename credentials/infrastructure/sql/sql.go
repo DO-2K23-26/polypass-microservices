@@ -6,6 +6,7 @@ import (
 	"log"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/DO-2K23-26/polypass-microservices/credentials/types"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -91,92 +92,166 @@ func (m sql) Shutdown() error {
 }
 
 // Define a mapping from credentials types to schema file paths
-var credentialsSchema = map[string]string{
-	"PasswordCredential": "interfaces/credentials/password_credential.avsc",
-	"CardCredential":     "interfaces/credentials/card_credential.avsc",
-	"SSHKeyCredential":   "interfaces/credentials/ssh_credential.avsc",
-	"CardAttribute":     "interfaces/credentials/card_attributes.avsc",
-	"CreateCredentialsOpts": "interfaces/credentials/create_credentials_opts.avsc",
-	"Credential": "interfaces/credentials/credential.avsc",
-	"PasswordAttribute": "interfaces/credentials/password_attributes.avsc",
-	"SSHKeyAttribute": "interfaces/credentials/ssh_attribute.avsc",
-	"UserIdentifierAttributes": "interfaces/credentials/user_identifier_attribues.avsc",
+var credentialsSchema = map[string][]string{
+	"PasswordCredential": {"/home/pauline/projects/polypass/polypass-microservices/interfaces/credentials/password_credential.avsc"},
+	"CardCredential":     {"interfaces/credentials/card_credential.avsc"},
+	"SSHKeyCredential":   {"interfaces/credentials/ssh_credential.avsc"},
+	"CardAttribute":     {"interfaces/credentials/card_attributes.avsc"},
+	"CreateCredentialsOpts": {"interfaces/credentials/create_credentials_opts.avsc"},
+	"Credential": {"interfaces/credentials/credential.avsc"},
+	"PasswordAttribute": {"interfaces/credentials/password_attributes.avsc"},
+	"SSHKeyAttribute": {"interfaces/credentials/ssh_attribute.avsc"},
+	"UserIdentifierAttributes": {"interfaces/credentials/user_identifier_attribues.avsc"},
+}
+func loadSchema(path string) (string, error) {
+    b, err := ioutil.ReadFile(filepath.Clean(path))
+    if err != nil {
+        return "", err
+    }
+    return string(b), nil
 }
 
-// Load the Avro schema from a file
-func loadSchema(filePath string) (string, error) {
-	schemaBytes, err := ioutil.ReadFile(filepath.Clean(filePath))
-	if err != nil {
-		return "", err
+func getSchemaPath(typeName string) (string, error) {
+	p, ok := credentialsSchema[typeName]
+	if !ok {
+		return "", fmt.Errorf("no schema for type %s", typeName)
 	}
-	return string(schemaBytes), nil
+	if len(p) == 0 {
+		return "", fmt.Errorf("empty schema for type %s", typeName)
+	}
+	return p[0], nil 	//change this to detect the correct schema file based on the typeName
 }
 
-// Get the schema path based on the topic
-func getSchemaPath(topic string) (string, error) {
-	schemaPath, exists := credentialsSchema[topic]
-	if !exists {
-		return "", fmt.Errorf("no schema found for topic: %s", topic)
-	}
-	return schemaPath, nil
+// newProduceMessage prend n'importe quel credential et le sérialise
+func (m *sql) produceMessage(topic string, cred interface{}) error {
+    // 1) on choisit le schéma et on construit le record
+    var (
+        typeName string
+        record   map[string]interface{}
+    )
+    switch c := cred.(type) {
+    case types.PasswordCredential:
+        typeName = "PasswordCredential"
+        record = map[string]interface{}{
+            "Credential": map[string]interface{}{
+                "id":            c.Credential.ID,
+                "title":         c.Credential.Title,
+                "note":          c.Credential.Note,
+                "created_at":    c.Credential.CreatedAt.Unix(),
+                "updated_at":    c.Credential.UpdatedAt.Unix(),
+                "expires_at":    unixOrZero(c.Credential.ExpiresAt),
+                "last_read_at":  unixOrZero(c.Credential.LastReadAt),
+                "custom_fields": toInterfaceMap(c.Credential.CustomFields),
+            },
+            "PasswordAttributes": map[string]interface{}{
+                "password":    c.PasswordAttributes.Password,
+                "domain_name": c.PasswordAttributes.DomainName,
+            },
+            "UserIdentifierAttribute": map[string]interface{}{
+                "user_identifier": c.UserIdentifierAttribute.UserIdentifier,
+            },
+        }
+
+    case types.CardCredential:
+        typeName = "CardCredential"
+        record = map[string]interface{}{
+            "Credential": map[string]interface{}{
+                "id":            c.Credential.ID,
+                "title":         c.Credential.Title,
+                "note":          c.Credential.Note,
+                "created_at":    c.Credential.CreatedAt.Unix(),
+                "updated_at":    c.Credential.UpdatedAt.Unix(),
+                "expires_at":    unixOrZero(c.Credential.ExpiresAt),
+                "last_read_at":  unixOrZero(c.Credential.LastReadAt),
+                "custom_fields": toInterfaceMap(c.Credential.CustomFields),
+            },
+			"CardAttributes": map[string]interface{}{
+				"owner_name":     c.OwnerName,
+				"cvc":            c.CVC,
+				"expiration_date": c.ExpirationDate,
+				"card_number":    c.CardNumber,
+			},
+        }
+
+    case types.SSHKeyCredential:
+        typeName = "SSHKeyCredential"
+        record = map[string]interface{}{
+            "Credential": map[string]interface{}{
+                "id":            c.Credential.ID,
+                "title":         c.Credential.Title,
+                "note":          c.Credential.Note,
+                "created_at":    c.Credential.CreatedAt.Unix(),
+                "updated_at":    c.Credential.UpdatedAt.Unix(),
+                "expires_at":    unixOrZero(c.Credential.ExpiresAt),
+                "last_read_at":  unixOrZero(c.Credential.LastReadAt),
+                "custom_fields": toInterfaceMap(c.Credential.CustomFields),
+            },
+            "SSHKeyAttributes": map[string]interface{}{
+                "private_key":     c.PrivateKey,
+                "public_key":      c.PublicKey,
+                "hostname":        c.Hostname,
+                "user_identifier": c.UserIdentifier,
+            },
+        }
+    default:
+        return fmt.Errorf("unsupported credential type %T", cred)
+    }
+
+    // 2) on charge le schéma Avro
+    schemaPath, err := getSchemaPath(typeName)
+    if err != nil {
+        return err
+    }
+    schemaDef, err := loadSchema(schemaPath)
+    if err != nil {
+        return err
+    }
+    codec, err := goavro.NewCodec(schemaDef)
+    if err != nil {
+        return err
+    }
+
+    // 3) on sérialise
+    avroBin, err := codec.BinaryFromNative(nil, record)
+    if err != nil {
+        log.Printf("Failed to serialize data: %v", err)
+        return err
+    }
+
+    // 4) on envoie sur Kafka
+    dc := make(chan kafka.Event, 1)
+    err = m.producer.Produce(&kafka.Message{
+        TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+        Key:            []byte(typeName), // ou l’ID que vous voulez
+        Value:          avroBin,
+    }, dc)
+    if err != nil {
+        return err
+    }
+    ev := <-dc
+    if km := ev.(*kafka.Message); km.TopicPartition.Error != nil {
+        return km.TopicPartition.Error
+    }
+    close(dc)
+    return nil
 }
 
-func (m *sql) produceMessage(topic string, key string, value []byte) error {
-	// Get the schema path based on the topic
-	schemaPath, err := getSchemaPath(topic)
-	if err != nil {
-		log.Printf("Failed to get schema path: %v", err)
-		return err
+func unixOrZero(t *time.Time) int64 {
+    if t != nil {
+        return t.Unix()
+    }
+    return 0
+}
+
+func toInterfaceMap(m *map[string]any) map[string]interface{} {
+	out := make(map[string]interface{})
+	if m == nil {
+		return out
 	}
-
-	// Load the appropriate Avro schema
-	schema, err := loadSchema(schemaPath)
-	if err != nil {
-		log.Printf("Failed to load schema: %v", err)
-		return err
+	for k, v := range *m {
+		out[k] = v
 	}
-
-	// Create a new Avro codec
-	codec, err := goavro.NewCodec(schema)
-	if err != nil {
-		log.Printf("Failed to create codec: %v", err)
-		return err
-	}
-
-	// Create a map to hold the message data
-	messageMap := map[string]interface{}{
-		"id":      key,
-		"message": string(value),
-	}
-
-	// Serialize the message using Avro
-	avroBinary, err := codec.BinaryFromNative(nil, messageMap)
-	if err != nil {
-		log.Printf("Failed to serialize data: %v", err)
-		return err
-	}
-
-	// Produce the message to Kafka
-	deliveryChan := make(chan kafka.Event)
-	err = m.producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Key:            []byte(key),
-		Value:          avroBinary,
-	}, deliveryChan)
-
-	if err != nil {
-		return err
-	}
-
-	e := <-deliveryChan
-	msg := e.(*kafka.Message)
-
-	if msg.TopicPartition.Error != nil {
-		return msg.TopicPartition.Error
-	}
-
-	close(deliveryChan)
-	return nil
+	return out
 }
 
 func sliceToString(slice []string) string {
@@ -190,7 +265,7 @@ func (m sql) GetPasswordCredentials(ids []string) ([]types.PasswordCredential, e
 		return nil, err
 	}
 	for _, cred := range credentials {
-		err := m.produceMessage("creds_read", cred.ID, []byte(fmt.Sprintf("Read PasswordCredential with ID: %s", cred.ID)))
+		err := m.produceMessage("creds_read", cred)
 		if err != nil {
 			log.Printf("Failed to produce message: %v", err)
 		}
@@ -205,7 +280,7 @@ func (m sql) GetCardCredentials(ids []string) ([]types.CardCredential, error) {
 		return nil, err
 	}
 	for _, cred := range credentials {
-		err := m.produceMessage("creds_read", cred.ID, []byte(fmt.Sprintf("Read CardCredential with ID: %s", cred.ID)))
+		err := m.produceMessage("creds_read", cred)
 		if err != nil {
 			log.Printf("Failed to produce message: %v", err)
 		}
@@ -220,7 +295,7 @@ func (m sql) GetSSHKeyCredentials(ids []string) ([]types.SSHKeyCredential, error
 		return nil, err
 	}
 	for _, cred := range credentials {
-		err := m.produceMessage("creds_read", cred.ID, []byte(fmt.Sprintf("Read SSHKeyCredential with ID: %s", cred.ID)))
+		err := m.produceMessage("creds_read", cred)
 		if err != nil {
 			log.Printf("Failed to produce message: %v", err)
 		}
@@ -229,12 +304,16 @@ func (m sql) GetSSHKeyCredentials(ids []string) ([]types.SSHKeyCredential, error
 }
 
 func (m sql) CreatePasswordCredential(credential types.PasswordCredential) (types.PasswordCredential, error) {
+	// log the credential
+	log.Printf("Creating PasswordCredential: %+v", credential)
 	var createdCredential types.PasswordCredential
 	err := m.db.Get(&createdCredential, "INSERT INTO password_credentials (title, note, user_identifier, password, domain_name) VALUES ($1, $2, $3, $4, $5) RETURNING *", credential.Title, credential.Note, credential.UserIdentifier, credential.Password, credential.DomainName)
 	if err != nil {
 		return createdCredential, err
 	}
-	err = m.produceMessage("creds_create", credential.ID, []byte(fmt.Sprintf("Created PasswordCredential with ID: %s", credential.ID)))
+	fmt.Printf("AAAAAAAAAAAAAAAAAAAAAAAAAA: %+v\n", createdCredential)
+	err = m.produceMessage("creds_create", createdCredential)
+
 	if err != nil {
 		log.Printf("Failed to produce message: %v", err)
 	}
@@ -247,7 +326,7 @@ func (m sql) CreateCardCredential(credential types.CardCredential) (types.CardCr
 	if err != nil {
 		return createdCredential, err
 	}
-	err = m.produceMessage("creds_create", credential.ID, []byte(fmt.Sprintf("Created CardCredential with ID: %s", credential.ID)))
+	err = m.produceMessage("creds_create", createdCredential)
 	if err != nil {
 		log.Printf("Failed to produce message: %v", err)
 	}
@@ -260,7 +339,7 @@ func (m sql) CreateSSHKeyCredential(credential types.SSHKeyCredential) (types.SS
 	if err != nil {
 		return createdCredential, err
 	}
-	err = m.produceMessage("creds_create", credential.ID, []byte(fmt.Sprintf("Created SSHKeyCredential with ID: %s", credential.ID)))
+	err = m.produceMessage("creds_create", createdCredential)
 	if err != nil {
 		log.Printf("Failed to produce message: %v", err)
 	}
@@ -272,7 +351,7 @@ func (m sql) UpdatePasswordCredential(credential types.PasswordCredential) (type
 	if err != nil {
 		return credential, err
 	}
-	err = m.produceMessage("creds_update", credential.ID, []byte(fmt.Sprintf("Updated PasswordCredential with ID: %s", credential.ID)))
+	err = m.produceMessage("creds_update", credential)
 	if err != nil {
 		log.Printf("Failed to produce message: %v", err)
 	}
@@ -285,7 +364,7 @@ func (m sql) UpdateCardCredential(credential types.CardCredential) (types.CardCr
 	if err != nil {
 		return updatedCredential, err
 	}
-	err = m.produceMessage("creds_update", credential.ID, []byte(fmt.Sprintf("Updated CardCredential with ID: %s", credential.ID)))
+	err = m.produceMessage("creds_update", credential)
 	if err != nil {
 		log.Printf("Failed to produce message: %v", err)
 	}
@@ -298,7 +377,7 @@ func (m sql) UpdateSSHKeyCredential(credential types.SSHKeyCredential) (types.SS
 	if err != nil {
 		return updatedCredential, err
 	}
-	err = m.produceMessage("creds_update", credential.ID, []byte(fmt.Sprintf("Updated SSHKeyCredential with ID: %s", credential.ID)))
+	err = m.produceMessage("creds_update", credential)
 	if err != nil {
 		log.Printf("Failed to produce message: %v", err)
 	}
@@ -311,7 +390,7 @@ func (m sql) DeletePasswordCredentials(ids []string) error {
 		return err
 	}
 	for _, id := range ids {
-		err = m.produceMessage("creds_delete", id, []byte(fmt.Sprintf("Deleted PasswordCredential with ID: %s", id)))
+		err = m.produceMessage("creds_delete", id)
 		if err != nil {
 			log.Printf("Failed to produce message: %v", err)
 		}
@@ -325,7 +404,7 @@ func (m sql) DeleteCardCredentials(ids []string) error {
 		return err
 	}
 	for _, id := range ids {
-		err = m.produceMessage("creds_delete", id, []byte(fmt.Sprintf("Deleted CardCredential with ID: %s", id)))
+		err = m.produceMessage("creds_delete", id)
 		if err != nil {
 			log.Printf("Failed to produce message: %v", err)
 		}
@@ -339,7 +418,7 @@ func (m sql) DeleteSSHKeyCredentials(ids []string) error {
 		return err
 	}
 	for _, id := range ids {
-		err = m.produceMessage("creds_delete", id, []byte(fmt.Sprintf("Deleted SSHKeyCredential with ID: %s", id)))
+		err = m.produceMessage("creds_delete", id)
 		if err != nil {
 			log.Printf("Failed to produce message: %v", err)
 		}
