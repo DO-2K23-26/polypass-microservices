@@ -10,12 +10,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	esdb "github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 	"github.com/polypass/polypass-microservices/statistics/application/services"
 	"github.com/polypass/polypass-microservices/statistics/config"
 	"github.com/polypass/polypass-microservices/statistics/domain/models"
-	"github.com/polypass/polypass-microservices/statistics/infrastructure/api"
 	"github.com/polypass/polypass-microservices/statistics/infrastructure/kafka"
 	"github.com/polypass/polypass-microservices/statistics/infrastructure/repositories"
 )
@@ -53,20 +53,9 @@ func main() {
 
 	// Create repositories
 	eventRepo := repositories.NewEventStoreDBEventRepository(esdbClient)
-	metricRepo := repositories.NewEventStoreDBMetricRepository(esdbClient)
 
 	// Create services
 	eventService := services.NewEventService(eventRepo)
-
-	// Create metric calculators
-	calculators := []models.MetricCalculator{
-		// Add your metric calculators here
-		models.NewCredentialCountCalculator(),
-		models.NewCredentialAccessCountCalculator(),
-		// Add more calculators as needed
-	}
-
-	metricService := services.NewMetricService(metricRepo, eventService, calculators)
 
 	// Create Kafka consumer
 	kafkaConfig := kafka.EventConsumerConfig{
@@ -88,16 +77,95 @@ func main() {
 	defer eventConsumer.Stop()
 
 	// Create HTTP router
-	router := mux.NewRouter()
+	r := gin.Default()
 
-	// Create REST handler
-	restHandler := api.NewRestHandler(metricService, eventService)
-	restHandler.RegisterRoutes(router)
+	// Configuration CORS
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
+
+	// Routes
+	r.POST("/statistics/analyze", func(c *gin.Context) {
+		var credentials []map[string]interface{}
+		if err := c.BindJSON(&credentials); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		// Analyse des mots de passe
+		weakPasswords := make(map[string][]string)
+		strongPasswords := make(map[string][]string)
+		reusedPasswords := make(map[string][]string)
+		oldPasswords := make(map[string][]string)
+		breachedPasswords := make(map[string][]string)
+
+		// Map pour suivre les mots de passe réutilisés
+		passwordOccurrences := make(map[string][]string)
+
+		// Date limite pour les mots de passe anciens (1 an)
+		oneYearAgo := time.Now().AddDate(-1, 0, 0)
+
+		for _, cred := range credentials {
+			password, ok := cred["password"].(string)
+			if !ok {
+				continue
+			}
+
+			id, ok := cred["id"].(string)
+			if !ok {
+				continue
+			}
+
+			// Vérifier si le mot de passe est fort
+			isStrong := models.IsStrongPassword(password)
+
+			if isStrong {
+				strongPasswords[password] = append(strongPasswords[password], id)
+			} else {
+				weakPasswords[password] = append(weakPasswords[password], id)
+			}
+
+			// Suivre les occurrences de chaque mot de passe
+			passwordOccurrences[password] = append(passwordOccurrences[password], id)
+
+			// Vérifier si le mot de passe est ancien
+			if lastUpdated, ok := cred["lastUpdated"].(string); ok {
+				lastUpdatedTime, err := time.Parse("2006-01-02", lastUpdated)
+				if err == nil && lastUpdatedTime.Before(oneYearAgo) {
+					oldPasswords[password] = append(oldPasswords[password], id)
+				}
+			}
+
+			// Vérifier si le mot de passe est compromis
+			if isBreached, err := models.CheckPasswordBreach(password); err == nil && isBreached {
+				breachedPasswords[password] = append(breachedPasswords[password], id)
+			}
+		}
+
+		// Identifier les mots de passe réutilisés
+		for password, ids := range passwordOccurrences {
+			if len(ids) > 1 {
+				reusedPasswords[password] = ids
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"weakPasswords":     weakPasswords,
+			"strongPasswords":   strongPasswords,
+			"reusedPasswords":   reusedPasswords,
+			"oldPasswords":      oldPasswords,
+			"breachedPasswords": breachedPasswords,
+		})
+	})
 
 	// Create HTTP server
 	server := &http.Server{
 		Addr:    cfg.HTTP.ListenAddress,
-		Handler: router,
+		Handler: r,
 	}
 
 	// Start HTTP server in a goroutine
