@@ -1,0 +1,91 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+union Credential = PasswordCredential | SSHCredential | CardCredential
+
+scalar JSON
+
+type PasswordCredential {
+  createdAt: String!
+  expiresAt: String!
+  updatedAt: String
+  lastReadAt: String
+  note: String
+  password: String!
+  title: String
+  userIdentifier: String!
+  id: ID!
+  domainName: String!
+  customFields: JSON
+}
+
+type SSHCredential {
+  createdAt: String!
+  expiresAt: String!
+  updatedAt: String
+  lastReadAt: String
+  note: String
+  publicKey: String!
+  privateKey: String!
+  title: String
+  userIdentifier: String!
+  id: ID!
+  hostname: String!
+  customFields: JSON
+}
+
+type CardCredential {
+  cardNumber: String!
+  createdAt: String!
+  customFields: JSON
+  CVC: String!
+  expirationDate: String!
+  expiresAt: String!
+  id: ID!
+  lastReadAt: String
+  note: String
+  createdAt: String!
+  ownerName: String!
+  title: String
+  updatedAt: String
+  userIdentifier: String!
+}
+
+type Folder {
+  id: ID!
+  name: String!
+  description: String!
+  icon: String!
+  parent: Folder
+  createdBy: User!
+  createdAt: String!
+  updatedAt: String!
+  members : [User!]!
+  tags: [Tag!]
+}
+
+type Tag {
+  name: String!
+  color: String!
+  folder: Folder!
+  createdBy: User!
+}
+
+type Query {
+  credentials: [Credential!]!
+  folders: [Folder!]!
+  tags: [Tag!]!
+}
+
+input NewFolder {
+  name: String!
+  description: String!
+  icon: String!
+  parent: ID
+  createdBy: ID!
+}
+
+type Mutation {
+  createFolder(newFolder: NewFolder!): Folder!
+}
