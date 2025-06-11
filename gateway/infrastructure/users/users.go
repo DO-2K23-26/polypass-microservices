@@ -18,6 +18,6 @@ type usersAPI struct {
 
 }
 
-func NewUsersAPI(config UsersConfig) UserAPI {
-	return &usersAPI{}
-}
+// func NewUsersAPI(config UsersConfig) UserAPI {
+// 	return &usersAPI{}
+// }

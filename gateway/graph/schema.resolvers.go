@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	model1 "github.com/DO-2K23-26/polypass-microservices/gateway/graph/model"
+	"github.com/DO-2K23-26/polypass-microservices/gateway/infrastructure/organizations"
 	"github.com/optique-dev/optique"
 )
 
@@ -59,7 +60,17 @@ func (r *folderResolver) Tags(ctx context.Context, obj *model1.Folder) ([]*model
 
 // CreateFolder is the resolver for the createFolder field.
 func (r *mutationResolver) CreateFolder(ctx context.Context, newFolder model1.NewFolder) (*model1.Folder, error) {
-	panic(fmt.Errorf("not implemented: CreateFolder - createFolder"))
+	folder, err := r.OrganizationsService.CreateFolder(organizations.CreateFolderRequest{
+		Name: newFolder.Name,
+		ParentID: newFolder.Parent,
+		Description: newFolder.Description,
+		Icon: newFolder.Icon,
+		CreatedBy: newFolder.CreatedBy,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return FolderToModel(&folder), nil
 }
 
 // Credentials is the resolver for the credentials field.
