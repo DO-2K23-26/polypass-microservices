@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	organization "github.com/DO-2K23-26/polypass-microservices/libs/interfaces/organization"
 	"github.com/DO-2K23-26/polypass-microservices/organization/internal/app"
 	"github.com/gorilla/mux"
 )
@@ -34,18 +35,24 @@ func (h *FolderCredentialHandler) ListCredentials(w http.ResponseWriter, r *http
 	if limitStr == "" {
 		limitStr = "10"
 	}
+
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
-		http.Error(w, "invalid page", http.StatusBadRequest)
+		http.Error(w, "invalid page number", http.StatusBadRequest)
 		return
 	}
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
-		http.Error(w, "invalid limit", http.StatusBadRequest)
+		http.Error(w, "invalid limit number", http.StatusBadRequest)
 		return
 	}
 
-	res, err := h.service.List(folderID, credType, page, limit)
+	req := organization.GetCredentialRequest{
+		Page:  page,
+		Limit: limit,
+	}
+
+	res, err := h.service.List(folderID, credType, req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
