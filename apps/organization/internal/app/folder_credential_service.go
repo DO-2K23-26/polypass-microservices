@@ -34,15 +34,8 @@ func NewFolderCredentialService(db *gorm.DB, publisher EventPublisher, encoder *
 	return &FolderCredentialService{db: db, host: host, client: &http.Client{}, publisher: publisher, encoder: encoder}
 }
 
-// CredentialList represents the list response for credentials.
-type CredentialList struct {
-	Credentials []map[string]interface{} `json:"credentials"`
-	Page        int                      `json:"page"`
-	Limit       int                      `json:"limit"`
-}
-
 // List returns paginated credentials for a folder.
-func (s *FolderCredentialService) List(folderID, credType string, page, limit int) (*CredentialList, error) {
+func (s *FolderCredentialService) List(folderID, credType string, page, limit int) (*organization.CredentialList, error) {
 	var relations []organization.FolderCredential
 	if err := s.db.Where("id_folder = ?", folderID).Find(&relations).Error; err != nil {
 		return nil, err
@@ -50,7 +43,7 @@ func (s *FolderCredentialService) List(folderID, credType string, page, limit in
 
 	start := (page - 1) * limit
 	if start > len(relations) {
-		return &CredentialList{Credentials: []map[string]interface{}{}, Page: page, Limit: limit}, nil
+		return &organization.CredentialList{Credentials: []map[string]interface{}{}, Page: page, Limit: limit}, nil
 	}
 	end := start + limit
 	if end > len(relations) {
@@ -75,7 +68,7 @@ func (s *FolderCredentialService) List(folderID, credType string, page, limit in
 		creds = append(creds, data)
 	}
 
-	return &CredentialList{Credentials: creds, Page: page, Limit: limit}, nil
+	return &organization.CredentialList{Credentials: creds, Page: page, Limit: limit}, nil
 }
 
 // Create creates a credential via the credential service and stores the link.
