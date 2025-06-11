@@ -42,6 +42,11 @@ func NewApp() (*App, error) {
 		return nil, err
 	}
 
+	credentialEncoder, err := avroschemas.NewEncoder(cfg.SchemaRegistryURL, "organization-credential-event-value", generated.CredentialEvent{}.Schema())
+	if err != nil {
+		return nil, err
+	}
+
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", "localhost", "postgres", "postgres", "postgres", "5432")
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -51,7 +56,7 @@ func NewApp() (*App, error) {
 
 	folderService := app.NewFolderService(producer, folderEncoder, db)
 	tagService := app.NewTagService(producer, tagEncoder, db)
-	folderCredentialService := app.NewFolderCredentialService(db)
+	folderCredentialService := app.NewFolderCredentialService(db, producer, credentialEncoder)
 
 	folderHandler := httpPorts.NewFolderHandler(folderService)
 	tagHandler := httpPorts.NewTagHandler(tagService)
