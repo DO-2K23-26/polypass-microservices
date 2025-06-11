@@ -22,6 +22,12 @@ func NewTagService(publisher EventPublisher, encoder *schemautils.AvroEncoder, d
 }
 
 func (s *TagService) CreateTag(tag organization.CreateTagRequest) error {
+
+	folderService := &FolderService{} // Create an instance of FolderService
+	if _, err := folderService.GetFolder(tag.FolderID); err != nil {
+		return err
+	}
+
 	newTag := organization.Tag{
 		Id:         uuid.New().String(),
 		Name:       tag.Name,
