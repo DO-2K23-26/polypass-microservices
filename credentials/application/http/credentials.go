@@ -70,7 +70,7 @@ func (c *CreatePasswordCredentialOpts) Validate(ctx *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		CreatePasswordCredentialOpts	true	"Create password credential options"
-//	@Success		200		{object}	types.PasswordCredential
+//	@Success		201		{object}	types.PasswordCredential
 //	@Failure		400		{object}	fiber.Map
 //	@Failure		500		{object}	fiber.Map
 //	@Router			/credentials/password [post]
@@ -110,7 +110,7 @@ func (c *CredentialsController) CreatePasswordCredential() fiber.Handler {
 			})
 		}
 
-		return ctx.Status(fiber.StatusOK).JSON(cred)
+		return ctx.Status(fiber.StatusCreated).JSON(cred)
 	}
 }
 
@@ -242,7 +242,7 @@ func (c *CreateCardCredentialOpts) Validate(ctx *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		CreateCardCredentialOpts	true	"Create card credential options"
-//	@Success		200		{object}	types.CardCredential
+//	@Success		201		{object}	types.CardCredential
 //	@Failure		400		{object}	fiber.Map
 //	@Failure		500		{object}	fiber.Map
 //	@Router			/credentials/card [post]
@@ -282,7 +282,7 @@ func (c *CredentialsController) CreateCardCredential() fiber.Handler {
 			})
 		}
 
-		return ctx.Status(fiber.StatusOK).JSON(cred)
+		return ctx.Status(fiber.StatusCreated).JSON(cred)
 	}
 }
 
@@ -414,7 +414,7 @@ func (c *CreateSSHCredentialOpts) Validate(ctx *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		CreateSSHCredentialOpts	true	"Create SSHKey credential options"
-//	@Success		200		{object}	types.SSHKeyCredential
+//	@Success		201		{object}	types.SSHKeyCredential
 //	@Failure		400		{object}	fiber.Map
 //	@Failure		500		{object}	fiber.Map
 //	@Router			/credentials/sshkey [post]
@@ -455,7 +455,7 @@ func (c *CredentialsController) CreateSSHKeyCredential() fiber.Handler {
 			})
 		}
 
-		return ctx.Status(fiber.StatusOK).JSON(cred)
+		return ctx.Status(fiber.StatusCreated).JSON(cred)
 	}
 }
 
