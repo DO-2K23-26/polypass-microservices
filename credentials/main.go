@@ -26,7 +26,7 @@ func main() {
 	cycle := NewCycle()
 
 	producer, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092",
+		"bootstrap.servers": "localhost:19092, localhost:29092",
 		"security.protocol": "PLAINTEXT", 
 	})
 	
@@ -38,7 +38,7 @@ func main() {
 	}
 	
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092",
+		"bootstrap.servers": "localhost:19092, localhost:29092",
 		"group.id":          "my-group",
 		"auto.offset.reset": "earliest",
 	})
