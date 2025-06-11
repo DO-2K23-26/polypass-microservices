@@ -122,3 +122,49 @@ func (h *FolderHandler) GetFolder(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(folder)
 }
+
+func (h *FolderHandler) ListUsersInFolder(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	folderId := vars["id"]
+
+	// Pagination parameters
+	page := r.URL.Query().Get("page")
+	if page == "" {
+		page = "1" // Default to page 1 if not provided
+	}
+	limit := r.URL.Query().Get("limit")
+	if limit == "" {
+		limit = "10" // Default to 10 items per page if not provided
+	}
+	// Convert page and limit to integers
+	pageInt, err := strconv.Atoi(page)
+	if err != nil {
+		http.Error(w, "Invalid page number", http.StatusBadRequest)
+		return
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		http.Error(w, "Invalid limit number", http.StatusBadRequest)
+		return
+	}
+	req := organization.GetUsersInFolderRequest{
+		Page:  pageInt,
+		Limit: limitInt,
+	}
+
+	users, err := h.service.ListUsersInFolder(folderId, req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	result := organization.GetUsersInFolderResponse{
+		Users: users,
+		Total: len(users),
+		Page:  pageInt,
+		Limit: limitInt,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}

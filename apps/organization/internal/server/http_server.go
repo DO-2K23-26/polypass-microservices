@@ -35,6 +35,7 @@ func (s *HttpServer) Start() {
 	r.HandleFunc("/folders/{id}", s.folderHandler.GetFolder).Methods("GET")
 	r.HandleFunc("/folders/{id}", s.folderHandler.UpdateFolder).Methods("PUT")
 	r.HandleFunc("/folders/{id}", s.folderHandler.DeleteFolder).Methods("DELETE")
+	r.HandleFunc("/folders/{id}/users", s.folderHandler.ListUsersInFolder).Methods("GET")
 
 	// Folder credentials
 	r.HandleFunc("/folders/{folderId}/credentials/{type}", s.folderCredentialHandler.ListCredentials).Methods("GET")

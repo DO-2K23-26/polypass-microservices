@@ -186,3 +186,38 @@ func (s *FolderService) GetFolder(id string) (*organization.Folder, error) {
 
 	return &folder, nil
 }
+
+func (s *FolderService) ListUsersInFolder(folderId string, req organization.GetUsersInFolderRequest) ([]string, error) {
+	// Retrieve all parent folders up to the root
+	var folders []organization.Folder
+	currentFolderId := folderId
+	for {
+		var f organization.Folder
+		result := s.database.Preload("User").First(&f, "id = ?", currentFolderId)
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		folders = append(folders, f)
+		if f.ParentID == nil || *f.ParentID == "" {
+			break
+		}
+		currentFolderId = *f.ParentID
+	}
+
+	// Collect all user IDs without duplicates
+	userIDSet := make(map[string]struct{})
+	for _, f := range folders {
+		if f.User != nil {
+			for _, user := range *f.User {
+				userIDSet[user.ID] = struct{}{}
+			}
+		}
+	}
+
+	var userIDs []string
+	for id := range userIDSet {
+		userIDs = append(userIDs, id)
+	}
+
+	return userIDs, nil
+}

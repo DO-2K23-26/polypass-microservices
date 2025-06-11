@@ -40,3 +40,15 @@ type GetFolderResponse struct {
 	Page    int      `json:"page"`
 	Limit   int      `json:"limit"`
 }
+
+type GetUsersInFolderRequest struct {
+	Page  int `json:"page" form:"page"`
+	Limit int `json:"limit" form:"limit"`
+}
+
+type GetUsersInFolderResponse struct {
+	Users []string `json:"users"`
+	Total int      `json:"total"`
+	Page  int      `json:"page"`
+	Limit int      `json:"limit"`
+}
