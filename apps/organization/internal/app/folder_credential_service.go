@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	avroGeneratedSchema "github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/generated"
 	"github.com/DO-2K23-26/polypass-microservices/libs/avro-schemas/schemautils"
@@ -178,9 +179,7 @@ func (s *FolderCredentialService) Delete(folderID, credType string, ids []string
 		return err
 	}
 	q := req.URL.Query()
-	for _, id := range ids {
-		q.Add("id", id)
-	}
+	q.Set("ids", strings.Join(ids, ","))
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := s.client.Do(req)
@@ -188,9 +187,19 @@ func (s *FolderCredentialService) Delete(folderID, credType string, ids []string
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		// Success case
+	case http.StatusBadRequest:
 		b, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("credential service returned %d: %s", resp.StatusCode, string(b))
+		return fmt.Errorf("invalid request: %s", string(b))
+	case http.StatusInternalServerError:
+		b, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("credential service internal error: %s", string(b))
+	default:
+		b, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("credential service returned unexpected status %d: %s", resp.StatusCode, string(b))
 	}
 
 	if err := s.db.Where("id_folder = ? AND id_credential IN ?", folderID, ids).Delete(&organization.FolderCredential{}).Error; err != nil {
