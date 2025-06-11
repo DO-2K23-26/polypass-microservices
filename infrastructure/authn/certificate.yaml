@@ -4,9 +4,9 @@ metadata:
   name: polypass-certificates
   namespace: default
 spec:
-  secretName: auth.umontpelier.fr-tls
+  secretName: auth.polypass.umontpelier.fr-tls
   issuerRef:
     name: polypass-prod
     kind: ClusterIssuer
   dnsNames:
-    - auth.umontpelier.fr
+    - auth.polypass.umontpelier.fr
