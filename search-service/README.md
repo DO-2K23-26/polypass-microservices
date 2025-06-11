@@ -1,5 +1,21 @@
 # Search service
 
+## Build & run the CLI
+
+Go in the `search-service` directory
+
+```sh
+cd search-service
+```
+
+```bash
+go build -o search-cli cli.go
+```
+
+```bash
+./search-cli search-folders --query "example" --limit 10 --page 1 --user-id "user123"
+```
+
 ## Launch the application
 
 ## Host setup
@@ -15,12 +31,14 @@ By default, the stack exposes the following ports:
 
 ## Bringing up the stack
 
-Go in the docker-elk directory
+Go in the `docker-elk` directory
+
 ```sh
 cd docker-elk
 ```
 
 The first time you launch the stack, you will need to run the setup script:
+
 ```sh
 docker compose up setup
 ```
@@ -32,6 +50,7 @@ docker compose up -d
 ```
 
 Launch the search service:
+
 ```sh
 cd ..
 go run main.go
@@ -44,7 +63,6 @@ multiple services such as:
 
 - Organization
 - Credentials
-
 
 ### Organization Events
 
@@ -78,11 +96,13 @@ Note: Topics name could change but those described are good enough to be underst
 ### Generate protos file
 
 Export the go path:
+
 ```sh
 export PATH="$PATH:$(go env GOPATH)/bin"
 ```
 
 Generate the proto files:
+
 ```sh
 protoc --go_out=./gen  --go-grpc_out=./gen ./proto/search.proto
 ```
