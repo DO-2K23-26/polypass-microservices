@@ -27,6 +27,13 @@ func (h *FolderCredentialHandler) ListCredentials(w http.ResponseWriter, r *http
 	folderID := vars["folderId"]
 	credType := vars["type"]
 
+	if organization.CredentialType(credType) != organization.CredentialTypePassword &&
+		organization.CredentialType(credType) != organization.CredentialTypeCard &&
+		organization.CredentialType(credType) != organization.CredentialTypeSSHKey {
+		http.Error(w, "invalid credential type", http.StatusBadRequest)
+		return
+	}
+
 	pageStr := r.URL.Query().Get("page")
 	if pageStr == "" {
 		pageStr = "1"
@@ -67,6 +74,13 @@ func (h *FolderCredentialHandler) CreateCredential(w http.ResponseWriter, r *htt
 	folderID := vars["folderId"]
 	credType := vars["type"]
 
+	if organization.CredentialType(credType) != organization.CredentialTypePassword &&
+		organization.CredentialType(credType) != organization.CredentialTypeCard &&
+		organization.CredentialType(credType) != organization.CredentialTypeSSHKey {
+		http.Error(w, "invalid credential type", http.StatusBadRequest)
+		return
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -89,6 +103,13 @@ func (h *FolderCredentialHandler) UpdateCredential(w http.ResponseWriter, r *htt
 	folderID := vars["folderId"]
 	credType := vars["type"]
 	credentialID := vars["credentialId"]
+
+	if organization.CredentialType(credType) != organization.CredentialTypePassword &&
+		organization.CredentialType(credType) != organization.CredentialTypeCard &&
+		organization.CredentialType(credType) != organization.CredentialTypeSSHKey {
+		http.Error(w, "invalid credential type", http.StatusBadRequest)
+		return
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
