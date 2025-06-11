@@ -23,7 +23,7 @@ func NewTagService(publisher EventPublisher, encoder *schemautils.AvroEncoder, d
 
 func (s *TagService) CreateTag(tag organization.CreateTagRequest) error {
 
-	folderService := &FolderService{} // Create an instance of FolderService
+	folderService := NewFolderService(s.publisher, s.encoder, s.database)
 	if _, err := folderService.GetFolder(tag.FolderID); err != nil {
 		return err
 	}
