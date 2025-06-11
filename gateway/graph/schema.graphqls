@@ -93,4 +93,5 @@ input NewFolder {
 
 type Mutation {
   createFolder(newFolder: NewFolder!): Folder!
+  deleteFolder(id: ID!): Boolean!
 }
