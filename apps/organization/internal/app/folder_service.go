@@ -34,6 +34,13 @@ func StringPtrToValue(val *string) string {
 }
 
 func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) (*organization.Folder, error) {
+	if folder.ParentID != nil {
+		_, err := s.GetFolder(*folder.ParentID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	newFolder := organization.Folder{
 		Id:          uuid.New().String(),
 		Name:        folder.Name,
@@ -87,6 +94,13 @@ func (s *FolderService) UpdateFolder(folderId string, folder organization.Update
 			return nil, gorm.ErrRecordNotFound
 		}
 		return nil, getDatabaseErr
+	}
+
+	if folder.ParentID != nil {
+		_, err := s.GetFolder(*folder.ParentID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	updatedFolder := organization.Folder{
