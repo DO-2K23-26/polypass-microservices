@@ -57,7 +57,7 @@ func (s *TagService) CreateTag(tag organization.CreateTagRequest) error {
 		return gorm.ErrRecordNotFound
 	}
 
-	return s.publisher.Publish("tag-create", buf.Bytes())
+	return s.publisher.Publish("tag-creation", buf.Bytes())
 }
 
 func (s *TagService) UpdateTag(tag organization.UpdateTagRequest) error {
@@ -75,6 +75,7 @@ func (s *TagService) UpdateTag(tag organization.UpdateTagRequest) error {
 	if err != nil {
 		return err
 	}
+
 
 	res := s.database.Model(&organization.Tag{}).
 		Where("id = ?", tag.Id).

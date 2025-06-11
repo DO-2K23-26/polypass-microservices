@@ -66,7 +66,7 @@ func (s *FolderService) CreateFolder(folder organization.CreateFolderRequest) (*
 	if res.RowsAffected == 0 {
 		return nil, gorm.ErrRecordNotFound
 	}
-	
+
 	var buf bytes.Buffer
 	kafkaErr := data.Serialize(&buf)
 	if kafkaErr != nil {
@@ -153,12 +153,11 @@ func (s *FolderService) DeleteFolder(folderId string) error {
 		Parent_id:   StringPtrToValue(deletedFolder.ParentID),
 		Members:     deletedFolder.Members,
 		Created_by:  deletedFolder.CreatedBy,
-	}
+
 	var buf bytes.Buffer
 	encodeErr := data.Serialize(&buf)
 	if encodeErr != nil {
 		return encodeErr
-	}
 
 	return s.publisher.Publish("folder-delete", buf.Bytes())
 }
