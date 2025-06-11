@@ -154,6 +154,7 @@ func (s *FolderService) DeleteFolder(folderId string) error {
 		Members:     deletedFolder.Members,
 		Created_by:  deletedFolder.CreatedBy,
 	}
+
 	var buf bytes.Buffer
 	encodeErr := data.Serialize(&buf)
 	if encodeErr != nil {
