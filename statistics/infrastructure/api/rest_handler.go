@@ -33,6 +33,7 @@ func (h *RestHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/metrics/name/{name}", h.GetMetricsByName).Methods("GET")
 	router.HandleFunc("/metrics/category/{category}", h.GetMetricsByCategory).Methods("GET")
 	router.HandleFunc("/metrics/calculate", h.CalculateMetrics).Methods("POST")
+	router.HandleFunc("/use", h.UsePassword).Methods("POST")
 }
 
 // GetLatestMetrics handles requests to get the latest metrics
@@ -136,4 +137,28 @@ func respondWithJSON(w http.ResponseWriter, status int, data interface{}) {
 	if data != nil {
 		json.NewEncoder(w).Encode(data)
 	}
+}
+
+func (h *RestHandler) UsePassword(w http.ResponseWriter, r *http.Request) {
+	// Déclaration de la structure attendue dans le corps de la requête
+	var req struct {
+		UserID     string `json:"userId"`
+		PasswordID string `json:"passwordId"`
+	}
+
+	// Décodage du corps JSON dans la structure
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Appel du service avec les données extraites
+	if err := h.eventService.UsedPasswordCount(r.Context(), req); err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Réponse en cas de succès
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status": "success"}`))
 }
