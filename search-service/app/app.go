@@ -13,7 +13,7 @@ import (
 	folderRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/folder"
 	tagRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/tags"
 	userRepository "github.com/DO-2K23-26/polypass-microservices/search-service/repositories/user"
-	credentialService"github.com/DO-2K23-26/polypass-microservices/search-service/services/credential"
+	credentialService "github.com/DO-2K23-26/polypass-microservices/search-service/services/credential"
 	folderService "github.com/DO-2K23-26/polypass-microservices/search-service/services/folder"
 	tagService "github.com/DO-2K23-26/polypass-microservices/search-service/services/tags"
 	userService "github.com/DO-2K23-26/polypass-microservices/search-service/services/user"
@@ -24,13 +24,13 @@ import (
 )
 
 type App struct {
-	Config               config.Config
-	esClient             *infrastructure.ElasticAdapter
-	gormClient           *infrastructure.GormAdapter
-	kafkaClient          *infrastructure.KafkaAdapter
-	GrpcServer           *grpc.Server
-	HttpServer           *http.Server
-	KafkaConsumers       []kafka.KafkaConsumerConfig
+	Config         config.Config
+	esClient       *infrastructure.ElasticAdapter
+	gormClient     *infrastructure.GormAdapter
+	kafkaClient    *infrastructure.KafkaAdapter
+	GrpcServer     *grpc.Server
+	HttpServer     *http.Server
+	KafkaConsumers []kafka.KafkaConsumerConfig
 }
 
 func NewApp(Config config.Config) (*App, error) {
@@ -43,6 +43,7 @@ func NewApp(Config config.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	println(err)
 
 	gormClient, err := infrastructure.NewGormAdapter(Config.PgHost, Config.PgUser, Config.PgPassword, Config.PgDBName, Config.PgPort)
 	if err != nil {
@@ -94,20 +95,19 @@ func NewApp(Config config.Config) (*App, error) {
 	}
 
 	return &App{
-		Config:               Config,
-		esClient:             esClient,
-		gormClient:           gormClient,
-		kafkaClient:          kafkaClient,
-		GrpcServer:           GrpcServer,
-		HttpServer:           HttpServer,
-		KafkaConsumers:       kafkaConsumers,
+		Config:         Config,
+		esClient:       esClient,
+		gormClient:     gormClient,
+		kafkaClient:    kafkaClient,
+		GrpcServer:     GrpcServer,
+		HttpServer:     HttpServer,
+		KafkaConsumers: kafkaConsumers,
 	}, nil
 }
 func (app *App) Init() error {
 	if err := app.esClient.CreateIndexes(); err != nil {
 		log.Println("Could not create elastic indexes:", err)
 		return err
-
 	}
 	if err := app.gormClient.Migrate(); err != nil {
 		log.Println("Could not migrate database:", err)
@@ -130,6 +130,7 @@ func (app *App) Start() error {
 			defer wg.Done()
 			err := app.kafkaClient.Consume(c.Topic, c.HandleMessage, c.HandleError)
 			if err != nil {
+				println(err)
 				errChan <- err
 			}
 		}(consumer)

@@ -215,12 +215,17 @@ func (c Consumers) HandleFolderUpdate(msg *kafka.Message) error {
 	log.Println("Handling folder update:", string(msg.Value))
 
 	var req folderService.UpdateFolderRequest
+	if folderUpdateErr != nil {
+		log.Println(folderUpdateErr.Error())
+	}
+
 	if err := avro.Unmarshal(folderUpdateSchema, msg.Value, &req); err != nil {
 		log.Println("Error deserializing folder update message:", err)
 		return err
 	}
-
+	log.Println("Ma request ", req)
 	_, err := c.folderService.Update(req)
+	log.Println("benoir ", err)
 	return err
 }
 

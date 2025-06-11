@@ -3,9 +3,13 @@ package folder
 import "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
 
 type CreateFolderQuery struct {
-	ID       string  `json:"id"`
-	Name     string  `json:"name"`
-	ParentID *string `json:"parent_id"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Icon        string   `json:"icon"`
+	ParentID    string   `json:"parent_id"`
+	Members     []string `json:"members"`
+	CreatedBy   string   `json:"created_by"`
 }
 
 type CreateFolderResult struct {
@@ -13,9 +17,12 @@ type CreateFolderResult struct {
 }
 
 type UpdateFolderQuery struct {
-	ID       string  `json:"id"`
-	Name     *string `json:"name"`
-	ParentId *string `json:"parent_id"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Icon        string   `json:"icon"`
+	ParentID    string   `json:"parent_id"`
+	Members     []string `json:"members"`
 }
 
 type UpdateFolderResult struct {
@@ -23,7 +30,12 @@ type UpdateFolderResult struct {
 }
 
 type DeleteFolderQuery struct {
-	ID string `json:"id"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Icon        string   `json:"icon"`
+	ParentID    string   `json:"parent_id"`
+	Members     []string `json:"members"`
 }
 
 type GetFolderQuery struct {
@@ -36,6 +48,8 @@ type GetFolderResult struct {
 
 type SearchFolderQuery struct {
 	Name         string    `json:"name"`
+	Description  string    `json:"description"`
+	Icon         string    `json:"icon"`
 	Limit        *int      `json:"limit"`         // The limit is the maximum number of folders to return
 	Offset       *int      `json:"offset"`        // The offset is the number of folders to skip before returning results
 	FoldersScope *[]string `json:"folders_scope"` // The folders that the user making the request can access

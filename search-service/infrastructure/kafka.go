@@ -2,6 +2,9 @@ package infrastructure
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
@@ -76,29 +79,49 @@ func (k *KafkaAdapter) Consume(topic string, handleMessage func(*kafka.Message) 
 		return err
 	}
 
-	for {
-		msg, err := consumer.ReadMessage(-1)
-		if err != nil {
-			if handleError != nil {
-				handleError(err)
-			}
-			continue
-		}
-		if handleMessage != nil {
-			err := handleMessage(msg)
-			if err != nil {
-				if handleError != nil {
+	err = consumer.SubscribeTopics([]string{topic}, nil)
+	sigchan := make(chan os.Signal, 1)
+    signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+	
+	run := true
+	for run == true {
+		select {
+        case sig := <-sigchan:
+            fmt.Printf("Caught signal %v: terminating\n", sig)
+            run = false
+        default:
+            ev, err := consumer.ReadMessage(-1)
+            if err != nil {
+                if handleError != nil {
 					handleError(err)
 				}
-				continue
-			}
-		}
+                continue
+            }
+            fmt.Printf("Consumed event from topic %s: key = %-10s value = %s\n",
+                *ev.TopicPartition.Topic, string(ev.Key), string(ev.Value))
 
-		_, err = k.consumer.CommitMessage(msg)
-		if err != nil && handleError != nil {
-			handleError(err)
+			if handleMessage != nil {
+				err := handleMessage(ev)
+				if err != nil {
+					if handleError != nil {
+						handleError(err)
+					}
+					continue
+				}
+			}
+			
+			_, err = k.consumer.CommitMessage(ev)
+			if err != nil && handleError != nil {
+				handleError(err)
+			}
+        }
+
+		if err != nil {
+			
+			continue
 		}
 	}
+	return err
 }
 
 func (k *KafkaAdapter) CheckHealth() bool {

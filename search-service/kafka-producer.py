@@ -111,7 +111,7 @@ def generate_folder_event():
         'icon': f'Icon-{uuid.uuid4().hex[:8]}',
         'created_at': datetime.now().isoformat(),
         'updated_at': datetime.now().isoformat(),
-        'parent_id': str(uuid.uuid4()),
+        'parent_id': "",  # Dossier sans parent
         'members': [str(uuid.uuid4()) for _ in range(2)],  # Génère 2 membres aléatoires
         'created_by': str(uuid.uuid4())
     }
@@ -145,12 +145,12 @@ def delivery_report(err, msg):
 def main():
     # Liste des topics et leurs fonctions de génération d'événements
     topics = {
-        'tag-creation': (generate_tag_event, tag_schema),
-        'tag-deletion': (generate_tag_event, tag_schema),
-        'tag-update': (generate_tag_event, tag_schema),
+        # 'tag-creation': (generate_tag_event, tag_schema),
+        # 'tag-deletion': (generate_tag_event, tag_schema),
+        # 'tag-update': (generate_tag_event, tag_schema),
         'folder-creation': (generate_folder_event, folder_schema),
-        'folder-deletion': (generate_folder_event, folder_schema),
-        'folder-update': (generate_folder_event, folder_schema),
+        # 'folder-deletion': (generate_folder_event, folder_schema),
+        # 'folder-update': (generate_folder_event, folder_schema),
         # 'user-creation': (generate_user_event, user_schema),
         # 'user-deletion': (generate_user_event, user_schema),
         # 'user-update': (generate_user_event, user_schema),

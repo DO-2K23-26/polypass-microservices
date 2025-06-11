@@ -33,24 +33,21 @@ func (e *EsSqlFolderRepository) GetFromUser(query GetFromUserQuery) (*GetFromUse
 		}
 		return nil, err
 	}
-	// Extract a list of ids
-	
+
 	folderIDs := make([]string, len(user.Folders))
 	for i, folder := range user.Folders {
 		folderIDs[i] = folder.ID
 	}
-	
-	// Get the hierarchy of folders with MGetFolderHierarchyQuery
+
 	hierarchyQuery := MGetFolderHierarchyQuery{
 		IDs: folderIDs,
 	}
-	
+
 	hierarchyResult, err := e.MGetHierarchy(hierarchyQuery)
 	if err != nil {
 		return nil, err
 	}
-	
-	
+
 	return &GetFromUserResult{
 		Folders: hierarchyResult.Folders,
 	}, nil
@@ -58,22 +55,36 @@ func (e *EsSqlFolderRepository) GetFromUser(query GetFromUserQuery) (*GetFromUse
 
 // CreateFolder implements FolderRepository.
 func (e *EsSqlFolderRepository) Create(query CreateFolderQuery) (*CreateFolderResult, error) {
-	createdFolder := types.Folder{
-		ID:   query.ID,
-		Name: query.Name,
+	// Vérifier si le dossier parent existe si un parent_id est spécifié
+	if query.ParentID != "" {
+		var parentFolder types.Folder
+		if err := e.sql.Db.Where("id = ?", query.ParentID).First(&parentFolder).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, fmt.Errorf("parent folder with ID %s does not exist", query.ParentID)
+			}
+			return nil, err
+		}
 	}
 
-	if query.ParentID != nil {
-		createdFolder.ParentID = query.ParentID
+	createdFolder := types.Folder{
+		ID:          query.ID,
+		Name:        query.Name,
+		Description: query.Description,
+		Icon:        query.Icon,
+		ParentID:    query.ParentID,
+		CreatedBy:   query.CreatedBy,
+		CreatedAt:   "", // Ces champs seront remplis par la base de données
+		UpdatedAt:   "", // Ces champs seront remplis par la base de données
 	}
+	createdFolder.SetMembers(query.Members)
+
 	if err := e.sql.Db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(createdFolder).Error; err != nil {
+		if err := tx.Create(&createdFolder).Error; err != nil {
 			return err
 		}
 		log.Println("create folder", createdFolder)
-		if err := e.es.CreateDocument(types.FolderIndex, createdFolder.ID, createdFolder); err != nil {
+		if err := e.es.CreateDocument(types.FolderIndex, createdFolder.ID, &createdFolder); err != nil {
 			log.Println("create folder err: ", err)
-
 			return err
 		}
 		return nil
@@ -184,8 +195,6 @@ func (e *EsSqlFolderRepository) MGetHierarchy(query MGetFolderHierarchyQuery) (*
 	if err := e.sql.Db.Raw(request, query.IDs).Scan(&folders).Error; err != nil {
 		return nil, err
 	}
-	
-
 
 	return &MGetFolderHierarchyResult{Folders: folders}, nil
 }
@@ -206,7 +215,7 @@ func (e *EsSqlFolderRepository) Search(query SearchFolderQuery) (*SearchFolderRe
 	res, total, err := e.es.Search(
 		types.FolderIndex,
 		query.Name,
-		[]string{"name"},
+		[]string{"name", "description"},
 		nil,
 	)
 	if err != nil {
@@ -233,26 +242,40 @@ func (e *EsSqlFolderRepository) Search(query SearchFolderQuery) (*SearchFolderRe
 func (e *EsSqlFolderRepository) Update(query UpdateFolderQuery) (*UpdateFolderResult, error) {
 	params := map[string]json.RawMessage{}
 	val, _ := json.Marshal(query.ID)
-
 	params["folder_id"] = val
-	// Marshal only non-nil values
-	if query.Name != nil {
-		val, _ := json.Marshal(query.Name)
-		params["folder_name"] = val
-	}
-	if query.ParentId != nil {
-		val, _ := json.Marshal(query.ParentId)
-		params["parent_id"] = val
-	}
 
-	log.Println(params)
+	// Marshal values
+	val, _ = json.Marshal(query.Name)
+	params["folder_name"] = val
+
+	val, _ = json.Marshal(query.Description)
+	params["description"] = val
+
+	val, _ = json.Marshal(query.Icon)
+	params["icon"] = val
+
+	val, _ = json.Marshal(query.ParentID)
+	params["parent_id"] = val
+
+	val, _ = json.Marshal(query.Members)
+	params["members"] = val
+
 	script := `
 if (ctx._source.folder != null) {
-  if (params.containsKey('folder_name') && params.folder_name != null) {
+  if (params.containsKey('folder_name')) {
     ctx._source.folder.name = params.folder_name;
   }
-  if (params.containsKey('parent_id') && params.parent_id != null) {
+  if (params.containsKey('description')) {
+    ctx._source.folder.description = params.description;
+  }
+  if (params.containsKey('icon')) {
+    ctx._source.folder.icon = params.icon;
+  }
+  if (params.containsKey('parent_id')) {
     ctx._source.folder.parent_id = params.parent_id;
+  }
+  if (params.containsKey('members')) {
+    ctx._source.folder.members = params.members;
   }
 }`
 
@@ -263,12 +286,23 @@ if (ctx._source.folder != null) {
 			},
 		},
 	}
+
+	// Créer une structure de mise à jour avec le champ Members converti en string
+	updateData := types.Folder{
+		ID:          query.ID,
+		Name:        query.Name,
+		Description: query.Description,
+		Icon:        query.Icon,
+		ParentID:    query.ParentID,
+	}
+	updateData.SetMembers(query.Members)
+
 	if err := e.sql.Db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&types.Folder{}).Where("id = ?", query.ID).Updates(query).Error; err != nil {
+		if err := tx.Model(&types.Folder{}).Where("id = ?", query.ID).Updates(updateData).Error; err != nil {
 			return err
 		}
-		// TO DO: Update the folder in Elasticsearch
-		err := e.es.UpdateDocument(types.FolderIndex, query.ID, query)
+
+		err := e.es.UpdateDocument(types.FolderIndex, query.ID, updateData)
 		if err != nil {
 			return err
 		}
@@ -281,9 +315,12 @@ if (ctx._source.folder != null) {
 	}); err != nil {
 		return nil, err
 	}
-	return &UpdateFolderResult{Folder: types.Folder{
-		ID:       query.ID,
-		Name:     *query.Name,
-		ParentID: *&query.ParentId,
-	}}, nil
+
+	// Récupérer le dossier mis à jour pour le retourner
+	var updatedFolder types.Folder
+	if err := e.sql.Db.Where("id = ?", query.ID).First(&updatedFolder).Error; err != nil {
+		return nil, err
+	}
+
+	return &UpdateFolderResult{Folder: updatedFolder}, nil
 }

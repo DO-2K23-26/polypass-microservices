@@ -30,13 +30,13 @@ func (s *FolderService) Create(req CreateFolderRequest) (*FolderResponse, error)
 	}
 
 	query := folder.CreateFolderQuery{
-		ID:   req.ID,
-		Name: req.Name,
-	}
-
-	if req.ParentID != nil {
-		//TO DO: Check the right of the user to create a folder inside another folder
-		query.ParentID = req.ParentID
+		ID:          req.ID,
+		Name:        req.Name,
+		Description: req.Description,
+		Icon:        req.Icon,
+		ParentID:    req.ParentID,
+		Members:     req.Members,
+		CreatedBy:   req.CreatedBy,
 	}
 
 	result, err := s.folderRepo.Create(query)
@@ -75,8 +75,12 @@ func (s *FolderService) Update(req UpdateFolderRequest) (*FolderResponse, error)
 	}
 
 	result, err := s.folderRepo.Update(folder.UpdateFolderQuery{
-		ID:   req.ID,
-		Name: &req.Name,
+		ID:          req.ID,
+		Name:        req.Name,
+		Description: req.Description,
+		Icon:        req.Icon,
+		ParentID:    req.ParentID,
+		Members:     req.Members,
 	})
 	if err != nil {
 		return nil, err
@@ -87,14 +91,19 @@ func (s *FolderService) Update(req UpdateFolderRequest) (*FolderResponse, error)
 	}, nil
 }
 
-// DeleteFolder deletes a folder by ID, checking user permissions
+// DeleteFolder deletes a folder by ID
 func (s *FolderService) Delete(req DeleteFolderRequest) error {
-	if req.ID == "" || req.UserID == "" {
+	if req.ID == "" {
 		return ErrInvalidRequest
 	}
 
 	return s.folderRepo.Delete(folder.DeleteFolderQuery{
-		ID: req.ID,
+		ID:          req.ID,
+		Name:        req.Name,
+		Description: req.Description,
+		Icon:        req.Icon,
+		ParentID:    req.ParentID,
+		Members:     req.Members,
 	})
 }
 
@@ -140,6 +149,8 @@ func (s *FolderService) Search(req SearchFoldersRequest) (*SearchFoldersResponse
 	// Perform the search with user's folder access scope
 	searchResult, err := s.folderRepo.Search(folder.SearchFolderQuery{
 		Name:         req.SearchQuery,
+		Description:  "",
+		Icon:         "",
 		Limit:        &limit,
 		Offset:       &offset,
 		FoldersScope: &folderIds,
