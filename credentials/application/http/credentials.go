@@ -2,7 +2,6 @@ package http
 
 import (
 	"strings"
-	"fmt"
 
 	"github.com/DO-2K23-26/polypass-microservices/credentials/core"
 	"github.com/DO-2K23-26/polypass-microservices/credentials/types"
@@ -105,8 +104,6 @@ func (c *CredentialsController) CreatePasswordCredential() fiber.Handler {
 			},
 			PasswordAttributes: payload.PasswordAttributes,
 		})
-		// log the cred
-		fmt.Printf("Created Password Credential: %+v\n", cred)
 		if err != nil {
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),

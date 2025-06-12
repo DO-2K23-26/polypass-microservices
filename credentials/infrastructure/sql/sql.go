@@ -2,9 +2,7 @@ package sql
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -17,6 +15,10 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
+)
+
+import (
+	avro "github.com/DO-2K23-26/polypass-microservices/credentials/interfaces/credentials"
 )
 
 type Sql interface {
@@ -51,9 +53,10 @@ type sql struct {
 	host       string
 	port       int
 	dbname     string
+	schemaDir  string
 }
 
-func NewSql(config Config,producer *kafka.Producer, consumer *kafka.Consumer) (Sql, error) {
+func NewSql(config Config, producer *kafka.Producer, consumer *kafka.Consumer) (Sql, error) {
 	db, err := sqlx.Connect("postgres", fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", config.Username, config.Password, config.Host, config.Port, config.Dbname))
 	if err != nil {
 		return nil, err
@@ -61,13 +64,14 @@ func NewSql(config Config,producer *kafka.Producer, consumer *kafka.Consumer) (S
 	return sql{
 		db:         db,
 		producer:   producer,
-		consumer: consumer,
+		consumer:   consumer,
 		migrations: config.Migrations,
 		username:   config.Username,
 		password:   config.Password,
 		host:       config.Host,
 		port:       config.Port,
 		dbname:     config.Dbname,
+		schemaDir:  config.SchemaDir,
 	}, nil
 }
 
@@ -92,155 +96,156 @@ func (m sql) Shutdown() error {
 }
 
 // Define a mapping from credentials types to schema file paths
-var credentialsSchema = map[string][]string{
-	"PasswordCredential": {"/home/pauline/projects/polypass/polypass-microservices/interfaces/credentials/password_credential.avsc"},
-	"CardCredential":     {"interfaces/credentials/card_credential.avsc"},
-	"SSHKeyCredential":   {"interfaces/credentials/ssh_credential.avsc"},
-	"CardAttribute":     {"interfaces/credentials/card_attributes.avsc"},
-	"CreateCredentialsOpts": {"interfaces/credentials/create_credentials_opts.avsc"},
-	"Credential": {"interfaces/credentials/credential.avsc"},
-	"PasswordAttribute": {"interfaces/credentials/password_attributes.avsc"},
-	"SSHKeyAttribute": {"interfaces/credentials/ssh_attribute.avsc"},
-	"UserIdentifierAttributes": {"interfaces/credentials/user_identifier_attribues.avsc"},
+var credentialsSchema = map[string]string{
+	"PasswordCredential":       "password_credential.avsc",
+    "CardCredential":           "card_credential.avsc",
+    "SSHKeyCredential":         "ssh_credential.avsc",
+    "CardAttribute":            "card_attributes.avsc",
+    "CreateCredentialsOpts":    "create_credentials_opts.avsc",
+    "Credential":               "credential.avsc",
+    "PasswordAttribute":        "password_attributes.avsc",
+    "SSHKeyAttribute":          "ssh_attribute.avsc",
+    "UserIdentifierAttributes": "user_identifier_attributes.avsc",
 }
-func loadSchema(path string) (string, error) {
-    b, err := ioutil.ReadFile(filepath.Clean(path))
-    if err != nil {
-        return "", err
-    }
-    return string(b), nil
+
+func (m *sql) loadSchema(filename string) (string, error) {
+	data, err := avro.FS.ReadFile(filename)
+	if err != nil {
+		return "", fmt.Errorf("lecture schema %s: %w", filename, err)
+	}
+	return string(data), nil
 }
 
 func getSchemaPath(typeName string) (string, error) {
-	p, ok := credentialsSchema[typeName]
-	if !ok {
-		return "", fmt.Errorf("no schema for type %s", typeName)
+	path, ok := credentialsSchema[typeName]
+	if !ok || path == "" {
+		return "", fmt.Errorf("no schema found for type %s", typeName)
 	}
-	if len(p) == 0 {
-		return "", fmt.Errorf("empty schema for type %s", typeName)
-	}
-	return p[0], nil 	//change this to detect the correct schema file based on the typeName
+	return path, nil
 }
 
 // newProduceMessage prend n'importe quel credential et le sérialise
 func (m *sql) produceMessage(topic string, cred interface{}) error {
-    // 1) on choisit le schéma et on construit le record
-    var (
-        typeName string
-        record   map[string]interface{}
-    )
-    switch c := cred.(type) {
-    case types.PasswordCredential:
-        typeName = "PasswordCredential"
-        record = map[string]interface{}{
-            "Credential": map[string]interface{}{
-                "id":            c.Credential.ID,
-                "title":         c.Credential.Title,
-                "note":          c.Credential.Note,
-                "created_at":    c.Credential.CreatedAt.Unix(),
-                "updated_at":    c.Credential.UpdatedAt.Unix(),
-                "expires_at":    unixOrZero(c.Credential.ExpiresAt),
-                "last_read_at":  unixOrZero(c.Credential.LastReadAt),
-                "custom_fields": toInterfaceMap(c.Credential.CustomFields),
-            },
-            "PasswordAttributes": map[string]interface{}{
-                "password":    c.PasswordAttributes.Password,
-                "domain_name": c.PasswordAttributes.DomainName,
-            },
-            "UserIdentifierAttribute": map[string]interface{}{
-                "user_identifier": c.UserIdentifierAttribute.UserIdentifier,
-            },
-        }
-
-    case types.CardCredential:
-        typeName = "CardCredential"
-        record = map[string]interface{}{
-            "Credential": map[string]interface{}{
-                "id":            c.Credential.ID,
-                "title":         c.Credential.Title,
-                "note":          c.Credential.Note,
-                "created_at":    c.Credential.CreatedAt.Unix(),
-                "updated_at":    c.Credential.UpdatedAt.Unix(),
-                "expires_at":    unixOrZero(c.Credential.ExpiresAt),
-                "last_read_at":  unixOrZero(c.Credential.LastReadAt),
-                "custom_fields": toInterfaceMap(c.Credential.CustomFields),
-            },
-			"CardAttributes": map[string]interface{}{
-				"owner_name":     c.OwnerName,
-				"cvc":            c.CVC,
-				"expiration_date": c.ExpirationDate,
-				"card_number":    c.CardNumber,
+	var (
+		typeName string
+		record   map[string]interface{}
+	)
+	switch c := cred.(type) {
+	case types.PasswordCredential:
+		typeName = "PasswordCredential"
+		record = map[string]interface{}{
+			"Credential": map[string]interface{}{
+				"id":            c.Credential.ID,
+				"title":         c.Credential.Title,
+				"note":          c.Credential.Note,
+				"created_at":    unixOrZero(c.Credential.CreatedAt),
+				"updated_at":    unixOrZero(c.Credential.UpdatedAt),
+				"expires_at":    unixOrZero(c.Credential.ExpiresAt),
+				"last_read_at":  unixOrZero(c.Credential.LastReadAt),
+				"custom_fields": toInterfaceMap(c.Credential.CustomFields),
 			},
-        }
+			"PasswordAttributes": map[string]interface{}{
+				"password":    c.PasswordAttributes.Password,
+				"domain_name": c.PasswordAttributes.DomainName,
+			},
+			"UserIdentifierAttribute": map[string]interface{}{
+				"user_identifier": c.UserIdentifierAttribute.UserIdentifier,
+			},
+		}
 
-    case types.SSHKeyCredential:
-        typeName = "SSHKeyCredential"
-        record = map[string]interface{}{
-            "Credential": map[string]interface{}{
+	case types.CardCredential:
+		typeName = "CardCredential"
+		record = map[string]interface{}{
+			"Credential": map[string]interface{}{
+				"id":            c.Credential.ID,
+				"title":         c.Credential.Title,
+				"note":          c.Credential.Note,
+				"created_at":    unixOrZero(c.Credential.CreatedAt),
+				"updated_at":    unixOrZero(c.Credential.UpdatedAt),
+				"expires_at":    unixOrZero(c.Credential.ExpiresAt),
+				"last_read_at":  unixOrZero(c.Credential.LastReadAt),
+				"custom_fields": toInterfaceMap(c.Credential.CustomFields),
+			},
+			"CardAttributes": map[string]interface{}{
+				"owner_name":      c.OwnerName,
+				"cvc":             c.CVC,
+				"expiration_date": c.ExpirationDate,
+				"card_number":     c.CardNumber,
+			},
+			"UserIdentifierAttribute": map[string]interface{}{
+				"user_identifier": c.UserIdentifier,
+			},
+		}
+
+	case types.SSHKeyCredential:
+		typeName = "SSHKeyCredential"
+		record = map[string]interface{}{
+			"Credential": map[string]interface{}{
                 "id":            c.Credential.ID,
                 "title":         c.Credential.Title,
                 "note":          c.Credential.Note,
-                "created_at":    c.Credential.CreatedAt.Unix(),
-                "updated_at":    c.Credential.UpdatedAt.Unix(),
+                "created_at":    unixOrZero(c.Credential.CreatedAt),
+                "updated_at":    unixOrZero(c.Credential.UpdatedAt),
                 "expires_at":    unixOrZero(c.Credential.ExpiresAt),
                 "last_read_at":  unixOrZero(c.Credential.LastReadAt),
                 "custom_fields": toInterfaceMap(c.Credential.CustomFields),
             },
-            "SSHKeyAttributes": map[string]interface{}{
-                "private_key":     c.PrivateKey,
-                "public_key":      c.PublicKey,
-                "hostname":        c.Hostname,
-                "user_identifier": c.UserIdentifier,
-            },
-        }
-    default:
-        return fmt.Errorf("unsupported credential type %T", cred)
-    }
+			"SSHKeyAttributes": map[string]interface{}{
+				"private_key":     c.PrivateKey,
+				"public_key":      c.PublicKey,
+				"hostname":        c.Hostname,
+				"user_identifier": c.UserIdentifier,
+			},
+			"UserIdentifierAttribute": map[string]interface{}{
+				"user_identifier": c.UserIdentifier,
+			},
+		}
+	default:
+		return fmt.Errorf("unsupported credential type %T", cred)
+	}
 
-    // 2) on charge le schéma Avro
-    schemaPath, err := getSchemaPath(typeName)
-    if err != nil {
-        return err
-    }
-    schemaDef, err := loadSchema(schemaPath)
-    if err != nil {
-        return err
-    }
-    codec, err := goavro.NewCodec(schemaDef)
-    if err != nil {
-        return err
-    }
+	schemaPath, err := getSchemaPath(typeName)
+	if err != nil {
+		return err
+	}
+	schemaDef, err := m.loadSchema(schemaPath)
+	if err != nil {
+		return err
+	}
+	codec, err := goavro.NewCodec(schemaDef)
+	if err != nil {
+		return err
+	}
 
-    // 3) on sérialise
-    avroBin, err := codec.BinaryFromNative(nil, record)
-    if err != nil {
-        log.Printf("Failed to serialize data: %v", err)
-        return err
-    }
+	avroBin, err := codec.BinaryFromNative(nil, record)
+	if err != nil {
+		log.Printf("Failed to serialize data: %v", err)
+		return err
+	}
 
-    // 4) on envoie sur Kafka
-    dc := make(chan kafka.Event, 1)
-    err = m.producer.Produce(&kafka.Message{
-        TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-        Key:            []byte(typeName), // ou l’ID que vous voulez
-        Value:          avroBin,
-    }, dc)
-    if err != nil {
-        return err
-    }
-    ev := <-dc
-    if km := ev.(*kafka.Message); km.TopicPartition.Error != nil {
-        return km.TopicPartition.Error
-    }
-    close(dc)
-    return nil
+	dc := make(chan kafka.Event, 1)
+	err = m.producer.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Key:            []byte(typeName),
+		Value:          avroBin,
+	}, dc)
+	if err != nil {
+		return err
+	}
+	ev := <-dc
+	if km := ev.(*kafka.Message); km.TopicPartition.Error != nil {
+		return km.TopicPartition.Error
+	}
+	close(dc)
+	log.Printf("[INFO] Message produit sur Kafka — topic: %s | key: %s | type: %s | record=%+v", topic, typeName, typeName, record)
+	return nil
 }
 
 func unixOrZero(t *time.Time) int64 {
-    if t != nil {
-        return t.Unix()
-    }
-    return 0
+	if t != nil {
+		return t.Unix()
+	}
+	return 0
 }
 
 func toInterfaceMap(m *map[string]any) map[string]interface{} {
@@ -304,14 +309,11 @@ func (m sql) GetSSHKeyCredentials(ids []string) ([]types.SSHKeyCredential, error
 }
 
 func (m sql) CreatePasswordCredential(credential types.PasswordCredential) (types.PasswordCredential, error) {
-	// log the credential
-	log.Printf("Creating PasswordCredential: %+v", credential)
 	var createdCredential types.PasswordCredential
 	err := m.db.Get(&createdCredential, "INSERT INTO password_credentials (title, note, user_identifier, password, domain_name) VALUES ($1, $2, $3, $4, $5) RETURNING *", credential.Title, credential.Note, credential.UserIdentifier, credential.Password, credential.DomainName)
 	if err != nil {
 		return createdCredential, err
 	}
-	fmt.Printf("AAAAAAAAAAAAAAAAAAAAAAAAAA: %+v\n", createdCredential)
 	err = m.produceMessage("creds_create", createdCredential)
 
 	if err != nil {
@@ -322,7 +324,7 @@ func (m sql) CreatePasswordCredential(credential types.PasswordCredential) (type
 
 func (m sql) CreateCardCredential(credential types.CardCredential) (types.CardCredential, error) {
 	var createdCredential types.CardCredential
-	err := m.db.Get(&createdCredential ,"INSERT INTO card_credentials (title, note, owner_name, cvc, expiration_date, card_number) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *", credential.Title, credential.Note, credential.OwnerName, credential.CVC, credential.ExpirationDate, credential.CardNumber)
+	err := m.db.Get(&createdCredential, "INSERT INTO card_credentials (title, note, owner_name, cvc, expiration_date, card_number) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *", credential.Title, credential.Note, credential.OwnerName, credential.CVC, credential.ExpirationDate, credential.CardNumber)
 	if err != nil {
 		return createdCredential, err
 	}
@@ -347,41 +349,74 @@ func (m sql) CreateSSHKeyCredential(credential types.SSHKeyCredential) (types.SS
 }
 
 func (m sql) UpdatePasswordCredential(credential types.PasswordCredential) (types.PasswordCredential, error) {
-	_, err := m.db.NamedExec("UPDATE password_credentials SET title = :title, note = :note, password = :password, domain_name = :domain_name WHERE id = :id", credential)
-	if err != nil {
-		return credential, err
-	}
-	err = m.produceMessage("creds_update", credential)
-	if err != nil {
-		log.Printf("Failed to produce message: %v", err)
-	}
-	return credential, nil
+	now := time.Now()
+    credential.UpdatedAt = &now
+
+    _, err := m.db.NamedExec(`
+        UPDATE password_credentials
+        SET title       = :title,
+            note        = :note,
+            password    = :password,
+            domain_name = :domain_name,
+            updated_at  = :updated_at
+        WHERE id = :id
+    `, credential)
+    if err != nil {
+        return credential, err
+    }
+
+    if err := m.produceMessage("creds_update", credential); err != nil {
+        log.Printf("Failed to produce message: %v", err)
+    }
+    return credential, nil
 }
 
 func (m sql) UpdateCardCredential(credential types.CardCredential) (types.CardCredential, error) {
-	var updatedCredential types.CardCredential
-	_, err := m.db.NamedExec("UPDATE card_credentials SET owner_name = :owner_name, cvc = :cvc, expiration_date = :expiration_date, card_number = :card_number, title = :title, note = :note WHERE id = :id", credential)
+	now := time.Now()
+	credential.UpdatedAt = &now
+	_, err := m.db.NamedExec(`
+      UPDATE card_credentials
+      SET owner_name      = :owner_name,
+          cvc             = :cvc,
+          expiration_date = :expiration_date,
+          card_number     = :card_number,
+          title           = :title,
+          note            = :note,
+          updated_at      = :updated_at
+      WHERE id = :id
+    `, credential)
 	if err != nil {
-		return updatedCredential, err
+		return credential, err
 	}
-	err = m.produceMessage("creds_update", credential)
-	if err != nil {
+	if err := m.produceMessage("creds_update", credential); err != nil {
 		log.Printf("Failed to produce message: %v", err)
 	}
 	return credential, nil
 }
 
 func (m sql) UpdateSSHKeyCredential(credential types.SSHKeyCredential) (types.SSHKeyCredential, error) {
-	var updatedCredential types.SSHKeyCredential
-	_, err := m.db.NamedExec("UPDATE ssh_keys SET private_key = :private_key, public_key = :public_key, hostname = :hostname, user_identifier = :user_identifier, title= :title, note = :note WHERE id = :id", credential)
-	if err != nil {
-		return updatedCredential, err
-	}
-	err = m.produceMessage("creds_update", credential)
-	if err != nil {
-		log.Printf("Failed to produce message: %v", err)
-	}
-	return credential, nil
+	now := time.Now()
+	credential.UpdatedAt = &now
+
+    _, err := m.db.NamedExec(`
+        UPDATE ssh_keys
+        SET private_key    = :private_key,
+            public_key     = :public_key,
+            hostname       = :hostname,
+            user_identifier= :user_identifier,
+            title          = :title,
+            note           = :note,
+            updated_at     = :updated_at
+        WHERE id = :id
+    `, credential)
+    if err != nil {
+        return credential, err
+    }
+
+    if err := m.produceMessage("creds_update", credential); err != nil {
+        log.Printf("Failed to produce message: %v", err)
+    }
+    return credential, nil
 }
 
 func (m sql) DeletePasswordCredentials(ids []string) error {
