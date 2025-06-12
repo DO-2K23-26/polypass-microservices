@@ -16,7 +16,7 @@
     ]
   },
   "http": {
-    "listen_address": ":8080"
+    "listen_address": ":8081"
   },
   "logging": {
     "level": "info",
