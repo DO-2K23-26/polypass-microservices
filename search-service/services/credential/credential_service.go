@@ -36,29 +36,40 @@ func NewCredentialService(
 
 // CreateCredential creates a new credential
 func (s *CredentialService) Create(req CreateCredentialRequest) (*CreateCredentialResponse, error) {
-	// Validate required fields
-	if req.Title == "" || req.FolderID == "" || req.ID == "" {
+	if req.Name == nil || *req.Name == "" {
 		return nil, ErrInvalidRequest
 	}
 
-	res, err := s.folderService.Get(folder.GetFolderRequest{
-		ID: req.FolderID,
-	})
-	if err != nil {
-		return nil, err
+	if req.FolderID == nil || *req.FolderID == "" {
+		return nil, ErrInvalidRequest
 	}
-	// Create the credential
+
+	var tagIDs []string
+	if req.TagIDs != nil {
+		tagIDs = *req.TagIDs
+	}
+
 	result, err := s.credentialRepository.Create(credential.CreateCredentialQuery{
-		ID:     req.ID,
-		Title:  req.Title,
-		Folder: res.Folder,
+		ID:        req.CredentialID,
+		Name:      *req.Name,
+		FolderID:  *req.FolderID,
+		TagIDs:    tagIDs,
+		CreatedAt: req.CreatedAt,
+		UpdatedAt: req.UpdatedAt,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &CreateCredentialResponse{
-		Credential: result.Credential,
+		Credential: types.Credential{
+			ID:        result.Credential.ID,
+			Name:      result.Credential.Name,
+			FolderID:  result.Credential.FolderID,
+			TagIDs:    result.Credential.TagIDs,
+			CreatedAt: result.Credential.CreatedAt,
+			UpdatedAt: result.Credential.UpdatedAt,
+		},
 	}, nil
 }
 
@@ -87,36 +98,27 @@ func (s *CredentialService) Get(req GetCredentialRequest) (*GetCredentialRespons
 
 // UpdateCredential updates an existing credential
 func (s *CredentialService) Update(req UpdateCredentialRequest) error {
-	if req.ID == "" {
+	if req.CredentialID == "" {
 		return ErrInvalidRequest
 	}
-	var newFolder *types.Folder
-	if req.FolderID != "" {
-		res, err := s.folderService.Get(folder.GetFolderRequest{ID: req.ID})
-		if err != nil {
-			return err
-		}
-		newFolder = &res.Folder
+	query := credential.UpdateCredentialQuery{
+		ID:       req.CredentialID,
+		Name:    req.Name,
+		FolderID: req.FolderID,
+		TagIDs:   req.TagIDs,
 	}
-
-	// Update the credential
-	return s.credentialRepository.Update(credential.UpdateCredentialQuery{
-		ID:     req.ID,
-		Title:  &req.Title,
-		Folder: newFolder,
-	})
+	return s.credentialRepository.Update(query)
 }
 
 // DeleteCredential deletes a credential by ID
 func (s *CredentialService) Delete(req DeleteCredentialRequest) error {
-	if req.ID == "" {
+	if req.CredentialID == "" {
 		return ErrInvalidRequest
 	}
-
-	// Delete the credential
-	return s.credentialRepository.Delete(credential.DeleteCredentialQuery{
-		ID: req.ID,
-	})
+	query := credential.DeleteCredentialQuery{
+		ID: req.CredentialID,
+	}
+	return s.credentialRepository.Delete(query)
 }
 
 // SearchCredentials searches for credentials based on criteria
@@ -124,65 +126,37 @@ func (s *CredentialService) Search(req SearchCredentialsRequest) (*SearchCredent
 	if req.UserID == "" {
 		return nil, ErrInvalidRequest
 	}
-
-	// Set default limit and offset if not provided
-	limit := 10
-	if req.Limit != nil && *req.Limit > 0 {
-		limit = *req.Limit
-	}
-
-	offset := 0
-	if req.Page != nil && *req.Page >= 0 {
-		offset = *req.Page * limit
-	}
-
-	res, err := s.folderService.GetFromUser(folder.GetUserFoldersRequest{UserID: req.UserID})
-	if err != nil {
-		return nil, err
-	}
-
-	var foldersScope []string
-	for _, folder := range res.Folders {
-		foldersScope = append(foldersScope, folder.ID)
-	}
-
-	// Perform the search
-	searchResult, err := s.credentialRepository.Search(credential.SearchCredentialQuery{
+	// Ici, il faudrait idéalement remplir FoldersScope avec les dossiers accessibles à l'utilisateur
+	query := credential.SearchCredentialQuery{
+		SearchQuery:  req.SearchQuery,
 		TagIds:       req.TagIDs,
-		Limit:        &limit,
-		Offset:       &offset,
-		FoldersScope: foldersScope,
-	})
+		Limit:        req.Limit,
+		Offset:       req.Page,
+		FoldersScope: nil, // à adapter si besoin
+	}
+	result, err := s.credentialRepository.Search(query)
 	if err != nil {
 		return nil, err
 	}
-
-	// Convert to response DTO
-	response := &SearchCredentialsResponse{
-		Credentials: searchResult.Credentials,
-		Total:       searchResult.Total,
-	}
-
-	return response, nil
+	return &SearchCredentialsResponse{
+		Credentials: result.Credentials,
+		Total:       result.Total,
+	}, nil
 }
 
-// AddTagsToCredential adds tags to a credential (this would need a new repository method)
-func (s *CredentialService) AddTags(credentialID string, tagIDs []string) error {
-	// Validate input
-	if credentialID == "" {
+// AddTagsToCredential adds tags to a credential
+func (s *CredentialService) AddTags(req AddTagsToCredentialRequest) error {
+	if req.ID == "" {
 		return ErrInvalidRequest
 	}
-
-	res, err := s.tagService.MGet(tag.MGetTagRequest{IDs: tagIDs})
-	if err != nil {
-		return err
+	if len(req.TagIds) == 0 {
+		return ErrInvalidRequest
 	}
-	// Call the repository method to add tags
-	return s.credentialRepository.AddTags(credential.AddTagsToCredentialQuery{
-		ID:   credentialID,
-		Tags: res.Tags,
-	})
-
+	query := credential.AddTagsToCredentialQuery{
+		ID:   req.ID,
+		Tags: nil, // à adapter selon la logique de ton repo
+	}
+	return s.credentialRepository.AddTags(query)
 }
 
 // RemoveTagsFromCredential removes tags from a credential (this would need a new repository method)

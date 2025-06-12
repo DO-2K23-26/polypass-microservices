@@ -38,7 +38,7 @@ func NewServer(
 	grpcServer := grpc.NewServer()
 
 	// Create the search service implementation
-	searchService := grpcController.NewSearchController(
+	searchService := grpcController.NewSearchServiceServer(
 		credentialService,
 		folderService,
 		tagService,

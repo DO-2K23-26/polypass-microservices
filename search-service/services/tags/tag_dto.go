@@ -14,9 +14,13 @@ type CreateTagRequest struct {
 }
 
 type UpdateTagRequest struct {
-	ID       string  `json:"id"`
-	Name     *string `json:"name"`
-	FolderID *string `json:"folder_id"`
+	ID        string `json:"id" avro:"id"`
+	Name      string `json:"name" avro:"name"`
+	Color     string `json:"color" avro:"color"`
+	CreatedAt string `json:"created_at" avro:"created_at"`
+	UpdatedAt string `json:"updated_at" avro:"updated_at"`
+	FolderID  string `json:"folder_id" avro:"folder_id"`
+	CreatedBy string `json:"created_by" avro:"created_by"`
 }
 
 type UpdateTagResponse struct {
@@ -28,7 +32,13 @@ type GetTagRequest struct {
 }
 
 type DeleteTagRequest struct {
-	ID string `json:"id"`
+	ID        string `json:"id" avro:"id"`
+	Name      string `json:"name" avro:"name"`
+	Color     string `json:"color" avro:"color"`
+	CreatedAt string `json:"created_at" avro:"created_at"`
+	UpdatedAt string `json:"updated_at" avro:"updated_at"`
+	FolderID  string `json:"folder_id" avro:"folder_id"`
+	CreatedBy string `json:"created_by" avro:"created_by"`
 }
 
 type SearchTagsRequest struct {

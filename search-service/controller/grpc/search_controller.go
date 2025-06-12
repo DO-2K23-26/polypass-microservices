@@ -4,30 +4,31 @@ import (
 	"context"
 	"errors"
 
-	"github.com/DO-2K23-26/polypass-microservices/search-service/gen/search/api"
-	"github.com/DO-2K23-26/polypass-microservices/search-service/services/credential"
+	types "github.com/DO-2K23-26/polypass-microservices/search-service/common/types"
+	api "github.com/DO-2K23-26/polypass-microservices/search-service/gen/search/api"
+	credentialService "github.com/DO-2K23-26/polypass-microservices/search-service/services/credential"
 	folderService "github.com/DO-2K23-26/polypass-microservices/search-service/services/folder"
 	tagService "github.com/DO-2K23-26/polypass-microservices/search-service/services/tags"
 )
 
 // SearchServiceServer implements the gRPC search service
-type SearchController struct {
+type SearchServiceServer struct {
 	api.UnimplementedSearchServiceServer
-	credentialService *credential.CredentialService
+	credentialService *credentialService.CredentialService
 	folderService     *folderService.FolderService
 	tagService        *tagService.TagService
 }
 
 // NewSearchServiceServer creates a new search service server
-func NewSearchController(
-	credentialService *credential.CredentialService,
+func NewSearchServiceServer(
+	credentialService *credentialService.CredentialService,
 	folderService *folderService.FolderService,
 	tagService *tagService.TagService,
-) *SearchController {
+) *SearchServiceServer {
 	if credentialService == nil || folderService == nil || tagService == nil {
 		panic("Services must not be nil")
 	}
-	return &SearchController{
+	return &SearchServiceServer{
 		credentialService: credentialService,
 		folderService:     folderService,
 		tagService:        tagService,
@@ -35,7 +36,7 @@ func NewSearchController(
 }
 
 // SearchFolders searches for folders
-func (s *SearchController) SearchFolders(ctx context.Context, req *api.SearchFoldersRequest) (*api.SearchFoldersResponse, error) {
+func (s *SearchServiceServer) SearchFolders(ctx context.Context, req *api.SearchFoldersRequest) (*api.SearchFoldersResponse, error) {
 	// Validate request
 	if req.UserId == "" {
 		return nil, errors.New("user ID is required")
@@ -76,7 +77,7 @@ func (s *SearchController) SearchFolders(ctx context.Context, req *api.SearchFol
 }
 
 // SearchTags searches for tags
-func (s *SearchController) SearchTags(ctx context.Context, req *api.SearchTagsRequest) (*api.SearchTagsResponse, error) {
+func (s *SearchServiceServer) SearchTags(ctx context.Context, req *api.SearchTagsRequest) (*api.SearchTagsResponse, error) {
 	// Validate request
 	if req.UserId == "" {
 		return nil, errors.New("user ID is required")
@@ -118,7 +119,7 @@ func (s *SearchController) SearchTags(ctx context.Context, req *api.SearchTagsRe
 }
 
 // SearchCredentials searches for credentials
-func (s *SearchController) SearchCredentials(ctx context.Context, req *api.SearchCredentialsRequest) (*api.SearchCredentialsResponse, error) {
+func (s *SearchServiceServer) SearchCredentials(ctx context.Context, req *api.SearchCredentialsRequest) (*api.SearchCredentialsResponse, error) {
 	// Validate request
 	if req.UserId == "" {
 		return nil, errors.New("user ID is required")
@@ -138,7 +139,7 @@ func (s *SearchController) SearchCredentials(ctx context.Context, req *api.Searc
 		tagIDs = &req.TagIds
 	}
 
-	serviceReq := credential.SearchCredentialsRequest{
+	serviceReq := credentialService.SearchCredentialsRequest{
 		SearchQuery: req.SearchQuery,
 		FolderID:    folderID,
 		TagIDs:      tagIDs,
@@ -148,48 +149,29 @@ func (s *SearchController) SearchCredentials(ctx context.Context, req *api.Searc
 	}
 
 	// Call service
-	result, err := s.credentialService.Search(serviceReq)
+	response, err := s.credentialService.Search(serviceReq)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert service response to gRPC response
-	response := &api.SearchCredentialsResponse{
-		Total: int32(result.Total),
+	// Convert response to proto
+	protoResponse := &api.SearchCredentialsResponse{
+		Credentials: make([]*api.Credential, len(response.Credentials)),
+		Total:       int32(response.Total),
 	}
 
-	// Map credentials
-	response.Credentials = make([]*api.Credential, len(result.Credentials))
-	for i, cred := range result.Credentials {
-		// Create credential
-		credential := &api.Credential{
-			Id:       cred.ID,
-			Title:    cred.Title,
-			FolderId: cred.Folder.ID,
-		}
-
-		// Add folder if present
-		if cred.Folder != nil {
-			credential.Folder = &api.Folder{
-				Id:       cred.Folder.ID,
-				Name:     cred.Folder.Name,
-				ParentId: cred.Folder.ParentID.String,
-			}
-		}
-
-		// Add tags if present
-		if len(cred.Tags) > 0 {
-			credential.Tags = make([]*api.Tag, len(cred.Tags))
-			for j, tag := range cred.Tags {
-				credential.Tags[j] = &api.Tag{
-					Id:   tag.ID,
-					Name: tag.Name,
-				}
-			}
-		}
-
-		response.Credentials[i] = credential
+	for i, cred := range response.Credentials {
+		protoResponse.Credentials[i] = convertCredentialToProto(cred)
 	}
 
-	return response, nil
+	return protoResponse, nil
+}
+
+// Convert credential to proto
+func convertCredentialToProto(cred types.Credential) *api.Credential {
+	return &api.Credential{
+		Id:       cred.ID,
+		Title:    cred.Name,
+		FolderId: cred.FolderID,
+	}
 }

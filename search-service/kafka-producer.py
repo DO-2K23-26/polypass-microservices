@@ -69,16 +69,17 @@ user_schema = avro.schema.parse('''
 
 credential_schema = avro.schema.parse('''
 {
+    "namespace": "com.polypass.events.credential",
     "type": "record",
-    "name": "CredentialEvent",
+    "name": "EventCredential",
     "fields": [
         {"name": "credentialId", "type": "string"},
-        {"name": "name", "type": "string"},
-        {"name": "username", "type": "string"},
-        {"name": "password", "type": "string"},
-        {"name": "url", "type": "string"},
-        {"name": "folderId", "type": "string"},
-        {"name": "timestamp", "type": "long"}
+        {"name": "name", "type": ["null", "string"]},
+        {"name": "folderId", "type": ["null", "string"]},
+        {"name": "tagIds", "type": ["null", {"type": "array", "items": "string"}]},
+        {"name": "timestamp", "type": "long"},
+        {"name": "created_at", "type": "string"},
+        {"name": "updated_at", "type": "string"}
     ]
 }
 ''')
@@ -135,11 +136,11 @@ def generate_credential_event():
     return {
         'credentialId': str(uuid.uuid4()),
         'name': f'Credential-{uuid.uuid4().hex[:8]}',
-        'username': f'user_{uuid.uuid4().hex[:4]}',
-        'password': f'pass_{uuid.uuid4().hex[:8]}',
-        'url': f'https://example.com/{uuid.uuid4().hex[:8]}',
         'folderId': str(uuid.uuid4()),
-        'timestamp': int(time.time() * 1000)
+        'tagIds': [str(uuid.uuid4()) for _ in range(2)],  # Génère 2 tags aléatoires
+        'timestamp': int(time.time() * 1000),
+        'created_at': datetime.now().isoformat(),
+        'updated_at': datetime.now().isoformat()
     }
 
 def delivery_report(err, msg):
@@ -152,7 +153,8 @@ def main():
     # Liste des topics et leurs fonctions de génération d'événements
     topics = {
         # 'folder-creation': (generate_folder_event, folder_schema),
-        'tag-creation': (generate_tag_event, tag_schema),
+        # 'tag-creation': (generate_tag_event, tag_schema),
+        'credential-creation': (generate_credential_event, credential_schema),
     }
 
     try:

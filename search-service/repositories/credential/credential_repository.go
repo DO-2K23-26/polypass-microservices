@@ -34,10 +34,12 @@ func NewCredentialRepository(esClient infrastructure.ElasticAdapter) ICredential
 // Function to write a credential to elasticsearch
 func (c CredentialRepository) Create(query CreateCredentialQuery) (*CreateCredentialResult, error) {
 	credential := types.Credential{
-		ID:     query.ID,
-		Title:  query.Title,
-		Tags:   query.Tags,
-		Folder: &query.Folder,
+		ID:        query.ID,
+		Name:      query.Name,
+		FolderID:  query.FolderID,
+		TagIDs:    query.TagIDs,
+		CreatedAt: query.CreatedAt,
+		UpdatedAt: query.UpdatedAt,
 	}
 	err := c.esClient.CreateDocument(types.CredentialIndex, credential.ID, credential)
 	if err != nil {
@@ -160,7 +162,7 @@ func (c CredentialRepository) AddTags(query AddTagsToCredentialQuery) error {
 		return err
 	}
 	for _, tag := range query.Tags {
-		res.Credential.Tags = append(res.Credential.Tags, tag)
+		res.Credential.TagIDs = append(res.Credential.TagIDs, tag.ID)
 	}
 	c.esClient.UpdateDocument(types.CredentialIndex, query.ID, res.Credential)
 	return nil
@@ -177,15 +179,15 @@ func (c CredentialRepository) RemoveTags(query RemoveTagsFromCredentialQuery) er
 	}
 
 	// Filter out the tags to be removed
-	updatedTags := []types.Tag{}
-	for _, tag := range res.Credential.Tags {
-		if !slices.Contains(query.TagIds, tag.ID) {
-			updatedTags = append(updatedTags, tag)
+	updatedTagIDs := []string{}
+	for _, tagID := range res.Credential.TagIDs {
+		if !slices.Contains(query.TagIds, tagID) {
+			updatedTagIDs = append(updatedTagIDs, tagID)
 		}
 	}
 
 	// Update the credential with the filtered tags
-	res.Credential.Tags = updatedTags
+	res.Credential.TagIDs = updatedTagIDs
 	err = c.esClient.UpdateDocument(types.CredentialIndex, query.ID, res.Credential)
 	if err != nil {
 		return err
@@ -196,13 +198,12 @@ func (c CredentialRepository) RemoveTags(query RemoveTagsFromCredentialQuery) er
 
 // UpdateCredential implements ICredentialRepository.
 func (c CredentialRepository) Update(query UpdateCredentialQuery) error {
-
 	updateCredential := types.Credential{}
-	if query.Title != nil {
-		updateCredential.Title = *query.Title
+	if query.Name != nil {
+		updateCredential.Name = *query.Name
 	}
-	if query.Folder != nil {
-		updateCredential.Folder = query.Folder
+	if query.FolderID != nil {
+		updateCredential.FolderID = *query.FolderID
 	}
 
 	err := c.esClient.UpdateDocument(types.CredentialIndex, query.ID, updateCredential)

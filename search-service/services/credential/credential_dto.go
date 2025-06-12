@@ -4,9 +4,13 @@ import "github.com/DO-2K23-26/polypass-microservices/search-service/common/types
 
 // Request DTOs
 type CreateCredentialRequest struct {
-	ID       string `json:"id,omitempty"` // Optional, will be generated if not provided
-	Title    string `json:"title"`
-	FolderID string `json:"folder_id"`
+	CredentialID string    `json:"credentialId" avro:"credentialId"`
+	Name         *string   `json:"name" avro:"name"`
+	FolderID     *string   `json:"folderId" avro:"folderId"`
+	TagIDs       *[]string `json:"tagIds" avro:"tagIds"`
+	Timestamp    int64     `json:"timestamp" avro:"timestamp"`
+	CreatedAt    string    `json:"created_at" avro:"created_at"`
+	UpdatedAt    string    `json:"updated_at" avro:"updated_at"`
 }
 
 type CreateCredentialResponse struct {
@@ -14,10 +18,13 @@ type CreateCredentialResponse struct {
 }
 
 type UpdateCredentialRequest struct {
-	ID       string   `json:"id"`
-	Title    string   `json:"title"`
-	FolderID string   `json:"folder_id"`
-	TagIDs   []string `json:"tag_ids,omitempty"` // IDs of tags to associate with the credential
+	CredentialID string    `json:"credentialId" avro:"credentialId"`
+	Name         *string   `json:"name" avro:"name"`
+	FolderID     *string   `json:"folderId" avro:"folderId"`
+	TagIDs       *[]string `json:"tagIds" avro:"tagIds"`
+	Timestamp    int64     `json:"timestamp" avro:"timestamp"`
+	CreatedAt    string    `json:"created_at" avro:"created_at"`
+	UpdatedAt    string    `json:"updated_at" avro:"updated_at"`
 }
 
 type GetCredentialRequest struct {
@@ -25,7 +32,13 @@ type GetCredentialRequest struct {
 }
 
 type DeleteCredentialRequest struct {
-	ID string `json:"id"`
+	CredentialID string    `json:"credentialId" avro:"credentialId"`
+	Name         *string   `json:"name" avro:"name"`
+	FolderID     *string   `json:"folderId" avro:"folderId"`
+	TagIDs       *[]string `json:"tagIds" avro:"tagIds"`
+	Timestamp    int64     `json:"timestamp" avro:"timestamp"`
+	CreatedAt    string    `json:"created_at" avro:"created_at"`
+	UpdatedAt    string    `json:"updated_at" avro:"updated_at"`
 }
 
 type SearchCredentialsRequest struct {
@@ -61,4 +74,3 @@ type RemoveTagsFromCredentialRequest struct {
 	ID     string   `json:"id"`
 	TagIds []string `json:"tag_ids,omitempty"`
 }
-
