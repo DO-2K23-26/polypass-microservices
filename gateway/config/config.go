@@ -6,6 +6,7 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/gateway/application/graphql"
 	"github.com/DO-2K23-26/polypass-microservices/gateway/infrastructure/organizations"
 	"github.com/DO-2K23-26/polypass-microservices/gateway/infrastructure/users"
+	"github.com/DO-2K23-26/polypass-microservices/gateway/infrastructure/search"
 	"github.com/optique-dev/optique"
 
 	"github.com/spf13/viper"
@@ -17,6 +18,7 @@ type Config struct {
 	OrganizationConfig organizations.Config `mapstructure:"organizations"`
 	GraphQL            graphql.Config       `mapstructure:"graphql"`
 	Users              users.UsersConfig    `mapstructure:"users"`
+	SearchConfig       search.Config        `mapstructure:"search"`
 }
 
 func LoadConfig() (*Config, error) {

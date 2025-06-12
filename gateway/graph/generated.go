@@ -22,6 +22,12 @@ import (
 // region    ************************** generated!.gotpl **************************
 
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
+// Add stub Complexity method to satisfy executableSchema interface
+func (e *executableSchema) Complexity(ctx context.Context, typeName string, fieldName string, childComplexity int, args map[string]any) (int, bool) {
+	// default to no custom complexity
+	return childComplexity, false
+}
+
 func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 	return &executableSchema{
 		schema:     cfg.Schema,
@@ -80,6 +86,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateFolder func(childComplexity int, newFolder model.NewFolder) int
+		DeleteFolder func(childComplexity int, id string) int
 	}
 
 	PasswordCredential struct {
@@ -97,9 +104,12 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Credentials func(childComplexity int) int
-		Folders     func(childComplexity int) int
-		Tags        func(childComplexity int) int
+		Credentials       func(childComplexity int) int
+		Folders           func(childComplexity int) int
+		SearchCredentials func(childComplexity int, searchQuery string, folderID *string, tagIds []string, limit int32, page int32, userID string) int
+		SearchFolders     func(childComplexity int, searchQuery string, limit int32, page int32, userID string) int
+		SearchTags        func(childComplexity int, searchQuery string, folderID string, limit int32, page int32, userID string) int
+		Tags              func(childComplexity int) int
 	}
 
 	SSHCredential struct {
@@ -115,6 +125,21 @@ type ComplexityRoot struct {
 		Title          func(childComplexity int) int
 		UpdatedAt      func(childComplexity int) int
 		UserIdentifier func(childComplexity int) int
+	}
+
+	SearchCredentialsResponse struct {
+		Credentials func(childComplexity int) int
+		Total       func(childComplexity int) int
+	}
+
+	SearchFoldersResponse struct {
+		Folders func(childComplexity int) int
+		Total   func(childComplexity int) int
+	}
+
+	SearchTagsResponse struct {
+		Tags  func(childComplexity int) int
+		Total func(childComplexity int) int
 	}
 
 	Tag struct {
@@ -140,11 +165,15 @@ type FolderResolver interface {
 }
 type MutationResolver interface {
 	CreateFolder(ctx context.Context, newFolder model.NewFolder) (*model.Folder, error)
+	DeleteFolder(ctx context.Context, id string) (bool, error)
 }
 type QueryResolver interface {
 	Credentials(ctx context.Context) ([]model.Credential, error)
 	Folders(ctx context.Context) ([]*model.Folder, error)
 	Tags(ctx context.Context) ([]*model.Tag, error)
+	SearchFolders(ctx context.Context, searchQuery string, limit int32, page int32, userID string) (*model.SearchFoldersResponse, error)
+	SearchTags(ctx context.Context, searchQuery string, folderID string, limit int32, page int32, userID string) (*model.SearchTagsResponse, error)
+	SearchCredentials(ctx context.Context, searchQuery string, folderID *string, tagIds []string, limit int32, page int32, userID string) (*model.SearchCredentialsResponse, error)
 }
 type TagResolver interface {
 	Folder(ctx context.Context, obj *model.Tag) (*model.Folder, error)
@@ -165,7 +194,7 @@ func (e *executableSchema) Schema() *ast.Schema {
 	return parsedSchema
 }
 
-func (e *executableSchema) Complexity(ctx context.Context, typeName, field string, childComplexity int, rawArgs map[string]any) (int, bool) {
+func (e *executableSchema) Complexity(typeName, field string, childComplexity int, rawArgs map[string]any) (int, bool) {
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
@@ -336,12 +365,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			break
 		}
 
-		args, err := ec.field_Mutation_createFolder_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_createFolder_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
 		return e.complexity.Mutation.CreateFolder(childComplexity, args["newFolder"].(model.NewFolder)), true
+
+	case "Mutation.deleteFolder":
+		if e.complexity.Mutation.DeleteFolder == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteFolder_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteFolder(childComplexity, args["id"].(string)), true
 
 	case "PasswordCredential.createdAt":
 		if e.complexity.PasswordCredential.CreatedAt == nil {
@@ -434,6 +475,42 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Folders(childComplexity), true
 
+	case "Query.searchCredentials":
+		if e.complexity.Query.SearchCredentials == nil {
+			break
+		}
+
+		args, err := ec.field_Query_searchCredentials_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SearchCredentials(childComplexity, args["searchQuery"].(string), args["folderId"].(*string), args["tagIds"].([]string), args["limit"].(int32), args["page"].(int32), args["userId"].(string)), true
+
+	case "Query.searchFolders":
+		if e.complexity.Query.SearchFolders == nil {
+			break
+		}
+
+		args, err := ec.field_Query_searchFolders_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SearchFolders(childComplexity, args["searchQuery"].(string), args["limit"].(int32), args["page"].(int32), args["userId"].(string)), true
+
+	case "Query.searchTags":
+		if e.complexity.Query.SearchTags == nil {
+			break
+		}
+
+		args, err := ec.field_Query_searchTags_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SearchTags(childComplexity, args["searchQuery"].(string), args["folderId"].(string), args["limit"].(int32), args["page"].(int32), args["userId"].(string)), true
+
 	case "Query.tags":
 		if e.complexity.Query.Tags == nil {
 			break
@@ -524,6 +601,48 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SSHCredential.UserIdentifier(childComplexity), true
+
+	case "SearchCredentialsResponse.credentials":
+		if e.complexity.SearchCredentialsResponse.Credentials == nil {
+			break
+		}
+
+		return e.complexity.SearchCredentialsResponse.Credentials(childComplexity), true
+
+	case "SearchCredentialsResponse.total":
+		if e.complexity.SearchCredentialsResponse.Total == nil {
+			break
+		}
+
+		return e.complexity.SearchCredentialsResponse.Total(childComplexity), true
+
+	case "SearchFoldersResponse.folders":
+		if e.complexity.SearchFoldersResponse.Folders == nil {
+			break
+		}
+
+		return e.complexity.SearchFoldersResponse.Folders(childComplexity), true
+
+	case "SearchFoldersResponse.total":
+		if e.complexity.SearchFoldersResponse.Total == nil {
+			break
+		}
+
+		return e.complexity.SearchFoldersResponse.Total(childComplexity), true
+
+	case "SearchTagsResponse.tags":
+		if e.complexity.SearchTagsResponse.Tags == nil {
+			break
+		}
+
+		return e.complexity.SearchTagsResponse.Tags(childComplexity), true
+
+	case "SearchTagsResponse.total":
+		if e.complexity.SearchTagsResponse.Total == nil {
+			break
+		}
+
+		return e.complexity.SearchTagsResponse.Total(childComplexity), true
 
 	case "Tag.color":
 		if e.complexity.Tag.Color == nil {
@@ -722,6 +841,29 @@ func (ec *executionContext) field_Mutation_createFolder_argsNewFolder(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteFolder_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_deleteFolder_argsID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteFolder_argsID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+	if tmp, ok := rawArgs["id"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -739,6 +881,291 @@ func (ec *executionContext) field_Query___type_argsName(
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 	if tmp, ok := rawArgs["name"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchCredentials_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_searchCredentials_argsSearchQuery(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["searchQuery"] = arg0
+	arg1, err := ec.field_Query_searchCredentials_argsFolderID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["folderId"] = arg1
+	arg2, err := ec.field_Query_searchCredentials_argsTagIds(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["tagIds"] = arg2
+	arg3, err := ec.field_Query_searchCredentials_argsLimit(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg3
+	arg4, err := ec.field_Query_searchCredentials_argsPage(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg4
+	arg5, err := ec.field_Query_searchCredentials_argsUserID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg5
+	return args, nil
+}
+func (ec *executionContext) field_Query_searchCredentials_argsSearchQuery(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("searchQuery"))
+	if tmp, ok := rawArgs["searchQuery"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchCredentials_argsFolderID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("folderId"))
+	if tmp, ok := rawArgs["folderId"]; ok {
+		return ec.unmarshalOID2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchCredentials_argsTagIds(
+	ctx context.Context,
+	rawArgs map[string]any,
+) ([]string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("tagIds"))
+	if tmp, ok := rawArgs["tagIds"]; ok {
+		return ec.unmarshalOID2ᚕstringᚄ(ctx, tmp)
+	}
+
+	var zeroVal []string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchCredentials_argsLimit(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int32, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		return ec.unmarshalNInt2int32(ctx, tmp)
+	}
+
+	var zeroVal int32
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchCredentials_argsPage(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int32, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+	if tmp, ok := rawArgs["page"]; ok {
+		return ec.unmarshalNInt2int32(ctx, tmp)
+	}
+
+	var zeroVal int32
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchCredentials_argsUserID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+	if tmp, ok := rawArgs["userId"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchFolders_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_searchFolders_argsSearchQuery(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["searchQuery"] = arg0
+	arg1, err := ec.field_Query_searchFolders_argsLimit(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
+	arg2, err := ec.field_Query_searchFolders_argsPage(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg2
+	arg3, err := ec.field_Query_searchFolders_argsUserID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_Query_searchFolders_argsSearchQuery(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("searchQuery"))
+	if tmp, ok := rawArgs["searchQuery"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchFolders_argsLimit(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int32, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		return ec.unmarshalNInt2int32(ctx, tmp)
+	}
+
+	var zeroVal int32
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchFolders_argsPage(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int32, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+	if tmp, ok := rawArgs["page"]; ok {
+		return ec.unmarshalNInt2int32(ctx, tmp)
+	}
+
+	var zeroVal int32
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchFolders_argsUserID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+	if tmp, ok := rawArgs["userId"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchTags_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_searchTags_argsSearchQuery(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["searchQuery"] = arg0
+	arg1, err := ec.field_Query_searchTags_argsFolderID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["folderId"] = arg1
+	arg2, err := ec.field_Query_searchTags_argsLimit(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg2
+	arg3, err := ec.field_Query_searchTags_argsPage(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg3
+	arg4, err := ec.field_Query_searchTags_argsUserID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg4
+	return args, nil
+}
+func (ec *executionContext) field_Query_searchTags_argsSearchQuery(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("searchQuery"))
+	if tmp, ok := rawArgs["searchQuery"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchTags_argsFolderID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("folderId"))
+	if tmp, ok := rawArgs["folderId"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchTags_argsLimit(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int32, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		return ec.unmarshalNInt2int32(ctx, tmp)
+	}
+
+	var zeroVal int32
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchTags_argsPage(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (int32, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+	if tmp, ok := rawArgs["page"]; ok {
+		return ec.unmarshalNInt2int32(ctx, tmp)
+	}
+
+	var zeroVal int32
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_searchTags_argsUserID(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+	if tmp, ok := rawArgs["userId"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
 	}
 
 	var zeroVal string
@@ -1961,6 +2388,61 @@ func (ec *executionContext) fieldContext_Mutation_createFolder(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_deleteFolder(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteFolder(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteFolder(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteFolder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteFolder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PasswordCredential_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.PasswordCredential) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PasswordCredential_createdAt(ctx, field)
 	if err != nil {
@@ -2590,6 +3072,189 @@ func (ec *executionContext) fieldContext_Query_tags(_ context.Context, field gra
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_searchFolders(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_searchFolders(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().SearchFolders(rctx, fc.Args["searchQuery"].(string), fc.Args["limit"].(int32), fc.Args["page"].(int32), fc.Args["userId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.SearchFoldersResponse)
+	fc.Result = res
+	return ec.marshalNSearchFoldersResponse2ᚖgithubᚗcomᚋDOᚑ2K23ᚑ26ᚋpolypassᚑmicroservicesᚋgatewayᚋgraphᚋmodelᚐSearchFoldersResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_searchFolders(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "folders":
+				return ec.fieldContext_SearchFoldersResponse_folders(ctx, field)
+			case "total":
+				return ec.fieldContext_SearchFoldersResponse_total(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SearchFoldersResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_searchFolders_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_searchTags(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_searchTags(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().SearchTags(rctx, fc.Args["searchQuery"].(string), fc.Args["folderId"].(string), fc.Args["limit"].(int32), fc.Args["page"].(int32), fc.Args["userId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.SearchTagsResponse)
+	fc.Result = res
+	return ec.marshalNSearchTagsResponse2ᚖgithubᚗcomᚋDOᚑ2K23ᚑ26ᚋpolypassᚑmicroservicesᚋgatewayᚋgraphᚋmodelᚐSearchTagsResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_searchTags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "tags":
+				return ec.fieldContext_SearchTagsResponse_tags(ctx, field)
+			case "total":
+				return ec.fieldContext_SearchTagsResponse_total(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SearchTagsResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_searchTags_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_searchCredentials(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_searchCredentials(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().SearchCredentials(rctx, fc.Args["searchQuery"].(string), fc.Args["folderId"].(*string), fc.Args["tagIds"].([]string), fc.Args["limit"].(int32), fc.Args["page"].(int32), fc.Args["userId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.SearchCredentialsResponse)
+	fc.Result = res
+	return ec.marshalNSearchCredentialsResponse2ᚖgithubᚗcomᚋDOᚑ2K23ᚑ26ᚋpolypassᚑmicroservicesᚋgatewayᚋgraphᚋmodelᚐSearchCredentialsResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_searchCredentials(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "credentials":
+				return ec.fieldContext_SearchCredentialsResponse_credentials(ctx, field)
+			case "total":
+				return ec.fieldContext_SearchCredentialsResponse_total(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SearchCredentialsResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_searchCredentials_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -3233,6 +3898,302 @@ func (ec *executionContext) fieldContext_SSHCredential_customFields(_ context.Co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type JSON does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchCredentialsResponse_credentials(ctx context.Context, field graphql.CollectedField, obj *model.SearchCredentialsResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchCredentialsResponse_credentials(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Credentials, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.Credential)
+	fc.Result = res
+	return ec.marshalNCredential2ᚕgithubᚗcomᚋDOᚑ2K23ᚑ26ᚋpolypassᚑmicroservicesᚋgatewayᚋgraphᚋmodelᚐCredentialᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SearchCredentialsResponse_credentials(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchCredentialsResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Credential does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchCredentialsResponse_total(ctx context.Context, field graphql.CollectedField, obj *model.SearchCredentialsResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchCredentialsResponse_total(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Total, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int32)
+	fc.Result = res
+	return ec.marshalNInt2int32(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SearchCredentialsResponse_total(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchCredentialsResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchFoldersResponse_folders(ctx context.Context, field graphql.CollectedField, obj *model.SearchFoldersResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchFoldersResponse_folders(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Folders, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Folder)
+	fc.Result = res
+	return ec.marshalNFolder2ᚕᚖgithubᚗcomᚋDOᚑ2K23ᚑ26ᚋpolypassᚑmicroservicesᚋgatewayᚋgraphᚋmodelᚐFolderᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SearchFoldersResponse_folders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchFoldersResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Folder_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Folder_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Folder_description(ctx, field)
+			case "icon":
+				return ec.fieldContext_Folder_icon(ctx, field)
+			case "parent":
+				return ec.fieldContext_Folder_parent(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Folder_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Folder_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Folder_updatedAt(ctx, field)
+			case "members":
+				return ec.fieldContext_Folder_members(ctx, field)
+			case "tags":
+				return ec.fieldContext_Folder_tags(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Folder", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchFoldersResponse_total(ctx context.Context, field graphql.CollectedField, obj *model.SearchFoldersResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchFoldersResponse_total(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Total, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int32)
+	fc.Result = res
+	return ec.marshalNInt2int32(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SearchFoldersResponse_total(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchFoldersResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchTagsResponse_tags(ctx context.Context, field graphql.CollectedField, obj *model.SearchTagsResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchTagsResponse_tags(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Tags, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Tag)
+	fc.Result = res
+	return ec.marshalNTag2ᚕᚖgithubᚗcomᚋDOᚑ2K23ᚑ26ᚋpolypassᚑmicroservicesᚋgatewayᚋgraphᚋmodelᚐTagᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SearchTagsResponse_tags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchTagsResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Tag_name(ctx, field)
+			case "color":
+				return ec.fieldContext_Tag_color(ctx, field)
+			case "folder":
+				return ec.fieldContext_Tag_folder(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Tag_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchTagsResponse_total(ctx context.Context, field graphql.CollectedField, obj *model.SearchTagsResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchTagsResponse_total(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Total, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int32)
+	fc.Result = res
+	return ec.marshalNInt2int32(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SearchTagsResponse_total(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchTagsResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5932,6 +6893,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "deleteFolder":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteFolder(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6114,6 +7082,72 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "searchFolders":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_searchFolders(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "searchTags":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_searchTags(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "searchCredentials":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_searchCredentials(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -6201,6 +7235,138 @@ func (ec *executionContext) _SSHCredential(ctx context.Context, sel ast.Selectio
 			}
 		case "customFields":
 			out.Values[i] = ec._SSHCredential_customFields(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var searchCredentialsResponseImplementors = []string{"SearchCredentialsResponse"}
+
+func (ec *executionContext) _SearchCredentialsResponse(ctx context.Context, sel ast.SelectionSet, obj *model.SearchCredentialsResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, searchCredentialsResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SearchCredentialsResponse")
+		case "credentials":
+			out.Values[i] = ec._SearchCredentialsResponse_credentials(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "total":
+			out.Values[i] = ec._SearchCredentialsResponse_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var searchFoldersResponseImplementors = []string{"SearchFoldersResponse"}
+
+func (ec *executionContext) _SearchFoldersResponse(ctx context.Context, sel ast.SelectionSet, obj *model.SearchFoldersResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, searchFoldersResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SearchFoldersResponse")
+		case "folders":
+			out.Values[i] = ec._SearchFoldersResponse_folders(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "total":
+			out.Values[i] = ec._SearchFoldersResponse_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var searchTagsResponseImplementors = []string{"SearchTagsResponse"}
+
+func (ec *executionContext) _SearchTagsResponse(ctx context.Context, sel ast.SelectionSet, obj *model.SearchTagsResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, searchTagsResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SearchTagsResponse")
+		case "tags":
+			out.Values[i] = ec._SearchTagsResponse_tags(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "total":
+			out.Values[i] = ec._SearchTagsResponse_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6730,7 +7896,6 @@ func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (
 }
 
 func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
-	_ = sel
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -6858,8 +8023,22 @@ func (ec *executionContext) unmarshalNID2string(ctx context.Context, v any) (str
 }
 
 func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	_ = sel
 	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int32(ctx context.Context, v any) (int32, error) {
+	res, err := graphql.UnmarshalInt32(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.SelectionSet, v int32) graphql.Marshaler {
+	res := graphql.MarshalInt32(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6873,13 +8052,54 @@ func (ec *executionContext) unmarshalNNewFolder2githubᚗcomᚋDOᚑ2K23ᚑ26ᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNSearchCredentialsResponse2githubᚗcomᚋDOᚑ2K23ᚑ26ᚋpolypassᚑmicroservicesᚋgatewayᚋgraphᚋmodelᚐSearchCredentialsResponse(ctx context.Context, sel ast.SelectionSet, v model.SearchCredentialsResponse) graphql.Marshaler {
+	return ec._SearchCredentialsResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSearchCredentialsResponse2ᚖgithubᚗcomᚋDOᚑ2K23ᚑ26ᚋpolypassᚑmicroservicesᚋgatewayᚋgraphᚋmodelᚐSearchCredentialsResponse(ctx context.Context, sel ast.SelectionSet, v *model.SearchCredentialsResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SearchCredentialsResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSearchFoldersResponse2githubᚗcomᚋDOᚑ2K23ᚑ26ᚋpolypassᚑmicroservicesᚋgatewayᚋgraphᚋmodelᚐSearchFoldersResponse(ctx context.Context, sel ast.SelectionSet, v model.SearchFoldersResponse) graphql.Marshaler {
+	return ec._SearchFoldersResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSearchFoldersResponse2ᚖgithubᚗcomᚋDOᚑ2K23ᚑ26ᚋpolypassᚑmicroservicesᚋgatewayᚋgraphᚋmodelᚐSearchFoldersResponse(ctx context.Context, sel ast.SelectionSet, v *model.SearchFoldersResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SearchFoldersResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSearchTagsResponse2githubᚗcomᚋDOᚑ2K23ᚑ26ᚋpolypassᚑmicroservicesᚋgatewayᚋgraphᚋmodelᚐSearchTagsResponse(ctx context.Context, sel ast.SelectionSet, v model.SearchTagsResponse) graphql.Marshaler {
+	return ec._SearchTagsResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSearchTagsResponse2ᚖgithubᚗcomᚋDOᚑ2K23ᚑ26ᚋpolypassᚑmicroservicesᚋgatewayᚋgraphᚋmodelᚐSearchTagsResponse(ctx context.Context, sel ast.SelectionSet, v *model.SearchTagsResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SearchTagsResponse(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	_ = sel
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -7055,7 +8275,6 @@ func (ec *executionContext) unmarshalN__DirectiveLocation2string(ctx context.Con
 }
 
 func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	_ = sel
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -7244,7 +8463,6 @@ func (ec *executionContext) unmarshalN__TypeKind2string(ctx context.Context, v a
 }
 
 func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	_ = sel
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -7260,8 +8478,6 @@ func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (
 }
 
 func (ec *executionContext) marshalOBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
-	_ = sel
-	_ = ctx
 	res := graphql.MarshalBoolean(v)
 	return res
 }
@@ -7278,8 +8494,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	if v == nil {
 		return graphql.Null
 	}
-	_ = sel
-	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
 }
@@ -7289,6 +8503,42 @@ func (ec *executionContext) marshalOFolder2ᚖgithubᚗcomᚋDOᚑ2K23ᚑ26ᚋpo
 		return graphql.Null
 	}
 	return ec._Folder(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOID2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v any) (*string, error) {
@@ -7303,8 +8553,6 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	if v == nil {
 		return graphql.Null
 	}
-	_ = sel
-	_ = ctx
 	res := graphql.MarshalID(*v)
 	return res
 }
@@ -7321,8 +8569,6 @@ func (ec *executionContext) marshalOJSON2ᚖstring(ctx context.Context, sel ast.
 	if v == nil {
 		return graphql.Null
 	}
-	_ = sel
-	_ = ctx
 	res := graphql.MarshalString(*v)
 	return res
 }
@@ -7339,8 +8585,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	if v == nil {
 		return graphql.Null
 	}
-	_ = sel
-	_ = ctx
 	res := graphql.MarshalString(*v)
 	return res
 }

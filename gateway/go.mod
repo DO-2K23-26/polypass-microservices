@@ -5,11 +5,13 @@ go 1.24.4
 require (
 	github.com/99designs/gqlgen v0.17.74
 	github.com/gofiber/fiber/v2 v2.52.8
-	github.com/optique-dev/modules/graphql v0.0.0-20250529172121-598a3ff06537
 	github.com/optique-dev/optique v0.5.0
 	github.com/spf13/viper v1.20.1
 	github.com/valyala/fasthttp v1.62.0
 	github.com/vektah/gqlparser/v2 v2.5.27
+	google.golang.org/grpc v1.67.3
+	google.golang.org/protobuf v1.36.6
+	resty.dev/v3 v3.0.0-beta.3
 )
 
 require (
@@ -20,7 +22,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -38,9 +39,11 @@ require (
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241223144023-3abc09e42ca8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	resty.dev/v3 v3.0.0-beta.3 // indirect
 )
+
+require github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect

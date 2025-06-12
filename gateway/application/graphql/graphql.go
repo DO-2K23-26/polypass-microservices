@@ -27,23 +27,14 @@ type graphqlController struct {
 	organizationService core.OrganizationService
 }
 
-func wrapHandler(f func(nethttp.ResponseWriter, *nethttp.Request)) func(*fiber.Ctx) {
-	return func(ctx *fiber.Ctx) {
-		fasthttpadaptor.NewFastHTTPHandler(nethttp.HandlerFunc(f))(ctx.Context())
-	}
-}
-
-func NewGraphQL(organizationService core.OrganizationService) *graphqlController {	
-	return &graphqlController{
-		organizationService,
-	}
+// NewGraphQL creates a new GraphQL controller with organization and search services
+func NewGraphQL(organizationService core.OrganizationService) *graphqlController {
+	return &graphqlController{organizationService: organizationService}
 }
 
 func (g *graphqlController) Query() fiber.Handler {
 	h := handler.New(graph.NewExecutableSchema(graph.Config{
-		Resolvers: &graph.Resolver{
-			OrganizationsService: g.organizationService,
-		},
+		Resolvers: &graph.Resolver{OrganizationsService: g.organizationService},
 	}))
 	h.AddTransport(transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
@@ -85,4 +76,11 @@ func (g *graphqlController) Register(app *fiber.App) {
 
 	app.Get("/playground", g.Playground())
 	app.Get("/playground", g.Playground())
+}
+
+// wrapHandler adapts a net/http handler to Fiber
+func wrapHandler(f func(nethttp.ResponseWriter, *nethttp.Request)) func(*fiber.Ctx) {
+	return func(ctx *fiber.Ctx) {
+		fasthttpadaptor.NewFastHTTPHandler(nethttp.HandlerFunc(f))(ctx.Context())
+	}
 }

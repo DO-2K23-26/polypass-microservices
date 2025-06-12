@@ -9,4 +9,5 @@ import "github.com/DO-2K23-26/polypass-microservices/gateway/core"
 type Resolver struct {
 	UsersService         core.UsersService
 	OrganizationsService core.OrganizationService
+	SearchService        core.SearchService
 }

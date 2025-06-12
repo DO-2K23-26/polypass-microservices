@@ -84,6 +84,21 @@ type SSHCredential struct {
 
 func (SSHCredential) IsCredential() {}
 
+type SearchCredentialsResponse struct {
+	Credentials []Credential `json:"credentials"`
+	Total       int32        `json:"total"`
+}
+
+type SearchFoldersResponse struct {
+	Folders []*Folder `json:"folders"`
+	Total   int32     `json:"total"`
+}
+
+type SearchTagsResponse struct {
+	Tags  []*Tag `json:"tags"`
+	Total int32  `json:"total"`
+}
+
 type Tag struct {
 	Name      string  `json:"name"`
 	Color     string  `json:"color"`
