@@ -43,6 +43,8 @@ func (s *HttpServer) Start() {
 	r.HandleFunc("/folders/{folderId}/credentials/{type}/{credentialId}", s.folderCredentialHandler.UpdateCredential).Methods("PUT")
 	r.HandleFunc("/folders/{folderId}/credentials/{type}", s.folderCredentialHandler.DeleteCredentials).Methods("DELETE")
 
+	r.HandleFunc("/users/credentials", s.folderCredentialHandler.ListUserCredentials).Methods("GET")
+
 	// Tags
 	r.HandleFunc("/tags", s.tagHandler.CreateTag).Methods("POST")
 	r.HandleFunc("/tags", s.tagHandler.ListTags).Methods("GET")

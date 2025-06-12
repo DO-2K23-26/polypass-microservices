@@ -68,7 +68,8 @@ func (h *FolderCredentialHandler) ListCredentials(w http.ResponseWriter, r *http
 		Limit: limit,
 	}
 
-	res, err := h.service.List(folderID, credType, req)
+	credTypeStr := credType
+	res, err := h.service.List(folderID, &credTypeStr, &req)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -189,4 +190,26 @@ func (h *FolderCredentialHandler) DeleteCredentials(w http.ResponseWriter, r *ht
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *FolderCredentialHandler) ListUserCredentials(w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query().Get("user_id")
+	if userId == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errorBody := map[string]string{"error": "missing user_id parameter"}
+		json.NewEncoder(w).Encode(errorBody)
+		return
+	}
+
+	res, err := h.service.ListUserCredentials(userId)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		errBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errBody)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
 }
