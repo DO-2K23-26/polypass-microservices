@@ -6,11 +6,15 @@ import (
     "log"
     "os"
     "time"
+    "encoding/json"
 
     "github.com/spf13/cobra"
     "github.com/spf13/viper"
     "google.golang.org/grpc"
     "google.golang.org/grpc/credentials/insecure"
+
+    "github.com/hamba/avro"
+    "github.com/confluentinc/confluent-kafka-go/kafka"
 
     "github.com/DO-2K23-26/polypass-microservices/search-service/gen/search/api"
 )
@@ -23,10 +27,11 @@ func main() {
     // Create the root command
     var rootCmd = &cobra.Command{
         Use:   "search-cli",
-        Short: "CLI for testing the SearchService gRPC API",
+        Short: "CLI for testing the SearchService gRPC API and Kafka",
     }
 
     // Add subcommands
+    rootCmd.AddCommand(kafkaProducerCmd())
     rootCmd.AddCommand(searchFoldersCmd())
     rootCmd.AddCommand(searchTagsCmd())
     rootCmd.AddCommand(searchCredentialsCmd())
@@ -48,6 +53,84 @@ func getClient() (api.SearchServiceClient, *grpc.ClientConn) {
     // Create the client
     client := api.NewSearchServiceClient(conn)
     return client, conn
+}
+
+var tagCreationSchema = `
+{
+    "type": "record",
+    "name": "TagCreation",
+    "fields": [
+        {"name": "id", "type": "string"},
+        {"name": "name", "type": "string"},
+        {"name": "folder_id", "type": "string"}
+    ]
+}`
+
+func kafkaProducerCmd() *cobra.Command {
+    var topic, schemaType, message string
+
+    cmd := &cobra.Command{
+        Use:   "produce-kafka",
+        Short: "Produce Kafka messages in Avro format",
+        Run: func(cmd *cobra.Command, args []string) {
+            producer, err := kafka.NewProducer(&kafka.ConfigMap{
+                "bootstrap.servers": viper.GetString("kafka_server"),
+            })
+            if err != nil {
+                log.Fatalf("Failed to create Kafka producer: %v", err)
+            }
+            defer func() {
+                // Ensure all messages are delivered before exiting
+                producer.Flush(5000) // Wait up to 5 seconds for delivery
+                producer.Close()
+            }()
+
+            // Select schema based on schemaType
+            var schema avro.Schema
+            switch schemaType {
+            case "tag_creation":
+                schema, err = avro.Parse(tagCreationSchema)
+                if err != nil {
+                    log.Fatalf("Failed to parse Avro schema: %v", err)
+                }
+            default:
+                log.Fatalf("Unsupported schema type: %s", schemaType)
+            }
+
+            // Parse the message into a map
+            var messageData map[string]interface{}
+            err = json.Unmarshal([]byte(message), &messageData)
+            if err != nil {
+                log.Fatalf("Failed to parse message JSON: %v", err)
+            }
+
+            // Serialize the message using Avro
+            encodedMessage, err := avro.Marshal(schema, messageData)
+            if err != nil {
+                log.Fatalf("Failed to encode message: %v", err)
+            }
+
+            // Produce the message to Kafka
+            err = producer.Produce(&kafka.Message{
+                TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+                Value:          encodedMessage,
+            }, nil)
+            if err != nil {
+                log.Fatalf("Failed to produce message: %v", err)
+            }
+
+            fmt.Printf("Message produced to topic %s\n", topic)
+        },
+    }
+
+    cmd.Flags().StringVar(&topic, "topic", "", "Kafka topic to produce to")
+    cmd.Flags().StringVar(&schemaType, "schema", "", "Schema type (e.g., tag_creation)")
+    cmd.Flags().StringVar(&message, "message", "", "Message JSON to produce")
+    cmd.MarkFlagRequired("topic")
+    cmd.MarkFlagRequired("schema")
+    cmd.MarkFlagRequired("message")
+
+    return cmd
 }
 
 func searchFoldersCmd() *cobra.Command {
