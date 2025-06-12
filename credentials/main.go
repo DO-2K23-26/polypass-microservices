@@ -7,6 +7,7 @@ import (
 	"github.com/DO-2K23-26/polypass-microservices/credentials/config"
 	"github.com/DO-2K23-26/polypass-microservices/credentials/core"
 	"github.com/DO-2K23-26/polypass-microservices/credentials/infrastructure/sql"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/optique-dev/optique"
 )
 
@@ -24,13 +25,40 @@ func main() {
 	}
 	cycle := NewCycle()
 
-	database, err := sql.NewSql(conf.Database)
-
+	producer, err := kafka.NewProducer(&kafka.ConfigMap{
+		"bootstrap.servers": "localhost:19092, localhost:29092",
+		"security.protocol": "PLAINTEXT", 
+	})
+	
+	
 	if err != nil {
 		optique.Error(err.Error())
 		cycle.Stop()
 		os.Exit(1)
 	}
+	
+	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": "localhost:19092, localhost:29092",
+		"group.id":          "my-group",
+		"auto.offset.reset": "earliest",
+	})
+
+	
+
+	
+	if err != nil {
+		optique.Error(err.Error())
+		cycle.Stop()
+		os.Exit(1)
+	}
+
+	database, err := sql.NewSql(conf.Database, producer, consumer)
+	if err != nil {
+		optique.Error(err.Error())
+		cycle.Stop()
+		os.Exit(1)
+	}
+	cycle.AddRepository(database)
 
 
 	// service
@@ -64,6 +92,10 @@ func main() {
 			os.Exit(1)
 		}
 	}
+
+	
+	
+
 
 	err = cycle.Ignite()
 }
