@@ -30,7 +30,10 @@ func (h *FolderCredentialHandler) ListCredentials(w http.ResponseWriter, r *http
 	if organization.CredentialType(credType) != organization.CredentialTypePassword &&
 		organization.CredentialType(credType) != organization.CredentialTypeCard &&
 		organization.CredentialType(credType) != organization.CredentialTypeSSHKey {
-		http.Error(w, "invalid credential type", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errBody := map[string]interface{}{"error": "invalid credential type", "types": []string{"password", "card", "sshkey"}}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 
@@ -45,12 +48,18 @@ func (h *FolderCredentialHandler) ListCredentials(w http.ResponseWriter, r *http
 
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
-		http.Error(w, "invalid page number", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errorBody := map[string]string{"error": "invalid page number"}
+		json.NewEncoder(w).Encode(errorBody)
 		return
 	}
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
-		http.Error(w, "invalid limit number", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errorBody := map[string]string{"error": "invalid limit number"}
+		json.NewEncoder(w).Encode(errorBody)
 		return
 	}
 
@@ -59,9 +68,13 @@ func (h *FolderCredentialHandler) ListCredentials(w http.ResponseWriter, r *http
 		Limit: limit,
 	}
 
-	res, err := h.service.List(folderID, credType, req)
+	credTypeStr := credType
+	res, err := h.service.List(folderID, &credTypeStr, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		errBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -77,19 +90,28 @@ func (h *FolderCredentialHandler) CreateCredential(w http.ResponseWriter, r *htt
 	if organization.CredentialType(credType) != organization.CredentialTypePassword &&
 		organization.CredentialType(credType) != organization.CredentialTypeCard &&
 		organization.CredentialType(credType) != organization.CredentialTypeSSHKey {
-		http.Error(w, "invalid credential type", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errBody := map[string]interface{}{"error": "invalid credential type", "types": []string{"password", "card", "sshkey"}}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 
 	cred, err := h.service.Create(folderID, credType, body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		errBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -107,19 +129,28 @@ func (h *FolderCredentialHandler) UpdateCredential(w http.ResponseWriter, r *htt
 	if organization.CredentialType(credType) != organization.CredentialTypePassword &&
 		organization.CredentialType(credType) != organization.CredentialTypeCard &&
 		organization.CredentialType(credType) != organization.CredentialTypeSSHKey {
-		http.Error(w, "invalid credential type", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errBody := map[string]interface{}{"error": "invalid credential type", "types": []string{"password", "card", "sshkey"}}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 
 	cred, err := h.service.Update(folderID, credType, credentialID, body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		errBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -131,15 +162,72 @@ func (h *FolderCredentialHandler) DeleteCredentials(w http.ResponseWriter, r *ht
 	vars := mux.Vars(r)
 	folderID := vars["folderId"]
 	credType := vars["type"]
+
+	if organization.CredentialType(credType) != organization.CredentialTypePassword &&
+		organization.CredentialType(credType) != organization.CredentialTypeCard &&
+		organization.CredentialType(credType) != organization.CredentialTypeSSHKey {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errBody := map[string]interface{}{"error": "invalid credential type", "types": []string{"password", "card", "sshkey"}}
+		json.NewEncoder(w).Encode(errBody)
+		return
+	}
+
 	ids := r.URL.Query()["id"]
 	if len(ids) == 0 {
-		http.Error(w, "missing id parameters", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errBody := map[string]string{"error": "missing id parameters"}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 
 	if err := h.service.Delete(folderID, credType, ids); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		errBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *FolderCredentialHandler) ListUserCredentials(w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query().Get("user_id")
+	if userId == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errorBody := map[string]string{"error": "missing user_id parameter"}
+		json.NewEncoder(w).Encode(errorBody)
+		return
+	}
+
+	var credentialType *string
+	credentialTypeStr := r.URL.Query().Get("type")
+	if credentialTypeStr != "" && organization.CredentialType(credentialTypeStr) != organization.CredentialTypePassword &&
+		organization.CredentialType(credentialTypeStr) != organization.CredentialTypeCard &&
+		organization.CredentialType(credentialTypeStr) != organization.CredentialTypeSSHKey {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errBody := map[string]interface{}{"error": "invalid credential type", "types": []string{"password", "card", "sshkey"}}
+		json.NewEncoder(w).Encode(errBody)
+		return
+	}
+
+	if credentialTypeStr == "" {
+		credentialType = nil
+	} else {
+		credentialType = &credentialTypeStr
+	}
+
+	res, err := h.service.ListUserCredentials(userId, credentialType)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		errBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errBody)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
 }

@@ -21,12 +21,18 @@ func NewTagHandler(service *app.TagService) *TagHandler {
 func (h *TagHandler) CreateTag(w http.ResponseWriter, r *http.Request) {
 	var tag organization.CreateTagRequest
 	if err := json.NewDecoder(r.Body).Decode(&tag); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errorBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errorBody)
 		return
 	}
 
 	if err := h.service.CreateTag(tag); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errorBody := map[string]string{"error": err.Error()}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(errorBody)
 		return
 	}
 
@@ -38,12 +44,18 @@ func (h *TagHandler) UpdateTag(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 	var tag organization.UpdateTagRequest
 	if err := json.NewDecoder(r.Body).Decode(&tag); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errorBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errorBody)
 		return
 	}
 	tag.Id = id
 	if err := h.service.UpdateTag(tag); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errorBody := map[string]string{"error": err.Error()}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(errorBody)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -53,7 +65,10 @@ func (h *TagHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if err := h.service.DeleteTag(id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		errBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -72,12 +87,18 @@ func (h *TagHandler) ListTags(w http.ResponseWriter, r *http.Request) {
 	pageInt, err := strconv.Atoi(page)
 
 	if err != nil {
-		http.Error(w, "Invalid page number", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errBody := map[string]string{"error": "Invalid page number"}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 	limitInt, err := strconv.Atoi(limit)
 	if err != nil {
-		http.Error(w, "Invalid limit number", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errBody := map[string]string{"error": "Invalid limit number"}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 
@@ -88,9 +109,11 @@ func (h *TagHandler) ListTags(w http.ResponseWriter, r *http.Request) {
 
 	tags, err := h.service.ListTags(req)
 
-
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		errBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -102,7 +125,10 @@ func (h *TagHandler) GetTag(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 	tag, err := h.service.GetTag(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		errBody := map[string]string{"error": err.Error()}
+		json.NewEncoder(w).Encode(errBody)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
