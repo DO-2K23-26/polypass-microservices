@@ -1,5 +1,39 @@
 # Search service
 
+## Build the CLI
+
+Go in the `search-service` directory
+
+```sh
+cd search-service
+```
+
+```bash
+go build -o search-cli cli.go
+```
+
+## Run the CLI
+
+Making search queries:
+
+```bash
+./search-cli search-folders --query "example" --limit 10 --page 1 --user-id "user123"
+```
+
+```bash
+./search-cli search-tags --query "example" --folder-id "folder123" --limit 10 --page 1 --user-id "user123"
+```
+
+```bash
+./search-cli search-credentials --query "example" --folder-id "folder123" --tag-ids "tag1,tag2" --limit 10 --page 1 --user-id "user123"
+```
+
+Producing data for the Search service (via Kafka):
+
+```bash
+KAFKA_SERVER=localhost:9092 ./search-cli produce-kafka --topic tag_creation --schema tag_creation --message '{"id":"tag1","name":"Tag Name","folder_id":"folder123"}'
+```
+
 ## Launch the application
 
 ## Host setup
