@@ -106,6 +106,7 @@ var credentialsSchema = map[string]string{
     "PasswordAttribute":        "password_attributes.avsc",
     "SSHKeyAttribute":          "ssh_attribute.avsc",
     "UserIdentifierAttributes": "user_identifier_attributes.avsc",
+	"CredentialID":             "credential_id.avsc",
 }
 
 func (m *sql) loadSchema(filename string) (string, error) {
@@ -199,6 +200,11 @@ func (m *sql) produceMessage(topic string, cred interface{}) error {
 			"UserIdentifierAttribute": map[string]interface{}{
 				"user_identifier": c.UserIdentifier,
 			},
+		}
+	case string:
+		typeName = "CredentialID"
+		record = map[string]interface{}{
+			"id": c,
 		}
 	default:
 		return fmt.Errorf("unsupported credential type %T", cred)
