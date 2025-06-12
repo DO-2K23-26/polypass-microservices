@@ -73,10 +73,8 @@ func (s *TagService) UpdateTag(tag organization.UpdateTagRequest) error {
 		Id:         tag.Id,
 		Name:       tag.Name,
 		Color:      tag.Color,
-		Created_at: tag.CreatedAt.String(),
-		Updated_at: tag.UpdatedAt.String(),
+		Updated_at: time.Now().String(),
 		Folder_id:  tag.FolderID,
-		Created_by: tag.CreatedBy,
 	}
 
 	var buf bytes.Buffer
