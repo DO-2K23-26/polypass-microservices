@@ -1,0 +1,33 @@
+# Dockerfile
+FROM golang:1.24.3 AS build-stage
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y gcc libc-dev
+
+COPY libs ./libs
+
+COPY apps/organization/go.mod apps/organization/go.sum ./apps/organization/
+
+WORKDIR /app/apps/organization
+
+RUN go mod download
+
+COPY apps/organization/cmd /app/apps/organization/cmd
+COPY apps/organization/internal /app/apps/organization/internal
+
+WORKDIR /app/apps/organization/cmd/organization
+
+# Enable CGO for Kafka client
+RUN CGO_ENABLED=1 GOOS=linux go build -o /organization
+
+FROM gcr.io/distroless/base-debian12 AS build-release-stage
+
+WORKDIR /
+
+COPY --from=build-stage /organization /organization
+
+USER nonroot:nonroot
+
+ENTRYPOINT ["/organization"]
