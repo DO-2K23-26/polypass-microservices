@@ -1,0 +1,162 @@
+services:
+  postgres:
+    image: postgres:17
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db_init:
+    build:
+      context: .
+      dockerfile: Dockerfile.org_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PORT: 5432
+
+  broker-1:
+    image: apache/kafka:latest
+    container_name: broker-1
+    restart: unless-stopped
+    ports:
+      - 19092:19092
+    environment:
+      # Shared setup
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:19092,CONTROLLER://:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker-1:9093,2@broker-2:9093
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      # Broker setup
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-1:9092,PLAINTEXT_HOST://localhost:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+    healthcheck:
+      test:
+        [
+          'CMD',
+          '/opt/kafka/bin/kafka-topics.sh',
+          '--bootstrap-server',
+          'localhost:9092',
+          '--list',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  broker-2:
+    image: apache/kafka:latest
+    container_name: broker-2
+    restart: unless-stopped
+    ports:
+      - 29092:29092
+    environment:
+      # Shared setup
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:29092,CONTROLLER://:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker-1:9093,2@broker-2:9093
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      # Broker setup
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker-2:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+    healthcheck:
+      test:
+        [
+          'CMD',
+          '/opt/kafka/bin/kafka-topics.sh',
+          '--bootstrap-server',
+          'localhost:9092',
+          '--list',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  init-topics:
+    image: apache/kafka:latest
+    depends_on:
+      broker-1:
+        condition: service_healthy
+      broker-2:
+        condition: service_healthy
+    environment:
+      BOOTSTRAP_SERVERS: broker-1:9092
+    entrypoint: >
+      bash -c '
+        echo "Waiting for Kafka to be ready...";
+        for i in {1..30}; do
+          /opt/kafka/bin/kafka-topics.sh --bootstrap-server broker-1:9092 --list && break || sleep 2;
+        done;
+        echo "Creating topics...";
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic folder-creation --partitions 2 --replication-factor 2 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic folder-update --partitions 2 --replication-factor 2 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic folder-delete --partitions 2 --replication-factor 2 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic tag-creation --partitions 2 --replication-factor 2 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic tag-update --partitions 2 --replication-factor 2 &&
+        /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server broker-1:9092 --topic tag-delete --partitions 2 --replication-factor 2 &&
+        echo "Kafka initialization complete.";'
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:${CONFLUENT_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - 8085:8085
+    depends_on:
+      broker-1:
+        condition: service_healthy
+      broker-2:
+        condition: service_healthy
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'PLAINTEXT://broker-1:9092'
+      SCHEMA_REGISTRY_HOST_NAME: 'schema-registry'
+      SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8085'
+      SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: 'INFO'
+
+  akhq:
+    image: tchiotludo/akhq
+    volumes:
+      - /opt/tibco/akd/repo/1.2/lib/tibftl-kafka-avro-1.2.0-thin.jar:/app/tibftl-kafka-avro-1.2.0-thin.jar
+      - /opt/tibco/akd/repo/1.2/lib/deps:/app/deps
+    restart: unless-stopped
+    depends_on:
+      broker-1:
+        condition: service_healthy
+      broker-2:
+        condition: service_healthy
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            docker-kafka-server:
+              properties:
+                bootstrap.servers: "broker-1:9092"
+              schema-registry:
+                url: "http://schema-registry:8085"
+      CLASSPATH: '/app/tibftl-kafka-avro-1.2.0-thin.jar:/app/deps/*'
+    ports:
+      - 8080:8080
+    links:
+      - broker-1
+      - broker-2
+      - schema-registry
