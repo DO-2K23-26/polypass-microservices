@@ -97,16 +97,10 @@ func (m sql) Shutdown() error {
 
 // Define a mapping from credentials types to schema file paths
 var credentialsSchema = map[string]string{
-	"PasswordCredential":       "password_credential.avsc",
-    "CardCredential":           "card_credential.avsc",
-    "SSHKeyCredential":         "ssh_credential.avsc",
-    "CardAttribute":            "card_attributes.avsc",
-    "CreateCredentialsOpts":    "create_credentials_opts.avsc",
-    "Credential":               "credential.avsc",
-    "PasswordAttribute":        "password_attributes.avsc",
-    "SSHKeyAttribute":          "ssh_attribute.avsc",
-    "UserIdentifierAttributes": "user_identifier_attributes.avsc",
-	"CredentialID":             "credential_id.avsc",
+	"PasswordCredential": "password_credential.avsc",
+	"CardCredential":     "card_credential.avsc",
+	"SSHKeyCredential":   "ssh_credential.avsc",
+	"CredentialID":       "credential_id.avsc",
 }
 
 func (m *sql) loadSchema(filename string) (string, error) {
@@ -182,15 +176,15 @@ func (m *sql) produceMessage(topic string, cred interface{}) error {
 		typeName = "SSHKeyCredential"
 		record = map[string]interface{}{
 			"Credential": map[string]interface{}{
-                "id":            c.Credential.ID,
-                "title":         c.Credential.Title,
-                "note":          c.Credential.Note,
-                "created_at":    unixOrZero(c.Credential.CreatedAt),
-                "updated_at":    unixOrZero(c.Credential.UpdatedAt),
-                "expires_at":    unixOrZero(c.Credential.ExpiresAt),
-                "last_read_at":  unixOrZero(c.Credential.LastReadAt),
-                "custom_fields": toInterfaceMap(c.Credential.CustomFields),
-            },
+				"id":            c.Credential.ID,
+				"title":         c.Credential.Title,
+				"note":          c.Credential.Note,
+				"created_at":    unixOrZero(c.Credential.CreatedAt),
+				"updated_at":    unixOrZero(c.Credential.UpdatedAt),
+				"expires_at":    unixOrZero(c.Credential.ExpiresAt),
+				"last_read_at":  unixOrZero(c.Credential.LastReadAt),
+				"custom_fields": toInterfaceMap(c.Credential.CustomFields),
+			},
 			"SSHKeyAttributes": map[string]interface{}{
 				"private_key":     c.PrivateKey,
 				"public_key":      c.PublicKey,
@@ -356,9 +350,9 @@ func (m sql) CreateSSHKeyCredential(credential types.SSHKeyCredential) (types.SS
 
 func (m sql) UpdatePasswordCredential(credential types.PasswordCredential) (types.PasswordCredential, error) {
 	now := time.Now()
-    credential.UpdatedAt = &now
+	credential.UpdatedAt = &now
 
-    _, err := m.db.NamedExec(`
+	_, err := m.db.NamedExec(`
         UPDATE password_credentials
         SET title       = :title,
             note        = :note,
@@ -367,14 +361,14 @@ func (m sql) UpdatePasswordCredential(credential types.PasswordCredential) (type
             updated_at  = :updated_at
         WHERE id = :id
     `, credential)
-    if err != nil {
-        return credential, err
-    }
+	if err != nil {
+		return credential, err
+	}
 
-    if err := m.produceMessage("creds_update", credential); err != nil {
-        log.Printf("Failed to produce message: %v", err)
-    }
-    return credential, nil
+	if err := m.produceMessage("creds_update", credential); err != nil {
+		log.Printf("Failed to produce message: %v", err)
+	}
+	return credential, nil
 }
 
 func (m sql) UpdateCardCredential(credential types.CardCredential) (types.CardCredential, error) {
@@ -404,7 +398,7 @@ func (m sql) UpdateSSHKeyCredential(credential types.SSHKeyCredential) (types.SS
 	now := time.Now()
 	credential.UpdatedAt = &now
 
-    _, err := m.db.NamedExec(`
+	_, err := m.db.NamedExec(`
         UPDATE ssh_keys
         SET private_key    = :private_key,
             public_key     = :public_key,
@@ -415,14 +409,14 @@ func (m sql) UpdateSSHKeyCredential(credential types.SSHKeyCredential) (types.SS
             updated_at     = :updated_at
         WHERE id = :id
     `, credential)
-    if err != nil {
-        return credential, err
-    }
+	if err != nil {
+		return credential, err
+	}
 
-    if err := m.produceMessage("creds_update", credential); err != nil {
-        log.Printf("Failed to produce message: %v", err)
-    }
-    return credential, nil
+	if err := m.produceMessage("creds_update", credential); err != nil {
+		log.Printf("Failed to produce message: %v", err)
+	}
+	return credential, nil
 }
 
 func (m sql) DeletePasswordCredentials(ids []string) error {
