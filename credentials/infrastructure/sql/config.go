@@ -13,4 +13,6 @@ type Config struct {
 	Port int `mapstructure:"port"`
 	//database name
 	Dbname string `mapstructure:"dbname"`
+	//SchemaDir is the directory where the SQL schema files are located
+	SchemaDir  string
 }
