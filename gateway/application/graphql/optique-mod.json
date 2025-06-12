@@ -1,0 +1,12 @@
+{
+  "name": "graphql",
+  "type": "application",
+  "url": "github.com/optique-dev/modules/graphql",
+  "ignore": [
+    "go.mod",
+    "go.sum"
+  ],
+  "scripts": {
+    "genql" :"go run github.com/99designs/gqlgen generate"
+  }
+}

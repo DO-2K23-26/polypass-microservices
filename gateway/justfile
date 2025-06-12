@@ -1,0 +1,8 @@
+build:
+    go build -o ./optique
+
+dev:
+    air
+genql:
+	go run github.com/99designs/gqlgen generate
+

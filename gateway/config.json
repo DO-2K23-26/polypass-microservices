@@ -1,0 +1,12 @@
+{
+  "bootstrap": true,
+  "organizations": {
+    "endpoint": "http://localhost:8000"
+  },
+  "graphql": {
+    "listen_addr": ":5000"
+  },
+  "search": {
+    "endpoint": "localhost:50051"
+  }
+}
