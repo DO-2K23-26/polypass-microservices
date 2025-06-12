@@ -23,7 +23,9 @@ func main() {
 		&organization.FolderCredential{},
 		&organization.Folder{},
 		&organization.TagCredential{},
-		&organization.Tag{})
+		&organization.Tag{},
+		&organization.User{},
+	)
 	if err != nil {
 		log.Fatalf("Failed to auto-migrate models: %v", err)
 	}
