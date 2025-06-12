@@ -5,7 +5,7 @@ This service is responsible for managing folders and tags in Polypass applicatio
 1. Clone the repository:
 ```bash
 git clone git@github.com:DO-2K23-26/polypass-microservices.git
-cd polypass-microservices
+cd polypass-microservices/organization
 ```
 
 2. Start the Docker containers:
@@ -16,6 +16,11 @@ docker compose up -d
 3. Start the service:
 ```bash
 go run apps/organization/cmd/organization/main.go
+```
+
+If you want to provide a host to the Credential Service, use: `CREDENTIAL_SERVICE_HOST=http://...`.
+```bash
+CREDENTIAL_SERVICE_HOST=http://127.0.0.1:4001 go run apps/organization/cmd/organization/main.go
 ```
 
 ## Folder credentials
