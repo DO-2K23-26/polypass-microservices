@@ -258,7 +258,7 @@ func (s *FolderCredentialService) Delete(folderID, credType string, ids []string
 	return nil
 }
 
-func (s *FolderCredentialService) ListUserCredentials(userID string) (*[]map[string]interface{}, error) {
+func (s *FolderCredentialService) ListUserCredentials(userID string, credentialType *string) (*[]map[string]interface{}, error) {
 	folderListReq := organization.GetFolderRequest{
 		Page:   1,
 		Limit:  10000,
@@ -273,7 +273,7 @@ func (s *FolderCredentialService) ListUserCredentials(userID string) (*[]map[str
 
 	var credentials []map[string]interface{}
 	for _, folder := range folders {
-		tmpCredentials, err := s.List(folder.Id, nil, nil)
+		tmpCredentials, err := s.List(folder.Id, credentialType, nil)
 		if err != nil {
 			continue
 		}
@@ -282,6 +282,11 @@ func (s *FolderCredentialService) ListUserCredentials(userID string) (*[]map[str
 		}
 
 		credentials = append(credentials, tmpCredentials.Credentials...)
+	}
+
+	if len(credentials) == 0 {
+		empty := []map[string]interface{}{}
+		return &empty, nil
 	}
 
 	return &credentials, nil

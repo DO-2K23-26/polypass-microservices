@@ -202,7 +202,25 @@ func (h *FolderCredentialHandler) ListUserCredentials(w http.ResponseWriter, r *
 		return
 	}
 
-	res, err := h.service.ListUserCredentials(userId)
+	var credentialType *string
+	credentialTypeStr := r.URL.Query().Get("type")
+	if credentialTypeStr != "" && organization.CredentialType(credentialTypeStr) != organization.CredentialTypePassword &&
+		organization.CredentialType(credentialTypeStr) != organization.CredentialTypeCard &&
+		organization.CredentialType(credentialTypeStr) != organization.CredentialTypeSSHKey {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errBody := map[string]interface{}{"error": "invalid credential type", "types": []string{"password", "card", "sshkey"}}
+		json.NewEncoder(w).Encode(errBody)
+		return
+	}
+
+	if credentialTypeStr == "" {
+		credentialType = nil
+	} else {
+		credentialType = &credentialTypeStr
+	}
+
+	res, err := h.service.ListUserCredentials(userId, credentialType)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
