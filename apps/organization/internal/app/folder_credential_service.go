@@ -36,10 +36,30 @@ func NewFolderCredentialService(db *gorm.DB, publisher EventPublisher, encoder *
 }
 
 // List returns paginated credentials for a folder.
-func (s *FolderCredentialService) List(folderID, credType string, req organization.GetCredentialRequest) (*organization.GetCredentialResponse, error) {
+func (s *FolderCredentialService) List(folderID string, credType *string, req *organization.GetCredentialRequest) (*organization.GetCredentialResponse, error) {
 	var relations []organization.FolderCredential
-	if err := s.db.Where("id_folder = ? AND type = ?", folderID, credType).Limit(req.Limit).Offset((req.Page - 1) * req.Limit).Find(&relations).Error; err != nil {
+	databaseRef := s.db
+
+	if credType != nil {
+		databaseRef = databaseRef.Where("id_folder = ? AND type = ?", folderID, *credType)
+	} else {
+		databaseRef = databaseRef.Where("id_folder = ?", folderID)
+	}
+
+	if req != nil {
+		databaseRef = databaseRef.Limit(req.Limit).Offset((req.Page - 1) * req.Limit)
+	}
+
+	if err := databaseRef.Find(&relations).Error; err != nil {
 		return nil, err
+	}
+
+	if len(relations) == 0 {
+		if req != nil {
+			return &organization.GetCredentialResponse{Credentials: []map[string]interface{}{}, Total: 0, Page: req.Page, Limit: req.Limit}, nil
+		} else {
+			return &organization.GetCredentialResponse{Credentials: []map[string]interface{}{}, Total: 0, Page: 1, Limit: 10}, nil
+		}
 	}
 
 	// start := (page - 1) * limit
@@ -54,7 +74,7 @@ func (s *FolderCredentialService) List(folderID, credType string, req organizati
 	// creds := make([]map[string]interface{}, 0, end-start)
 	creds := make([]map[string]interface{}, 0, len(relations))
 	for _, rel := range relations {
-		url := fmt.Sprintf("%s/credentials/%s?ids=%s", s.host, credType, rel.IdCredential)
+		url := fmt.Sprintf("%s/credentials/%s?ids=%s", s.host, rel.Type, rel.IdCredential)
 		resp, err := s.client.Get(url)
 		if err != nil {
 			return nil, err
@@ -79,7 +99,11 @@ func (s *FolderCredentialService) List(folderID, credType string, req organizati
 		creds = append(creds, data[0])
 	}
 
-	return &organization.GetCredentialResponse{Credentials: creds, Total: len(relations), Page: req.Page, Limit: req.Limit}, nil
+	if req != nil {
+		return &organization.GetCredentialResponse{Credentials: creds, Total: len(relations), Page: req.Page, Limit: req.Limit}, nil
+	} else {
+		return &organization.GetCredentialResponse{Credentials: creds, Total: len(relations), Page: 1, Limit: 10}, nil
+	}
 }
 
 // Create creates a credential via the credential service and stores the link.
@@ -232,4 +256,38 @@ func (s *FolderCredentialService) Delete(folderID, credType string, ids []string
 	}
 
 	return nil
+}
+
+func (s *FolderCredentialService) ListUserCredentials(userID string, credentialType *string) (*[]map[string]interface{}, error) {
+	folderListReq := organization.GetFolderRequest{
+		Page:   1,
+		Limit:  10000,
+		UserId: &userID,
+	}
+
+	folderService := NewFolderService(s.publisher, s.encoder, s.db)
+	folders, err := folderService.ListFolders(folderListReq)
+	if err != nil {
+		return nil, err
+	}
+
+	var credentials []map[string]interface{}
+	for _, folder := range folders {
+		tmpCredentials, err := s.List(folder.Id, credentialType, nil)
+		if err != nil {
+			continue
+		}
+		if tmpCredentials == nil {
+			continue
+		}
+
+		credentials = append(credentials, tmpCredentials.Credentials...)
+	}
+
+	if len(credentials) == 0 {
+		empty := []map[string]interface{}{}
+		return &empty, nil
+	}
+
+	return &credentials, nil
 }

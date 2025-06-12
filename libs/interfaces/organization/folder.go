@@ -1,10 +1,6 @@
 package organization
 
-import (
-	"time"
-
-	"github.com/lib/pq"
-)
+import "time"
 
 type Folder struct {
 	Id          string `gorm:"primaryKey;type:uuid"`
@@ -15,7 +11,7 @@ type Folder struct {
 	UpdatedAt   time.Time
 	ParentID    *string
 	CreatedBy   string
-	Members     pq.StringArray `gorm:"type:text[]" json:"members"`
+	User        *[]User `gorm:"many2many:user_folders;" json:"user"`
 }
 
 type CreateFolderRequest struct {
@@ -34,8 +30,9 @@ type UpdateFolderRequest struct {
 }
 
 type GetFolderRequest struct {
-	Page  int `json:"page" form:"page"`
-	Limit int `json:"limit" form:"limit"`
+	Page   int     `json:"page" form:"page"`
+	Limit  int     `json:"limit" form:"limit"`
+	UserId *string `json:"user_id" form:"user_id"`
 }
 
 type GetFolderResponse struct {
@@ -43,4 +40,16 @@ type GetFolderResponse struct {
 	Total   int      `json:"total"`
 	Page    int      `json:"page"`
 	Limit   int      `json:"limit"`
+}
+
+type GetUsersInFolderRequest struct {
+	Page  int `json:"page" form:"page"`
+	Limit int `json:"limit" form:"limit"`
+}
+
+type GetUsersInFolderResponse struct {
+	Users []string `json:"users"`
+	Total int      `json:"total"`
+	Page  int      `json:"page"`
+	Limit int      `json:"limit"`
 }
