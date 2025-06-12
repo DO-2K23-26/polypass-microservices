@@ -4,13 +4,10 @@ go 1.24.1
 
 require (
 	github.com/confluentinc/confluent-kafka-go v1.9.2
-	github.com/elastic/go-elasticsearch/v9 v9.0.0
 	github.com/gin-gonic/gin v1.10.0
-<<<<<<< Updated upstream
-=======
 	github.com/hamba/avro v1.5.6
 	github.com/spf13/cobra v1.9.1
->>>>>>> Stashed changes
+	github.com/hamba/avro v1.5.6
 	github.com/spf13/viper v1.20.1
 	gorm.io/gorm v1.25.12
 )

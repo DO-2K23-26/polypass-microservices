@@ -24,6 +24,9 @@ func NewSearchController(
 	folderService *folderService.FolderService,
 	tagService *tagService.TagService,
 ) *SearchController {
+	if credentialService == nil || folderService == nil || tagService == nil {
+		panic("Services must not be nil")
+	}
 	return &SearchController{
 		credentialService: credentialService,
 		folderService:     folderService,
