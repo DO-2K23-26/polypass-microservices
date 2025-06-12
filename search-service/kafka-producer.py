@@ -15,6 +15,8 @@ producer_config = {
     'client.id': 'python-producer'
 }
 
+existing_credentials = {}  # {id: last_known_event_data}
+
 # Création d'un producer
 producer = Producer(producer_config)
 
@@ -133,15 +135,51 @@ def generate_user_event():
 
 # Fonction pour générer un événement credential
 def generate_credential_event():
-    return {
-        'credentialId': str(uuid.uuid4()),
+    credential_id = str(uuid.uuid4())
+    data = {
+        'credentialId': credential_id,
         'name': f'Credential-{uuid.uuid4().hex[:8]}',
         'folderId': str(uuid.uuid4()),
-        'tagIds': [str(uuid.uuid4()) for _ in range(2)],  # Génère 2 tags aléatoires
+        'tagIds': [str(uuid.uuid4()) for _ in range(2)],
         'timestamp': int(time.time() * 1000),
         'created_at': datetime.now().isoformat(),
         'updated_at': datetime.now().isoformat()
     }
+    existing_credentials[credential_id] = data
+    return data
+
+
+def generate_credential_update_event():
+    if not existing_credentials:
+        return None  # Rien à mettre à jour
+    credential_id = random.choice(list(existing_credentials.keys()))
+    old_data = existing_credentials[credential_id]
+    updated_data = {
+        **old_data,
+        'name': f'Credential-Updated-{uuid.uuid4().hex[:6]}' if random.random() < 0.7 else None,
+        'folderId': str(uuid.uuid4()) if random.random() < 0.7 else None,
+        'tagIds': [str(uuid.uuid4()) for _ in range(random.randint(0, 3))] if random.random() < 0.7 else None,
+        'timestamp': int(time.time() * 1000),
+        'updated_at': datetime.now().isoformat()
+    }
+    existing_credentials[credential_id] = updated_data
+    return updated_data
+
+def generate_credential_delete_event():
+    if not existing_credentials:
+        return None
+    credential_id = random.choice(list(existing_credentials.keys()))
+    deleted_data = {
+        'credentialId': credential_id,
+        'name': None,
+        'folderId': None,
+        'tagIds': None,
+        'timestamp': int(time.time() * 1000),
+        'created_at': existing_credentials[credential_id]['created_at'],
+        'updated_at': datetime.now().isoformat()
+    }
+    del existing_credentials[credential_id]
+    return deleted_data
 
 def delivery_report(err, msg):
     if err is not None:
@@ -152,29 +190,30 @@ def delivery_report(err, msg):
 def main():
     # Liste des topics et leurs fonctions de génération d'événements
     topics = {
-        # 'folder-creation': (generate_folder_event, folder_schema),
-        # 'tag-creation': (generate_tag_event, tag_schema),
+        'folder-creation': (generate_folder_event, folder_schema),
+        'tag-creation': (generate_tag_event, tag_schema),
         'credential-creation': (generate_credential_event, credential_schema),
+        # 'credential-update': (generate_credential_update_event, credential_schema),
+        # 'credential-deletion': (generate_credential_delete_event, credential_schema),
     }
 
     try:
         while True:
-            for topic, (generator, schema) in topics.items():
-                event = generator()
-                print(f"Sending event to {topic}: {event}")
-                try:
-                    # Sérialiser l'événement en Avro
-                    avro_data = serialize_avro(schema, event)
-                    producer.produce(
-                        topic=topic,
-                        value=avro_data,
-                        callback=delivery_report
-                    )
-                    producer.poll(0)
-                except Exception as e:
-                    print(f"Error producing message: {e}")
+            topic = random.choice(list(topics.keys()))
+            generator, schema = topics[topic]
+            event = generator()
+            if event is None:
+                continue
+            print(f"Sending event to {topic}: {event}")
+            try:
+                avro_data = serialize_avro(schema, event)
+                producer.produce(topic=topic, value=avro_data, callback=delivery_report)
+                producer.poll(0)
+            except Exception as e:
+                print(f"Error producing message: {e}")
             producer.flush()
-            time.sleep(5)  # Attendre 5 secondes entre chaque envoi
+            time.sleep(1)
+
     except KeyboardInterrupt:
         print("\nStopping producer...")
     finally:
