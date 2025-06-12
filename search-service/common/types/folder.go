@@ -51,15 +51,15 @@ type FolderEvent struct {
 
 // Folder représente la structure de dossier dans la base de données
 type Folder struct {
-	ID          string `json:"id" gorm:"primaryKey"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Icon        string `json:"icon"`
-	ParentID    string `json:"parent_id"`
-	Members     string `json:"members" gorm:"type:jsonb"` // Stocké comme une chaîne JSON
-	CreatedBy   string `json:"created_by"`
-	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
+	ID          string         `json:"id" gorm:"primaryKey"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Icon        string         `json:"icon"`
+	ParentID    sql.NullString `json:"parent_id"`
+	Members     string         `json:"members" gorm:"type:jsonb"` // Stocké comme une chaîne JSON
+	CreatedBy   string         `json:"created_by"`
+	CreatedAt   string         `json:"created_at"`
+	UpdatedAt   string         `json:"updated_at"`
 }
 
 // ToFolderEvent convertit un Folder en FolderEvent
@@ -75,7 +75,7 @@ func (f *Folder) ToFolderEvent() *FolderEvent {
 		Icon:        f.Icon,
 		CreatedAt:   f.CreatedAt,
 		UpdatedAt:   f.UpdatedAt,
-		ParentID:    f.ParentID,
+		ParentID:    f.ParentID.String,
 		Members:     members,
 		CreatedBy:   f.CreatedBy,
 	}
@@ -89,7 +89,7 @@ func (f *Folder) FromFolderEvent(event *FolderEvent) {
 	f.Icon = event.Icon
 	f.CreatedAt = event.CreatedAt
 	f.UpdatedAt = event.UpdatedAt
-	f.ParentID = event.ParentID
+	f.ParentID.String = event.ParentID
 	f.CreatedBy = event.CreatedBy
 
 	// Convertir les membres en JSON
@@ -140,3 +140,23 @@ type FolderSql struct {
 }
 
 var FolderIndex = "folders"
+
+// ToElasticsearchMap convertit un Folder en map pour Elasticsearch
+func (f *Folder) ToElasticsearchMap() map[string]interface{} {
+	parentID := ""
+	if f.ParentID.Valid {
+		parentID = f.ParentID.String
+	}
+
+	return map[string]interface{}{
+		"id":          f.ID,
+		"name":        f.Name,
+		"description": f.Description,
+		"icon":        f.Icon,
+		"parent_id":   parentID,
+		"members":     f.Members,
+		"created_by":  f.CreatedBy,
+		"created_at":  f.CreatedAt,
+		"updated_at":  f.UpdatedAt,
+	}
+}

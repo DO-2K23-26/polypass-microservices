@@ -68,7 +68,7 @@ func (s *SearchController) SearchFolders(ctx context.Context, req *api.SearchFol
 		response.Folders[i] = &api.Folder{
 			Id:       folder.ID,
 			Name:     folder.Name,
-			ParentId: folder.ParentID,
+			ParentId: folder.ParentID.String,
 		}
 	}
 
@@ -173,7 +173,7 @@ func (s *SearchController) SearchCredentials(ctx context.Context, req *api.Searc
 			credential.Folder = &api.Folder{
 				Id:       cred.Folder.ID,
 				Name:     cred.Folder.Name,
-				ParentId: cred.Folder.ParentID,
+				ParentId: cred.Folder.ParentID.String,
 			}
 		}
 

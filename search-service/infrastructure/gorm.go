@@ -31,7 +31,7 @@ func (a *GormAdapter) CheckHealth() bool {
 	if err != nil {
 		return false
 	}
-return true
+	return true
 }
 
 func (a *GormAdapter) Migrate() error {

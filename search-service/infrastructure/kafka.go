@@ -71,34 +71,40 @@ func (k *KafkaAdapter) Consume(topic string, handleMessage func(*kafka.Message) 
 	println("Consuming topic:", topic)
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": k.host,
-		"group.id":          k.clientId,
+		"group.id":          k.clientId + "-" + topic,
 		"auto.offset.reset": "earliest",
 	})
 	if err != nil {
 		println("Error creating consumer:", err)
 		return err
 	}
+	defer consumer.Close()
 
 	err = consumer.SubscribeTopics([]string{topic}, nil)
+	if err != nil {
+		println("Error subscribing to topic:", err)
+		return err
+	}
+
 	sigchan := make(chan os.Signal, 1)
-    signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
-	
+	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+
 	run := true
 	for run == true {
 		select {
-        case sig := <-sigchan:
-            fmt.Printf("Caught signal %v: terminating\n", sig)
-            run = false
-        default:
-            ev, err := consumer.ReadMessage(-1)
-            if err != nil {
-                if handleError != nil {
+		case sig := <-sigchan:
+			fmt.Printf("Caught signal %v: terminating\n", sig)
+			run = false
+		default:
+			ev, err := consumer.ReadMessage(-1)
+			if err != nil {
+				if handleError != nil {
 					handleError(err)
 				}
-                continue
-            }
-            fmt.Printf("Consumed event from topic %s: key = %-10s value = %s\n",
-                *ev.TopicPartition.Topic, string(ev.Key), string(ev.Value))
+				continue
+			}
+			fmt.Printf("Consumed event from topic %s: key = %-10s value = %s\n",
+				*ev.TopicPartition.Topic, string(ev.Key), string(ev.Value))
 
 			if handleMessage != nil {
 				err := handleMessage(ev)
@@ -109,19 +115,14 @@ func (k *KafkaAdapter) Consume(topic string, handleMessage func(*kafka.Message) 
 					continue
 				}
 			}
-			
-			_, err = k.consumer.CommitMessage(ev)
+
+			_, err = consumer.CommitMessage(ev)
 			if err != nil && handleError != nil {
 				handleError(err)
 			}
-        }
-
-		if err != nil {
-			
-			continue
 		}
 	}
-	return err
+	return nil
 }
 
 func (k *KafkaAdapter) CheckHealth() bool {

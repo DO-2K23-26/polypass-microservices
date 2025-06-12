@@ -1,6 +1,7 @@
 package folder
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -55,6 +56,19 @@ func (e *EsSqlFolderRepository) GetFromUser(query GetFromUserQuery) (*GetFromUse
 
 // CreateFolder implements FolderRepository.
 func (e *EsSqlFolderRepository) Create(query CreateFolderQuery) (*CreateFolderResult, error) {
+	var createdFolder types.Folder
+	if query.ParentID == "" {
+		createdFolder = types.Folder{
+			ID:          query.ID,
+			Name:        query.Name,
+			Description: query.Description,
+			Icon:        query.Icon,
+			ParentID:    sql.NullString{Valid: false}, // NULL en base de données
+			CreatedBy:   query.CreatedBy,
+			CreatedAt:   "", // Ces champs seront remplis par la base de données
+			UpdatedAt:   "", // Ces champs seront remplis par la base de données
+		}
+	}
 	// Vérifier si le dossier parent existe si un parent_id est spécifié
 	if query.ParentID != "" {
 		var parentFolder types.Folder
@@ -64,17 +78,17 @@ func (e *EsSqlFolderRepository) Create(query CreateFolderQuery) (*CreateFolderRe
 			}
 			return nil, err
 		}
-	}
 
-	createdFolder := types.Folder{
-		ID:          query.ID,
-		Name:        query.Name,
-		Description: query.Description,
-		Icon:        query.Icon,
-		ParentID:    query.ParentID,
-		CreatedBy:   query.CreatedBy,
-		CreatedAt:   "", // Ces champs seront remplis par la base de données
-		UpdatedAt:   "", // Ces champs seront remplis par la base de données
+		createdFolder = types.Folder{
+			ID:          query.ID,
+			Name:        query.Name,
+			Description: query.Description,
+			Icon:        query.Icon,
+			ParentID:    sql.NullString{String: query.ParentID, Valid: true},
+			CreatedBy:   query.CreatedBy,
+			CreatedAt:   "", // Ces champs seront remplis par la base de données
+			UpdatedAt:   "", // Ces champs seront remplis par la base de données
+		}
 	}
 	createdFolder.SetMembers(query.Members)
 
@@ -83,7 +97,7 @@ func (e *EsSqlFolderRepository) Create(query CreateFolderQuery) (*CreateFolderRe
 			return err
 		}
 		log.Println("create folder", createdFolder)
-		if err := e.es.CreateDocument(types.FolderIndex, createdFolder.ID, &createdFolder); err != nil {
+		if err := e.es.CreateDocument(types.FolderIndex, createdFolder.ID, createdFolder.ToElasticsearchMap()); err != nil {
 			log.Println("create folder err: ", err)
 			return err
 		}
@@ -293,7 +307,7 @@ if (ctx._source.folder != null) {
 		Name:        query.Name,
 		Description: query.Description,
 		Icon:        query.Icon,
-		ParentID:    query.ParentID,
+		ParentID:    sql.NullString{String: query.ParentID, Valid: query.ParentID != ""},
 	}
 	updateData.SetMembers(query.Members)
 
@@ -302,7 +316,7 @@ if (ctx._source.folder != null) {
 			return err
 		}
 
-		err := e.es.UpdateDocument(types.FolderIndex, query.ID, updateData)
+		err := e.es.UpdateDocument(types.FolderIndex, query.ID, updateData.ToElasticsearchMap())
 		if err != nil {
 			return err
 		}

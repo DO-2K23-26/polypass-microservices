@@ -7,7 +7,7 @@ type CreateFolderQuery struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Icon        string   `json:"icon"`
-	ParentID    string   `json:"parent_id"`
+	ParentID    string   `json:"parent_id,omitempty"`
 	Members     []string `json:"members"`
 	CreatedBy   string   `json:"created_by"`
 }

@@ -34,9 +34,13 @@ func (s *FolderService) Create(req CreateFolderRequest) (*FolderResponse, error)
 		Name:        req.Name,
 		Description: req.Description,
 		Icon:        req.Icon,
-		ParentID:    req.ParentID,
 		Members:     req.Members,
 		CreatedBy:   req.CreatedBy,
+	}
+
+	// Gérer le cas où ParentID est nil
+	if req.ParentID != nil {
+		query.ParentID = *req.ParentID
 	}
 
 	result, err := s.folderRepo.Create(query)

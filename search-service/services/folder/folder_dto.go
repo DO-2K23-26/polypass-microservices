@@ -8,7 +8,7 @@ type CreateFolderRequest struct {
 	Name        string   `json:"name" avro:"name"`
 	Description string   `json:"description" avro:"description"`
 	Icon        string   `json:"icon" avro:"icon"`
-	ParentID    string   `json:"parent_id" avro:"parent_id"`
+	ParentID    *string  `json:"parent_id" avro:"parent_id"`
 	Members     []string `json:"members" avro:"members"`
 	CreatedBy   string   `json:"created_by" avro:"created_by"`
 	CreatedAt   string   `json:"created_at" avro:"created_at"`

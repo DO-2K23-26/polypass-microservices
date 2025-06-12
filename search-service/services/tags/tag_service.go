@@ -32,7 +32,13 @@ func (s *TagService) Create(req CreateTagRequest) (*CreateTagResponse, error) {
 	}
 
 	result, err := s.tagRepository.Create(tags.CreateTagQuery{
-		Name: req.Name,
+		ID:        req.ID,
+		Name:      req.Name,
+		Color:     req.Color,
+		CreatedAt: req.CreatedAt,
+		UpdatedAt: req.UpdatedAt,
+		FolderID:  req.FolderID,
+		CreatedBy: req.CreatedBy,
 	})
 	if err != nil {
 		return nil, err

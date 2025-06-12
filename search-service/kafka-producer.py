@@ -48,7 +48,7 @@ folder_schema = avro.schema.parse('''
 		{ "name": "icon", "type": "string", "default": "" },
 		{ "name": "created_at", "type": "string" },
 		{ "name": "updated_at", "type": "string" },
-		{ "name": "parent_id", "type": "string", "default": "" },
+		{ "name": "parent_id", "type": ["null", "string"], "default": null },
 		{ "name": "members", "type": {"type": "array", "items": "string"}, "default": [] },
 		{ "name": "created_by", "type": "string" }
 	]
@@ -87,8 +87,14 @@ def serialize_avro(schema, data):
     writer = DatumWriter(schema)
     bytes_writer = io.BytesIO()
     encoder = BinaryEncoder(bytes_writer)
-    writer.write(data, encoder)
-    return bytes_writer.getvalue()
+    try:
+        writer.write(data, encoder)
+        return bytes_writer.getvalue()
+    except Exception as e:
+        print(f"Error serializing data: {e}")
+        print(f"Data: {data}")
+        print(f"Schema: {schema}")
+        raise e
 
 # Fonction pour générer un événement de tag
 def generate_tag_event():
@@ -111,7 +117,7 @@ def generate_folder_event():
         'icon': f'Icon-{uuid.uuid4().hex[:8]}',
         'created_at': datetime.now().isoformat(),
         'updated_at': datetime.now().isoformat(),
-        'parent_id': "",  # Dossier sans parent
+        'parent_id': None,  # Avro va automatiquement gérer None comme null
         'members': [str(uuid.uuid4()) for _ in range(2)],  # Génère 2 membres aléatoires
         'created_by': str(uuid.uuid4())
     }
@@ -145,18 +151,8 @@ def delivery_report(err, msg):
 def main():
     # Liste des topics et leurs fonctions de génération d'événements
     topics = {
-        # 'tag-creation': (generate_tag_event, tag_schema),
-        # 'tag-deletion': (generate_tag_event, tag_schema),
-        # 'tag-update': (generate_tag_event, tag_schema),
-        'folder-creation': (generate_folder_event, folder_schema),
-        # 'folder-deletion': (generate_folder_event, folder_schema),
-        # 'folder-update': (generate_folder_event, folder_schema),
-        # 'user-creation': (generate_user_event, user_schema),
-        # 'user-deletion': (generate_user_event, user_schema),
-        # 'user-update': (generate_user_event, user_schema),
-        # 'credential-creation': (generate_credential_event, credential_schema),
-        # 'credential-deletion': (generate_credential_event, credential_schema),
-        # 'credential-update': (generate_credential_event, credential_schema)
+        # 'folder-creation': (generate_folder_event, folder_schema),
+        'tag-creation': (generate_tag_event, tag_schema),
     }
 
     try:
@@ -164,14 +160,17 @@ def main():
             for topic, (generator, schema) in topics.items():
                 event = generator()
                 print(f"Sending event to {topic}: {event}")
-                # Sérialiser l'événement en Avro
-                avro_data = serialize_avro(schema, event)
-                producer.produce(
-                    topic=topic,
-                    value=avro_data,
-                    callback=delivery_report
-                )
-                producer.poll(0)
+                try:
+                    # Sérialiser l'événement en Avro
+                    avro_data = serialize_avro(schema, event)
+                    producer.produce(
+                        topic=topic,
+                        value=avro_data,
+                        callback=delivery_report
+                    )
+                    producer.poll(0)
+                except Exception as e:
+                    print(f"Error producing message: {e}")
             producer.flush()
             time.sleep(5)  # Attendre 5 secondes entre chaque envoi
     except KeyboardInterrupt:

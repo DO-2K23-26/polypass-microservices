@@ -11,9 +11,13 @@ type GetTagResult struct {
 }
 
 type CreateTagQuery struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	FolderID string `json:"folder_id"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Color     string `json:"color"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+	FolderID  string `json:"folder_id"`
+	CreatedBy string `json:"created_by"`
 }
 
 type CreateTagResult struct {

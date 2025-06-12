@@ -4,7 +4,13 @@ import "github.com/DO-2K23-26/polypass-microservices/search-service/common/types
 
 // Request DTOs
 type CreateTagRequest struct {
-	Name string `json:"name"`
+	ID        string `json:"id" avro:"id"`
+	Name      string `json:"name" avro:"name"`
+	Color     string `json:"color" avro:"color"`
+	CreatedAt string `json:"created_at" avro:"created_at"`
+	UpdatedAt string `json:"updated_at" avro:"updated_at"`
+	FolderID  string `json:"folder_id" avro:"folder_id"`
+	CreatedBy string `json:"created_by" avro:"created_by"`
 }
 
 type UpdateTagRequest struct {
