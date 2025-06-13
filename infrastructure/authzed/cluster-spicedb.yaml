@@ -1,0 +1,17 @@
+apiVersion: authzed.com/v1alpha1
+kind: SpiceDBCluster
+metadata:
+  namespace: authz
+  name: dev
+spec:
+  config:
+    datastoreEngine: memory
+  secretName: dev-spicedb-config
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: authz
+  name: dev-spicedb-config
+stringData:
+  preshared_key: "averysecretpresharedkey"

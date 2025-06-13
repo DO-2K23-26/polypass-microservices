@@ -4,8 +4,8 @@ import (
 	"os"
 	"sharing/dto"
 	"sharing/services"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
 )
 
@@ -20,6 +20,13 @@ func init() {
 
 func main() {
 	app := fiber.New()
+	// Enable CORS for https://polypass.umontpeler.fr
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "https://polypass.umontpeler.fr",
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders:     "*",
+		AllowCredentials: true,
+	}))
 
 	app.Post("/sharing", func(c *fiber.Ctx) error {
 		var request dto.PostSecretRequest

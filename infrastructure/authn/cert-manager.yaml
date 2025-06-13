@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: polypass-prod
+  namespace: default
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: contact@umontpelier.fr
+    privateKeySecretRef:
+      name: polypass-certificates
+    solvers:
+      - http01:
+          ingress:
+            class: traefik

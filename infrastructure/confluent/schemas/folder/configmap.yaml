@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: folder-schema
+  namespace: confluent
+data:
+  schema: |
+    {
+      "type": "record",
+      "name": "Folder",
+      "namespace": "com.example",
+      "fields": [
+          { "name": "id", "type": "string", "default": "default-id" },
+          { "name": "name", "type": "string", "default": "default-name" }
+      ]
+    }

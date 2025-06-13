@@ -1,0 +1,36 @@
+keycloak:
+  auth:
+    adminPassword: admin
+    adminUser: admin
+  cache:
+    enabled: false
+  ingress:
+    annotations:
+      cert-manager.io/cluster-issuer: polypass-prod
+      kubernetes.io/ingress.class: traefik
+    enabled: true
+    hostname: auth.polypass.umontpelier.fr
+    selfSigned: false
+    tls: true
+  postgresql:
+    architecture: standalone
+    auth:
+      database: bitnami_keycloak
+      password: yourKeycloakDbPassword
+      postgresPassword: yourPostgresRootPassword
+      username: bn_keycloak
+    enabled: true
+  production: true
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 4
+      memory: 8Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  resourcesPreset: large
+  tls:
+    enabled: true
+    existingSecret: auth.polypass.umontpelier.fr-tls
+    usePem: true
