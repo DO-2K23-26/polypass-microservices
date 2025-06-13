@@ -90,9 +90,7 @@ func (c *CredentialsController) CreatePasswordCredential() fiber.Handler {
 			Note:               payload.Note,
 			CustomFields:       payload.CustomFields,
 			PasswordAttributes: payload.PasswordAttributes,
-			UserIdentifierAttribute: types.UserIdentifierAttribute{
-				UserIdentifier: "",
-			},
+			UserIdentifierAttribute: payload.UserIdentifierAttribute,
 		}); err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
@@ -104,6 +102,7 @@ func (c *CredentialsController) CreatePasswordCredential() fiber.Handler {
 				CustomFields: &payload.CustomFields,
 			},
 			PasswordAttributes: payload.PasswordAttributes,
+			UserIdentifierAttribute: payload.UserIdentifierAttribute,
 		})
 		if err != nil {
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
