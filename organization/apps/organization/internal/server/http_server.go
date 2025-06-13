@@ -8,6 +8,7 @@ import (
 	folderHttp "github.com/DO-2K23-26/polypass-microservices/organization/internal/transport/http"
 	tagHttp "github.com/DO-2K23-26/polypass-microservices/organization/internal/transport/http"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 type HttpServer struct {
@@ -52,6 +53,8 @@ func (s *HttpServer) Start() {
 	r.HandleFunc("/tags/{id}", s.tagHandler.UpdateTag).Methods("PUT")
 	r.HandleFunc("/tags/{id}", s.tagHandler.DeleteTag).Methods("DELETE")
 
+	handler := cors.Default().Handler(r)
+
 	log.Printf("Starting HTTP server on %s", s.port)
-	log.Fatal(http.ListenAndServe(s.port, r))
+	log.Fatal(http.ListenAndServe(s.port, handler))
 }
