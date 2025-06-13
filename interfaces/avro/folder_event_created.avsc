@@ -1,0 +1,23 @@
+{
+  "namespace": "com.polypass.events.folder",
+  "type": "record",
+  "name": "EventFolderCreated",
+  "fields": [
+    {
+      "name": "folderId",
+      "type": "string"
+    },
+    {
+      "name": "name",
+      "type": ["null", "string"]
+    },
+    {
+      "name": "organizationId",
+      "type": "string"
+    },
+    {
+      "name": "timestamp",
+      "type": "long"
+    }
+  ]
+} 

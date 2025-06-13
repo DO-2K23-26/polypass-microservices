@@ -1,0 +1,14 @@
+{
+  "grpcPort": "8081",
+  "httpPort": "8082",
+  "esHost": "http://localhost:9200",
+  "esPassword": "changeme",
+  "esUsername": "elastic",
+  "kafkaHost": "0.0.0.0:9092",
+  "clientId": "search-service",
+  "pgHost": "localhost",
+  "pgUser": "postgres",
+  "pgPassword": "postgres",
+  "pgDBName": "postgres",
+  "pgPort": "5432"
+}
