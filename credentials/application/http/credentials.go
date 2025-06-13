@@ -56,6 +56,7 @@ type CreatePasswordCredentialOpts struct {
 	Note         string         `json:"note" db:"note"`
 	CustomFields map[string]any `json:"custom_fields" db:"custom_fields"`
 	types.PasswordAttributes
+	types.UserIdentifierAttribute
 }
 
 func (c *CreatePasswordCredentialOpts) Validate(ctx *fiber.Ctx) error {
